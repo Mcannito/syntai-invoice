@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Edit, Eye, Users, Building2, UserCheck } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { NuovoPazienteDialog } from "@/components/Pazienti/NuovoPazienteDialog";
 import {
   Table,
   TableBody,
@@ -15,9 +17,30 @@ import { Badge } from "@/components/ui/badge";
 
 const Pazienti = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [pazienti, setPazienti] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data
-  const pazienti = [
+  const fetchPazienti = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("pazienti")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Errore caricamento pazienti:", error);
+    } else {
+      setPazienti(data || []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchPazienti();
+  }, []);
+
+  // Mock data for initial display
+  const mockPazienti = [
     {
       id: 1,
       nome: "Mario Rossi",
@@ -65,14 +88,23 @@ const Pazienti = () => {
     },
   ];
 
-  const filteredPazienti = pazienti.filter(p =>
-    p.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.cf && p.cf.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (p.piva && p.piva.includes(searchTerm))
-  );
+  const displayPazienti = pazienti.length > 0 ? pazienti : mockPazienti;
 
-  const personeFisiche = pazienti.filter(p => p.tipo === "Persona Fisica").length;
-  const personeGiuridiche = pazienti.filter(p => p.tipo === "Persona Giuridica").length;
+  const filteredPazienti = displayPazienti.filter(p => {
+    const nomeCompleto = p.ragione_sociale || `${p.nome} ${p.cognome || ""}`;
+    return (
+      nomeCompleto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.codice_fiscale && p.codice_fiscale.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (p.partita_iva && p.partita_iva.includes(searchTerm))
+    );
+  });
+
+  const personeFisiche = displayPazienti.filter(p => 
+    p.tipo_paziente === "persona_fisica" || p.tipo === "Persona Fisica"
+  ).length;
+  const personeGiuridiche = displayPazienti.filter(p => 
+    p.tipo_paziente === "persona_giuridica" || p.tipo === "Persona Giuridica"
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -84,10 +116,7 @@ const Pazienti = () => {
             Gestisci l'anagrafica dei tuoi pazienti
           </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nuovo Paziente
-        </Button>
+        <NuovoPazienteDialog onPazienteCreated={fetchPazienti} />
       </div>
 
       {/* Stats */}
@@ -156,46 +185,69 @@ const Pazienti = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredPazienti.map((paziente) => (
-                <TableRow key={paziente.id} className="hover:bg-muted/30">
-                  <TableCell className="font-medium">{paziente.nome}</TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {paziente.cf || paziente.piva}
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={paziente.tipo === "Persona Fisica" ? "default" : "secondary"}
-                      className="gap-1"
-                    >
-                      {paziente.tipo === "Persona Fisica" ? (
-                        <UserCheck className="h-3 w-3" />
-                      ) : (
-                        <Building2 className="h-3 w-3" />
-                      )}
-                      {paziente.tipo}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">{paziente.email}</p>
-                      <p className="text-xs text-muted-foreground">{paziente.telefono}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {paziente.ultimaVisita}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    Caricamento...
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : filteredPazienti.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    Nessun paziente trovato
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredPazienti.map((paziente) => {
+                  const nomeCompleto = paziente.ragione_sociale || `${paziente.nome} ${paziente.cognome || ""}`;
+                  const cfPiva = paziente.codice_fiscale || paziente.partita_iva || paziente.cf || paziente.piva;
+                  const tipo = paziente.tipo_paziente === "persona_fisica" || paziente.tipo === "Persona Fisica" 
+                    ? "Persona Fisica" 
+                    : "Persona Giuridica";
+                  const ultimaVisita = paziente.ultimaVisita || new Date(paziente.created_at).toLocaleDateString('it-IT');
+
+                  return (
+                    <TableRow key={paziente.id} className="hover:bg-muted/30">
+                      <TableCell className="font-medium">{nomeCompleto}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {cfPiva}
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={tipo === "Persona Fisica" ? "default" : "secondary"}
+                          className="gap-1"
+                        >
+                          {tipo === "Persona Fisica" ? (
+                            <UserCheck className="h-3 w-3" />
+                          ) : (
+                            <Building2 className="h-3 w-3" />
+                          )}
+                          {tipo}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground">{paziente.email}</p>
+                          <p className="text-xs text-muted-foreground">{paziente.telefono}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {ultimaVisita}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
         </CardContent>

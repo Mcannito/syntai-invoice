@@ -14,7 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      pazienti: {
+        Row: {
+          cap: string | null
+          citta: string | null
+          codice_destinatario: string | null
+          codice_fiscale: string | null
+          cognome: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          indirizzo: string | null
+          nome: string
+          partita_iva: string | null
+          pec: string | null
+          provincia: string | null
+          ragione_sociale: string | null
+          telefono: string | null
+          tipo_paziente: string
+          updated_at: string | null
+        }
+        Insert: {
+          cap?: string | null
+          citta?: string | null
+          codice_destinatario?: string | null
+          codice_fiscale?: string | null
+          cognome?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          indirizzo?: string | null
+          nome: string
+          partita_iva?: string | null
+          pec?: string | null
+          provincia?: string | null
+          ragione_sociale?: string | null
+          telefono?: string | null
+          tipo_paziente: string
+          updated_at?: string | null
+        }
+        Update: {
+          cap?: string | null
+          citta?: string | null
+          codice_destinatario?: string | null
+          codice_fiscale?: string | null
+          cognome?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          indirizzo?: string | null
+          nome?: string
+          partita_iva?: string | null
+          pec?: string | null
+          provincia?: string | null
+          ragione_sociale?: string | null
+          telefono?: string | null
+          tipo_paziente?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
