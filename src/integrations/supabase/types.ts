@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      appuntamenti: {
+        Row: {
+          created_at: string
+          data: string
+          id: string
+          note: string | null
+          ora_fine: string
+          ora_inizio: string
+          paziente_id: string | null
+          prestazione_id: string | null
+          stato: string
+          titolo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: string
+          id?: string
+          note?: string | null
+          ora_fine: string
+          ora_inizio: string
+          paziente_id?: string | null
+          prestazione_id?: string | null
+          stato?: string
+          titolo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          id?: string
+          note?: string | null
+          ora_fine?: string
+          ora_inizio?: string
+          paziente_id?: string | null
+          prestazione_id?: string | null
+          stato?: string
+          titolo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appuntamenti_paziente_id_fkey"
+            columns: ["paziente_id"]
+            isOneToOne: false
+            referencedRelation: "pazienti"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appuntamenti_prestazione_id_fkey"
+            columns: ["prestazione_id"]
+            isOneToOne: false
+            referencedRelation: "prestazioni"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pazienti: {
         Row: {
           cap: string | null

@@ -1,24 +1,47 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { NuovoAppuntamentoDialog } from "@/components/Calendario/NuovoAppuntamentoDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Calendario = () => {
   const [currentDate] = useState(new Date(2025, 0, 19)); // 19 Gennaio 2025
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  // Mock appointments for the week
-  const appointments = [
-    { id: 1, day: 19, time: "09:00", patient: "Mario Rossi", service: "Visita di controllo", duration: 30 },
-    { id: 2, day: 19, time: "10:30", patient: "Anna Bianchi", service: "Prima visita", duration: 45 },
-    { id: 3, day: 19, time: "14:00", patient: "Giuseppe Verdi", service: "Consulto", duration: 30 },
-    { id: 4, day: 19, time: "15:30", patient: "Laura Neri", service: "Visita di controllo", duration: 30 },
-    { id: 5, day: 20, time: "09:30", patient: "Franco Blu", service: "ECG", duration: 30 },
-    { id: 6, day: 20, time: "11:00", patient: "Maria Gialli", service: "Prima visita", duration: 45 },
-    { id: 7, day: 21, time: "10:00", patient: "Paolo Grigi", service: "Visita specialistica", duration: 60 },
-    { id: 8, day: 22, time: "09:00", patient: "Lucia Rosa", service: "Controllo", duration: 30 },
-    { id: 9, day: 23, time: "14:30", patient: "Marco Verde", service: "Consulto online", duration: 30 },
-  ];
+  const loadAppointments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("appuntamenti")
+        .select(`
+          *,
+          pazienti (nome, cognome, ragione_sociale, tipo_paziente),
+          prestazioni (nome, codice)
+        `)
+        .order("data", { ascending: true })
+        .order("ora_inizio", { ascending: true });
+
+      if (error) throw error;
+      setAppointments(data || []);
+    } catch (error) {
+      console.error("Error loading appointments:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile caricare gli appuntamenti",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAppointments();
+  }, []);
 
   const weekDays = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
   const timeSlots = [
@@ -40,10 +63,7 @@ const Calendario = () => {
             Gestisci gli appuntamenti del tuo studio
           </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nuovo Appuntamento
-        </Button>
+        <NuovoAppuntamentoDialog onAppuntamentoAdded={loadAppointments} />
       </div>
 
       {/* Calendar Navigation */}
@@ -98,9 +118,22 @@ const Calendario = () => {
                       {time}
                     </div>
                     {daysInWeek.map((day) => {
-                      const dayAppointments = appointments.filter(
-                        (apt) => apt.day === day && apt.time === time
-                      );
+                      const dayAppointments = appointments.filter((apt) => {
+                        if (!apt.data || !apt.ora_inizio) return false;
+                        const aptDate = new Date(apt.data);
+                        const aptDay = aptDate.getDate();
+                        const aptTime = apt.ora_inizio.substring(0, 5);
+                        return aptDay === day && aptTime === time;
+                      });
+                      
+                      const getPazienteDisplayName = (apt: any) => {
+                        if (!apt.pazienti) return apt.titolo;
+                        if (apt.pazienti.tipo_paziente === "persona_fisica") {
+                          return `${apt.pazienti.nome} ${apt.pazienti.cognome || ""}`.trim();
+                        }
+                        return apt.pazienti.ragione_sociale || apt.pazienti.nome;
+                      };
+
                       return (
                         <div
                           key={`${day}-${time}`}
@@ -113,21 +146,23 @@ const Calendario = () => {
                             >
                               <div className="flex items-start justify-between gap-1">
                                 <div className="flex-1 space-y-0.5">
-                                  <p className="font-semibold text-primary">{apt.patient}</p>
-                                  <p className="text-muted-foreground">{apt.service}</p>
+                                  <p className="font-semibold text-primary">
+                                    {getPazienteDisplayName(apt)}
+                                  </p>
+                                  <p className="text-muted-foreground">
+                                    {apt.prestazioni?.nome || apt.titolo}
+                                  </p>
                                   <div className="flex items-center gap-1 text-muted-foreground">
                                     <Clock className="h-3 w-3" />
-                                    <span>{apt.duration} min</span>
+                                    <span>{apt.ora_inizio} - {apt.ora_fine}</span>
                                   </div>
                                 </div>
                               </div>
                             </div>
                           ))}
-                          {dayAppointments.length === 0 && (
+                          {dayAppointments.length === 0 && !loading && (
                             <div className="flex h-full items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
-                              <Button variant="ghost" size="sm" className="h-6 text-xs">
-                                <Plus className="h-3 w-3" />
-                              </Button>
+                              <span className="text-xs text-muted-foreground">Slot libero</span>
                             </div>
                           )}
                         </div>
@@ -148,7 +183,7 @@ const Calendario = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Appuntamenti Settimana</p>
-                <p className="text-2xl font-bold">{appointments.length}</p>
+                <p className="text-2xl font-bold">{loading ? "..." : appointments.length}</p>
               </div>
               <Badge className="bg-primary text-primary-foreground">Questa settimana</Badge>
             </div>
@@ -160,7 +195,11 @@ const Calendario = () => {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Appuntamenti Oggi</p>
                 <p className="text-2xl font-bold">
-                  {appointments.filter(a => a.day === 19).length}
+                  {loading ? "..." : appointments.filter(a => {
+                    if (!a.data) return false;
+                    const aptDate = new Date(a.data);
+                    return aptDate.getDate() === 19;
+                  }).length}
                 </p>
               </div>
               <Badge className="bg-secondary text-secondary-foreground">Oggi</Badge>
