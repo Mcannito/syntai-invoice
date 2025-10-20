@@ -7,9 +7,13 @@ import {
   FileText, 
   Settings,
   CreditCard,
-  TrendingUp
+  TrendingUp,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -24,6 +28,23 @@ const navigation = [
 
 export const Sidebar = () => {
   const location = useLocation();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Disconnesso",
+        description: "Logout effettuato con successo",
+      });
+    } catch (error) {
+      toast({
+        title: "Errore",
+        description: "Impossibile effettuare il logout",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="flex h-screen w-64 flex-col border-r border-sidebar-border bg-sidebar">
@@ -61,7 +82,7 @@ export const Sidebar = () => {
       </nav>
 
       {/* User info */}
-      <div className="border-t border-sidebar-border p-4">
+      <div className="border-t border-sidebar-border p-4 space-y-3">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
             DR
@@ -75,6 +96,14 @@ export const Sidebar = () => {
             </p>
           </div>
         </div>
+        <Button 
+          variant="outline" 
+          className="w-full gap-2" 
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4" />
+          Esci
+        </Button>
       </div>
     </div>
   );
