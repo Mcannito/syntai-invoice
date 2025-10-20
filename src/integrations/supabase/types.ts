@@ -74,6 +74,42 @@ export type Database = {
         }
         Relationships: []
       }
+      prestazioni: {
+        Row: {
+          categoria: string
+          codice: string
+          created_at: string
+          id: string
+          iva: string
+          nome: string
+          prezzo: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categoria: string
+          codice: string
+          created_at?: string
+          id?: string
+          iva?: string
+          nome: string
+          prezzo: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string
+          codice?: string
+          created_at?: string
+          id?: string
+          iva?: string
+          nome?: string
+          prezzo?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

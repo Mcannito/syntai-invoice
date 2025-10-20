@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Edit, Trash2, Stethoscope } from "lucide-react";
+import { Search, Edit, Trash2, Stethoscope } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -12,58 +12,51 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { NuovaPrestazioneDialog } from "@/components/Prestazioni/NuovaPrestazioneDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Prestazioni = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [prestazioni, setPrestazioni] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  // Mock data
-  const prestazioni = [
-    {
-      id: 1,
-      nome: "Visita Specialistica",
-      codice: "VS001",
-      prezzo: 120,
-      iva: "Esente IVA Art.10",
-      categoria: "Visite",
-    },
-    {
-      id: 2,
-      nome: "Prima Visita",
-      codice: "PV001",
-      prezzo: 150,
-      iva: "Esente IVA Art.10",
-      categoria: "Visite",
-    },
-    {
-      id: 3,
-      nome: "Visita di Controllo",
-      codice: "VC001",
-      prezzo: 80,
-      iva: "Esente IVA Art.10",
-      categoria: "Visite",
-    },
-    {
-      id: 4,
-      nome: "Consulto Online",
-      codice: "CO001",
-      prezzo: 60,
-      iva: "Esente IVA Art.10",
-      categoria: "Telemedicina",
-    },
-    {
-      id: 5,
-      nome: "ECG",
-      codice: "ECG001",
-      prezzo: 50,
-      iva: "Esente IVA Art.10",
-      categoria: "Diagnostica",
-    },
-  ];
+  const loadPrestazioni = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("prestazioni")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setPrestazioni(data || []);
+    } catch (error) {
+      console.error("Error loading prestazioni:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile caricare le prestazioni",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPrestazioni();
+  }, []);
 
   const filteredPrestazioni = prestazioni.filter(p =>
     p.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.codice.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const prezzoMedio = prestazioni.length > 0 
+    ? Math.round(prestazioni.reduce((acc, p) => acc + parseFloat(p.prezzo), 0) / prestazioni.length)
+    : 0;
+
+  const categorie = [...new Set(prestazioni.map(p => p.categoria))].length;
 
   return (
     <div className="space-y-6">
@@ -75,10 +68,7 @@ const Prestazioni = () => {
             Gestisci le prestazioni sanitarie del tuo studio
           </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nuova Prestazione
-        </Button>
+        <NuovaPrestazioneDialog onPrestazioneAdded={loadPrestazioni} />
       </div>
 
       {/* Stats */}
@@ -99,7 +89,7 @@ const Prestazioni = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Prezzo Medio</p>
-                <p className="text-2xl font-bold">€92</p>
+                <p className="text-2xl font-bold">€{prezzoMedio}</p>
               </div>
             </div>
           </CardContent>
@@ -109,7 +99,7 @@ const Prestazioni = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Categorie</p>
-                <p className="text-2xl font-bold">3</p>
+                <p className="text-2xl font-bold">{categorie}</p>
               </div>
             </div>
           </CardContent>
@@ -145,7 +135,20 @@ const Prestazioni = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredPrestazioni.map((prestazione) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    Caricamento...
+                  </TableCell>
+                </TableRow>
+              ) : filteredPrestazioni.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    Nessuna prestazione trovata
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredPrestazioni.map((prestazione) => (
                 <TableRow key={prestazione.id} className="hover:bg-muted/30">
                   <TableCell className="font-mono text-xs">{prestazione.codice}</TableCell>
                   <TableCell className="font-medium">{prestazione.nome}</TableCell>
@@ -167,7 +170,7 @@ const Prestazioni = () => {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              )))}
             </TableBody>
           </Table>
         </CardContent>
