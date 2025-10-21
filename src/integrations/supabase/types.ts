@@ -74,6 +74,56 @@ export type Database = {
           },
         ]
       }
+      fatture: {
+        Row: {
+          created_at: string
+          data: string
+          id: string
+          importo: number
+          metodo_pagamento: string
+          note: string | null
+          numero: string
+          paziente_id: string | null
+          stato: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: string
+          id?: string
+          importo: number
+          metodo_pagamento: string
+          note?: string | null
+          numero: string
+          paziente_id?: string | null
+          stato?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          id?: string
+          importo?: number
+          metodo_pagamento?: string
+          note?: string | null
+          numero?: string
+          paziente_id?: string | null
+          stato?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fatture_paziente_id_fkey"
+            columns: ["paziente_id"]
+            isOneToOne: false
+            referencedRelation: "pazienti"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pazienti: {
         Row: {
           cap: string | null

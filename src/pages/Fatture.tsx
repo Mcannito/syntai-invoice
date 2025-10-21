@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Eye, Download, Send, FileText } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { NuovaFatturaDialog } from "@/components/Fatture/NuovaFatturaDialog";
 import {
   Table,
   TableBody,
@@ -15,65 +18,51 @@ import { Badge } from "@/components/ui/badge";
 
 const Fatture = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [fatture, setFatture] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  // Mock data
-  const fatture = [
-    {
-      id: 1,
-      numero: "2025/001",
-      data: "15/01/2025",
-      paziente: "Mario Rossi",
-      tipo: "Persona Fisica",
-      importo: 120,
-      stato: "Inviata TS",
-      metodoPagamento: "Bonifico",
-    },
-    {
-      id: 2,
-      numero: "2025/002",
-      data: "14/01/2025",
-      paziente: "Studio Medico Associato",
-      tipo: "Persona Giuridica",
-      importo: 350,
-      stato: "Inviata SDI",
-      metodoPagamento: "Bonifico",
-    },
-    {
-      id: 3,
-      numero: "2025/003",
-      data: "14/01/2025",
-      paziente: "Anna Bianchi",
-      tipo: "Persona Fisica",
-      importo: 150,
-      stato: "Da Inviare",
-      metodoPagamento: "Contanti",
-    },
-    {
-      id: 4,
-      numero: "2025/004",
-      data: "13/01/2025",
-      paziente: "Giuseppe Verdi",
-      tipo: "Persona Fisica",
-      importo: 200,
-      stato: "Da Inviare",
-      metodoPagamento: "POS",
-    },
-    {
-      id: 5,
-      numero: "2025/005",
-      data: "12/01/2025",
-      paziente: "Laura Neri",
-      tipo: "Persona Fisica",
-      importo: 80,
-      stato: "Pagata",
-      metodoPagamento: "Bonifico",
-    },
-  ];
+  const loadFatture = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("fatture")
+        .select(`
+          *,
+          pazienti (nome, cognome, ragione_sociale, tipo_paziente)
+        `)
+        .order("data", { ascending: false });
 
-  const filteredFatture = fatture.filter(f =>
-    f.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    f.paziente.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      if (error) throw error;
+      setFatture(data || []);
+    } catch (error) {
+      console.error("Error loading fatture:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile caricare le fatture",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFatture();
+  }, []);
+
+  const getPazienteDisplayName = (fattura: any) => {
+    if (!fattura.pazienti) return "N/A";
+    if (fattura.pazienti.tipo_paziente === "persona_fisica") {
+      return `${fattura.pazienti.nome} ${fattura.pazienti.cognome || ""}`.trim();
+    }
+    return fattura.pazienti.ragione_sociale || fattura.pazienti.nome;
+  };
+
+  const filteredFatture = fatture.filter(f => {
+    const searchLower = searchTerm.toLowerCase();
+    const pazienteNome = getPazienteDisplayName(f).toLowerCase();
+    return f.numero.toLowerCase().includes(searchLower) || pazienteNome.includes(searchLower);
+  });
 
   const getStatoBadge = (stato: string) => {
     switch (stato) {
@@ -105,10 +94,7 @@ const Fatture = () => {
             <Send className="h-4 w-4" />
             Invio Massivo TS
           </Button>
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nuova Fattura
-          </Button>
+          <NuovaFatturaDialog onFatturaAdded={loadFatture} />
         </div>
       </div>
 
@@ -186,22 +172,39 @@ const Fatture = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredFatture.map((fattura) => (
-                <TableRow key={fattura.id} className="hover:bg-muted/30">
-                  <TableCell className="font-mono font-medium">{fattura.numero}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{fattura.data}</TableCell>
-                  <TableCell className="font-medium">{fattura.paziente}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-xs">
-                      {fattura.tipo}
-                    </Badge>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
+                    Caricamento...
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {fattura.metodoPagamento}
+                </TableRow>
+              ) : filteredFatture.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
+                    Nessuna fattura trovata
                   </TableCell>
-                  <TableCell className="text-right font-semibold text-primary">
-                    €{fattura.importo}
-                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredFatture.map((fattura) => (
+                  <TableRow key={fattura.id} className="hover:bg-muted/30">
+                    <TableCell className="font-mono font-medium">{fattura.numero}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {new Date(fattura.data).toLocaleDateString('it-IT')}
+                    </TableCell>
+                    <TableCell className="font-medium">{getPazienteDisplayName(fattura)}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {fattura.pazienti?.tipo_paziente === "persona_fisica" 
+                          ? "Persona Fisica" 
+                          : "Persona Giuridica"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {fattura.metodo_pagamento}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold text-primary">
+                      €{Number(fattura.importo).toFixed(2)}
+                    </TableCell>
                   <TableCell>{getStatoBadge(fattura.stato)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -219,7 +222,8 @@ const Fatture = () => {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

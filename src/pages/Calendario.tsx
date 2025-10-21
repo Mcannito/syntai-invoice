@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { NuovoAppuntamentoDialog } from "@/components/Calendario/NuovoAppuntamentoDialog";
+import { NuovaFatturaDialog } from "@/components/Fatture/NuovaFatturaDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -157,6 +158,22 @@ const Calendario = () => {
                                     <span>{apt.ora_inizio} - {apt.ora_fine}</span>
                                   </div>
                                 </div>
+                                {apt.stato === "completato" && apt.paziente_id && (
+                                  <NuovaFatturaDialog
+                                    appuntamento={apt}
+                                    onFatturaAdded={() => {}}
+                                    trigger={
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-6 w-6"
+                                        title="Crea fattura"
+                                      >
+                                        <FileText className="h-3 w-3" />
+                                      </Button>
+                                    }
+                                  />
+                                )}
                               </div>
                             </div>
                           ))}
