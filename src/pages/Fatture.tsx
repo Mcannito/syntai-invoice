@@ -28,7 +28,8 @@ const Fatture = () => {
         .from("fatture")
         .select(`
           *,
-          pazienti (nome, cognome, ragione_sociale, tipo_paziente)
+          pazienti (nome, cognome, ragione_sociale, tipo_paziente),
+          fatture_dettagli (*)
         `)
         .order("data", { ascending: false });
 
@@ -105,7 +106,7 @@ const Fatture = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Totale Fatturato</p>
-                <p className="text-2xl font-bold">€{fatture.reduce((sum, f) => sum + f.importo, 0)}</p>
+                <p className="text-2xl font-bold">€{fatture.reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}</p>
               </div>
               <FileText className="h-8 w-8 text-primary" />
             </div>
@@ -203,7 +204,7 @@ const Fatture = () => {
                       {fattura.metodo_pagamento}
                     </TableCell>
                     <TableCell className="text-right font-semibold text-primary">
-                      €{Number(fattura.importo).toFixed(2)}
+                      €{Number(fattura.totale || fattura.importo).toFixed(2)}
                     </TableCell>
                   <TableCell>{getStatoBadge(fattura.stato)}</TableCell>
                   <TableCell className="text-right">

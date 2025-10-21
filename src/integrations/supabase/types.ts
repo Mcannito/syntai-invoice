@@ -76,43 +76,91 @@ export type Database = {
       }
       fatture: {
         Row: {
+          bollo_virtuale: number | null
+          cassa_previdenziale: number | null
+          contributo_integrativo: number | null
           created_at: string
           data: string
+          email_inviata: boolean | null
+          fattura_originale_id: string | null
           id: string
+          imponibile: number | null
           importo: number
+          iva_importo: number | null
           metodo_pagamento: string
           note: string | null
           numero: string
           paziente_id: string | null
+          pdf_path: string | null
+          ritenuta_acconto: number | null
+          scadenza_pagamento: string | null
+          sdi_id: string | null
+          sdi_stato: string | null
           stato: string
+          tipo_documento: string
+          totale: number | null
+          ts_inviata: boolean | null
           updated_at: string
           user_id: string
+          xml_path: string | null
         }
         Insert: {
+          bollo_virtuale?: number | null
+          cassa_previdenziale?: number | null
+          contributo_integrativo?: number | null
           created_at?: string
           data: string
+          email_inviata?: boolean | null
+          fattura_originale_id?: string | null
           id?: string
+          imponibile?: number | null
           importo: number
+          iva_importo?: number | null
           metodo_pagamento: string
           note?: string | null
           numero: string
           paziente_id?: string | null
+          pdf_path?: string | null
+          ritenuta_acconto?: number | null
+          scadenza_pagamento?: string | null
+          sdi_id?: string | null
+          sdi_stato?: string | null
           stato?: string
+          tipo_documento?: string
+          totale?: number | null
+          ts_inviata?: boolean | null
           updated_at?: string
           user_id: string
+          xml_path?: string | null
         }
         Update: {
+          bollo_virtuale?: number | null
+          cassa_previdenziale?: number | null
+          contributo_integrativo?: number | null
           created_at?: string
           data?: string
+          email_inviata?: boolean | null
+          fattura_originale_id?: string | null
           id?: string
+          imponibile?: number | null
           importo?: number
+          iva_importo?: number | null
           metodo_pagamento?: string
           note?: string | null
           numero?: string
           paziente_id?: string | null
+          pdf_path?: string | null
+          ritenuta_acconto?: number | null
+          scadenza_pagamento?: string | null
+          sdi_id?: string | null
+          sdi_stato?: string | null
           stato?: string
+          tipo_documento?: string
+          totale?: number | null
+          ts_inviata?: boolean | null
           updated_at?: string
           user_id?: string
+          xml_path?: string | null
         }
         Relationships: [
           {
@@ -120,6 +168,69 @@ export type Database = {
             columns: ["paziente_id"]
             isOneToOne: false
             referencedRelation: "pazienti"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fatture_dettagli: {
+        Row: {
+          created_at: string
+          descrizione: string
+          fattura_id: string
+          id: string
+          imponibile: number
+          iva_importo: number
+          iva_percentuale: number | null
+          prestazione_id: string | null
+          prezzo_unitario: number
+          quantita: number
+          sconto: number | null
+          totale: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descrizione: string
+          fattura_id: string
+          id?: string
+          imponibile: number
+          iva_importo: number
+          iva_percentuale?: number | null
+          prestazione_id?: string | null
+          prezzo_unitario: number
+          quantita?: number
+          sconto?: number | null
+          totale: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descrizione?: string
+          fattura_id?: string
+          id?: string
+          imponibile?: number
+          iva_importo?: number
+          iva_percentuale?: number | null
+          prestazione_id?: string | null
+          prezzo_unitario?: number
+          quantita?: number
+          sconto?: number | null
+          totale?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fatture_dettagli_fattura_id_fkey"
+            columns: ["fattura_id"]
+            isOneToOne: false
+            referencedRelation: "fatture"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fatture_dettagli_prestazione_id_fkey"
+            columns: ["prestazione_id"]
+            isOneToOne: false
+            referencedRelation: "prestazioni"
             referencedColumns: ["id"]
           },
         ]
@@ -215,6 +326,57 @@ export type Database = {
           iva?: string
           nome?: string
           prezzo?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      spese: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          data: string
+          descrizione: string | null
+          file_path: string | null
+          fornitore: string
+          id: string
+          importo: number
+          iva_importo: number | null
+          note: string | null
+          numero: string
+          totale: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          data: string
+          descrizione?: string | null
+          file_path?: string | null
+          fornitore: string
+          id?: string
+          importo: number
+          iva_importo?: number | null
+          note?: string | null
+          numero: string
+          totale: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          data?: string
+          descrizione?: string | null
+          file_path?: string | null
+          fornitore?: string
+          id?: string
+          importo?: number
+          iva_importo?: number | null
+          note?: string | null
+          numero?: string
+          totale?: number
           updated_at?: string
           user_id?: string
         }
