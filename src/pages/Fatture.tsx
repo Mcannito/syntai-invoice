@@ -1204,7 +1204,7 @@ const Fatture = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">
-                      Totale Documenti {format(new Date(), 'MMMM yyyy', { locale: it })}
+                      Spese {format(new Date(), 'MMMM yyyy', { locale: it })}
                     </p>
                     <p className="text-2xl font-bold">
                       €{fattureInEntrata
