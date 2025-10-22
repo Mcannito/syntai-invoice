@@ -449,6 +449,7 @@ export type Database = {
           regime_fiscale: string | null
           ritenuta_acconto: number | null
           sesso: string | null
+          specializzazione: string | null
           telefono: string | null
           tipo_persona: string | null
           updated_at: string
@@ -476,6 +477,7 @@ export type Database = {
           regime_fiscale?: string | null
           ritenuta_acconto?: number | null
           sesso?: string | null
+          specializzazione?: string | null
           telefono?: string | null
           tipo_persona?: string | null
           updated_at?: string
@@ -503,6 +505,7 @@ export type Database = {
           regime_fiscale?: string | null
           ritenuta_acconto?: number | null
           sesso?: string | null
+          specializzazione?: string | null
           telefono?: string | null
           tipo_persona?: string | null
           updated_at?: string

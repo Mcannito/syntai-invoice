@@ -19,6 +19,7 @@ const Impostazioni = () => {
   const [logo, setLogo] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [settings, setSettings] = useState<any>(null);
+  const [qualificaSelezionata, setQualificaSelezionata] = useState<string>("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,6 +41,7 @@ const Impostazioni = () => {
 
       if (data) {
         setSettings(data);
+        setQualificaSelezionata(data.qualifica || "");
         if (data.logo_path) {
           const { data: publicUrl } = supabase.storage
             .from("logos")
@@ -69,6 +71,7 @@ const Impostazioni = () => {
           nome: formData.get("nome") as string,
           cognome: formData.get("cognome") as string,
           qualifica: formData.get("qualifica") as string,
+          specializzazione: formData.get("specializzazione") as string,
           codice_fiscale: formData.get("codice_fiscale") as string,
           partita_iva: formData.get("partita_iva") as string,
           albo_nome: formData.get("albo_nome") as string,
@@ -324,7 +327,11 @@ const Impostazioni = () => {
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="qualifica">Qualifica *</Label>
-                  <Select name="qualifica" defaultValue={settings?.qualifica || ""}>
+                  <Select 
+                    name="qualifica" 
+                    defaultValue={settings?.qualifica || ""}
+                    onValueChange={(value) => setQualificaSelezionata(value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleziona qualifica" />
                     </SelectTrigger>
@@ -358,6 +365,69 @@ const Impostazioni = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                
+                {qualificaSelezionata === "Medico Chirurgo" && (
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="specializzazione">Specializzazione Medica</Label>
+                    <Select name="specializzazione" defaultValue={settings?.specializzazione || ""}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleziona specializzazione" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        <SelectItem value="Medicina interna">Medicina interna</SelectItem>
+                        <SelectItem value="Medicina d'emergenza-urgenza">Medicina d'emergenza-urgenza</SelectItem>
+                        <SelectItem value="Geriatria">Geriatria</SelectItem>
+                        <SelectItem value="Medicina dello sport e dell'esercizio fisico">Medicina dello sport e dell'esercizio fisico</SelectItem>
+                        <SelectItem value="Medicina termale">Medicina termale</SelectItem>
+                        <SelectItem value="Oncologia medica">Oncologia medica</SelectItem>
+                        <SelectItem value="Medicina di comunità e delle cure primarie">Medicina di comunità e delle cure primarie</SelectItem>
+                        <SelectItem value="Medicina e Cure Palliative">Medicina e Cure Palliative</SelectItem>
+                        <SelectItem value="Allergologia ed immunologia clinica">Allergologia ed immunologia clinica</SelectItem>
+                        <SelectItem value="Dermatologia e venereologia">Dermatologia e venereologia</SelectItem>
+                        <SelectItem value="Ematologia">Ematologia</SelectItem>
+                        <SelectItem value="Endocrinologia e malattie del metabolismo">Endocrinologia e malattie del metabolismo</SelectItem>
+                        <SelectItem value="Scienza dell'alimentazione">Scienza dell'alimentazione</SelectItem>
+                        <SelectItem value="Malattie dell'apparato digerente">Malattie dell'apparato digerente</SelectItem>
+                        <SelectItem value="Malattie dell'apparato cardiovascolare">Malattie dell'apparato cardiovascolare</SelectItem>
+                        <SelectItem value="Malattie dell'apparato respiratorio">Malattie dell'apparato respiratorio</SelectItem>
+                        <SelectItem value="Malattie infettive e tropicali">Malattie infettive e tropicali</SelectItem>
+                        <SelectItem value="Nefrologia">Nefrologia</SelectItem>
+                        <SelectItem value="Reumatologia">Reumatologia</SelectItem>
+                        <SelectItem value="Neurologia">Neurologia</SelectItem>
+                        <SelectItem value="Neuropsichiatria infantile">Neuropsichiatria infantile</SelectItem>
+                        <SelectItem value="Psichiatria">Psichiatria</SelectItem>
+                        <SelectItem value="Pediatria">Pediatria</SelectItem>
+                        <SelectItem value="Chirurgia generale">Chirurgia generale</SelectItem>
+                        <SelectItem value="Chirurgia pediatrica">Chirurgia pediatrica</SelectItem>
+                        <SelectItem value="Chirurgia plastica, ricostruttiva ed estetica">Chirurgia plastica, ricostruttiva ed estetica</SelectItem>
+                        <SelectItem value="Ginecologia ed ostetricia">Ginecologia ed ostetricia</SelectItem>
+                        <SelectItem value="Ortopedia e traumatologia">Ortopedia e traumatologia</SelectItem>
+                        <SelectItem value="Urologia">Urologia</SelectItem>
+                        <SelectItem value="Chirurgia maxillo-facciale">Chirurgia maxillo-facciale</SelectItem>
+                        <SelectItem value="Neurochirurgia">Neurochirurgia</SelectItem>
+                        <SelectItem value="Oftalmologia">Oftalmologia</SelectItem>
+                        <SelectItem value="Otorinolaringoiatria">Otorinolaringoiatria</SelectItem>
+                        <SelectItem value="Cardiochirurgia">Cardiochirurgia</SelectItem>
+                        <SelectItem value="Chirurgia toracica">Chirurgia toracica</SelectItem>
+                        <SelectItem value="Chirurgia vascolare">Chirurgia vascolare</SelectItem>
+                        <SelectItem value="Anatomia patologica">Anatomia patologica</SelectItem>
+                        <SelectItem value="Microbiologia e virologia">Microbiologia e virologia</SelectItem>
+                        <SelectItem value="Patologia clinica e biochimica clinica">Patologia clinica e biochimica clinica</SelectItem>
+                        <SelectItem value="Radiodiagnostica">Radiodiagnostica</SelectItem>
+                        <SelectItem value="Radioterapia">Radioterapia</SelectItem>
+                        <SelectItem value="Medicina nucleare">Medicina nucleare</SelectItem>
+                        <SelectItem value="Anestesia, rianimazione e terapia intensiva e del dolore">Anestesia, rianimazione e terapia intensiva e del dolore</SelectItem>
+                        <SelectItem value="Audiologia e foniatria">Audiologia e foniatria</SelectItem>
+                        <SelectItem value="Medicina fisica e riabilitativa">Medicina fisica e riabilitativa</SelectItem>
+                        <SelectItem value="Farmacologia e tossicologia clinica">Farmacologia e tossicologia clinica</SelectItem>
+                        <SelectItem value="Genetica medica">Genetica medica</SelectItem>
+                        <SelectItem value="Igiene e medicina preventiva">Igiene e medicina preventiva</SelectItem>
+                        <SelectItem value="Medicina legale">Medicina legale</SelectItem>
+                        <SelectItem value="Medicina del lavoro">Medicina del lavoro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </div>
 
