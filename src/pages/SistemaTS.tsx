@@ -19,6 +19,7 @@ const SistemaTS = () => {
     pincode: "",
     password: "",
     codiceFiscale: "",
+    codiceProprietario: "",
   });
 
   // Mock data per le fatture inviate al TS
@@ -229,6 +230,28 @@ const SistemaTS = () => {
                   value={credentials.codiceFiscale}
                   onChange={(e) => setCredentials({ ...credentials, codiceFiscale: e.target.value })}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="codiceProprietario">
+                  Codice Proprietario <span className="text-muted-foreground text-xs">(opzionale)</span>
+                </Label>
+                <Input
+                  id="codiceProprietario"
+                  placeholder="XXX-YYY-ZZZZZZ"
+                  value={credentials.codiceProprietario}
+                  onChange={(e) => {
+                    const value = e.target.value.toUpperCase();
+                    // Permette solo caratteri alfanumerici e trattini
+                    if (value === "" || /^[A-Z0-9-]*$/.test(value)) {
+                      setCredentials({ ...credentials, codiceProprietario: value });
+                    }
+                  }}
+                  maxLength={14}
+                />
+                {credentials.codiceProprietario && !/^[A-Z0-9]{3}-[A-Z0-9]{3}-[A-Z0-9]{6}$/.test(credentials.codiceProprietario) && (
+                  <p className="text-xs text-destructive">Formato richiesto: XXX-YYY-ZZZZZZ</p>
+                )}
               </div>
             </div>
 
