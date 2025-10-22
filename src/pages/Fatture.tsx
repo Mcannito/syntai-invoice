@@ -69,6 +69,7 @@ const Fatture = () => {
   const [filtroStato, setFiltroStato] = useState<string>("tutti");
   const [filtroPaziente, setFiltroPaziente] = useState<string>("tutti");
   const [impostazioniDialogOpen, setImpostazioniDialogOpen] = useState(false);
+  const [rivalsaAttiva, setRivalsaAttiva] = useState(true);
   const { toast } = useToast();
 
   const loadFatture = async () => {
@@ -1036,48 +1037,51 @@ const Fatture = () => {
                         type="checkbox" 
                         id="rivalsa-attiva" 
                         className="h-4 w-4 rounded border-gray-300"
-                        defaultChecked
+                        checked={rivalsaAttiva}
+                        onChange={(e) => setRivalsaAttiva(e.target.checked)}
                       />
                     </div>
                   </div>
                   
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="aliquota-rivalsa">Percentuale Rivalsa (%)</Label>
-                      <Input id="aliquota-rivalsa" type="number" placeholder="4" defaultValue="4" step="0.01" />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Applicazione</Label>
+                  {rivalsaAttiva && (
+                    <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <input 
-                            type="radio" 
-                            id="rivalsa-separata" 
-                            name="rivalsa-applicazione" 
-                            value="separata"
-                            defaultChecked
-                            className="h-4 w-4"
-                          />
-                          <Label htmlFor="rivalsa-separata" className="font-normal cursor-pointer">
-                            Separata dal prezzo prestazione
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input 
-                            type="radio" 
-                            id="rivalsa-inclusa" 
-                            name="rivalsa-applicazione" 
-                            value="inclusa"
-                            className="h-4 w-4"
-                          />
-                          <Label htmlFor="rivalsa-inclusa" className="font-normal cursor-pointer">
-                            Inclusa nel prezzo prestazione
-                          </Label>
+                        <Label htmlFor="aliquota-rivalsa">Percentuale Rivalsa (%)</Label>
+                        <Input id="aliquota-rivalsa" type="number" placeholder="4" defaultValue="4" step="0.01" />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Applicazione</Label>
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <input 
+                              type="radio" 
+                              id="rivalsa-separata" 
+                              name="rivalsa-applicazione" 
+                              value="separata"
+                              defaultChecked
+                              className="h-4 w-4"
+                            />
+                            <Label htmlFor="rivalsa-separata" className="font-normal cursor-pointer">
+                              Separata dal prezzo prestazione
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input 
+                              type="radio" 
+                              id="rivalsa-inclusa" 
+                              name="rivalsa-applicazione" 
+                              value="inclusa"
+                              className="h-4 w-4"
+                            />
+                            <Label htmlFor="rivalsa-inclusa" className="font-normal cursor-pointer">
+                              Inclusa nel prezzo prestazione
+                            </Label>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
                 
                 <div className="grid gap-6 md:grid-cols-2">
