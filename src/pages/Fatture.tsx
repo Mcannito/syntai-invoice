@@ -3,7 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon } from "lucide-react";
+import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { NuovaFatturaDialog } from "@/components/Fatture/NuovaFatturaDialog";
@@ -52,6 +59,8 @@ const Fatture = () => {
   const [viewMode, setViewMode] = useState<"list" | "grouped">("grouped");
   const [prestazioniPerFattura, setPrestazioniPerFattura] = useState<any[]>([]);
   const [showNuovaFatturaDialog, setShowNuovaFatturaDialog] = useState(false);
+  const [filtroStato, setFiltroStato] = useState<string>("tutti");
+  const [filtroPaziente, setFiltroPaziente] = useState<string>("tutti");
   const { toast } = useToast();
 
   const loadFatture = async () => {
@@ -91,10 +100,10 @@ const Fatture = () => {
           note,
           paziente_id,
           prestazione_id,
+          stato,
           pazienti (id, nome, cognome, ragione_sociale, tipo_paziente),
           prestazioni (id, nome, prezzo, iva)
         `)
-        .eq("stato", "completato")
         .eq("fatturato", false)
         .order("data", { ascending: false });
 
@@ -332,10 +341,44 @@ const Fatture = () => {
     setShowNuovaFatturaDialog(true);
   };
 
+  const getStatoAppuntamentoBadge = (stato: string) => {
+    switch (stato) {
+      case "completato":
+        return <Badge className="bg-green-500 text-white">Completato</Badge>;
+      case "programmato":
+        return <Badge className="bg-blue-500 text-white">Programmato</Badge>;
+      case "annullato":
+        return <Badge variant="outline" className="border-muted text-muted-foreground">Annullato</Badge>;
+      case "in_corso":
+        return <Badge className="bg-yellow-500 text-white">In corso</Badge>;
+      default:
+        return <Badge variant="outline">{stato}</Badge>;
+    }
+  };
+
+  const getFilteredPrestazioni = () => {
+    return prestazioniDaFatturare.filter(prestazione => {
+      const matchStato = filtroStato === "tutti" || prestazione.stato === filtroStato;
+      const matchPaziente = filtroPaziente === "tutti" || prestazione.paziente_id === filtroPaziente;
+      return matchStato && matchPaziente;
+    });
+  };
+
+  const getPazientiUnici = () => {
+    const pazientiMap = new Map();
+    prestazioniDaFatturare.forEach(prestazione => {
+      if (prestazione.pazienti && !pazientiMap.has(prestazione.paziente_id)) {
+        pazientiMap.set(prestazione.paziente_id, prestazione.pazienti);
+      }
+    });
+    return Array.from(pazientiMap.entries());
+  };
+
   const getPrestazioniGroupedByPaziente = () => {
+    const filtered = getFilteredPrestazioni();
     const grouped = new Map<string, any[]>();
     
-    prestazioniDaFatturare.forEach(prestazione => {
+    filtered.forEach(prestazione => {
       const pazienteId = prestazione.paziente_id;
       if (!grouped.has(pazienteId)) {
         grouped.set(pazienteId, []);
@@ -344,6 +387,11 @@ const Fatture = () => {
     });
     
     return Array.from(grouped.entries());
+  };
+
+  const resetFiltri = () => {
+    setFiltroStato("tutti");
+    setFiltroPaziente("tutti");
   };
 
   const openPaymentDialog = (fattura: any) => {
@@ -412,23 +460,80 @@ const Fatture = () => {
         <TabsContent value="da-fatturare" className="space-y-4">
           <Card className="shadow-medical-sm">
             <CardHeader className="border-b bg-muted/50">
-              <div className="flex items-center justify-between gap-4">
-                <CardTitle>Prestazioni da Fatturare</CardTitle>
-                <div className="flex gap-2">
-                  <Button
-                    variant={viewMode === "list" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode("list")}
-                  >
-                    Elenco
-                  </Button>
-                  <Button
-                    variant={viewMode === "grouped" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode("grouped")}
-                  >
-                    Per Paziente
-                  </Button>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle>Prestazioni da Fatturare</CardTitle>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={viewMode === "list" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setViewMode("list")}
+                    >
+                      Elenco
+                    </Button>
+                    <Button
+                      variant={viewMode === "grouped" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setViewMode("grouped")}
+                    >
+                      Per Paziente
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Filtri */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium whitespace-nowrap">Stato:</Label>
+                    <Select value={filtroStato} onValueChange={setFiltroStato}>
+                      <SelectTrigger className="w-[160px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="tutti">Tutti gli stati</SelectItem>
+                        <SelectItem value="programmato">Programmato</SelectItem>
+                        <SelectItem value="completato">Completato</SelectItem>
+                        <SelectItem value="in_corso">In corso</SelectItem>
+                        <SelectItem value="annullato">Annullato</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium whitespace-nowrap">Paziente:</Label>
+                    <Select value={filtroPaziente} onValueChange={setFiltroPaziente}>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="tutti">Tutti i pazienti</SelectItem>
+                        {getPazientiUnici().map(([id, paziente]) => (
+                          <SelectItem key={id} value={id}>
+                            {paziente.tipo_paziente === "persona_fisica"
+                              ? `${paziente.nome} ${paziente.cognome || ""}`
+                              : paziente.ragione_sociale || paziente.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {(filtroStato !== "tutti" || filtroPaziente !== "tutti") && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={resetFiltri}
+                      className="gap-2"
+                    >
+                      <X className="h-4 w-4" />
+                      Resetta filtri
+                    </Button>
+                  )}
+                  
+                  <div className="ml-auto text-sm text-muted-foreground">
+                    {getFilteredPrestazioni().length} prestazioni • 
+                    Totale: €{getFilteredPrestazioni().reduce((sum, p) => sum + Number(p.prestazioni?.prezzo || 0), 0).toFixed(2)}
+                  </div>
                 </div>
               </div>
             </CardHeader>
@@ -462,14 +567,18 @@ const Fatture = () => {
 
               {viewMode === "list" ? (
                 <div className="space-y-2">
-                  {prestazioniDaFatturare.length === 0 ? (
+                  {getFilteredPrestazioni().length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground">
                       <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p className="text-lg font-medium mb-2">Nessuna prestazione da fatturare</p>
-                      <p className="text-sm">Tutte le prestazioni sono state fatturate</p>
+                      <p className="text-sm">
+                        {prestazioniDaFatturare.length === 0 
+                          ? "Tutte le prestazioni sono state fatturate"
+                          : "Nessuna prestazione corrisponde ai filtri selezionati"}
+                      </p>
                     </div>
                   ) : (
-                    prestazioniDaFatturare.map((prestazione) => (
+                    getFilteredPrestazioni().map((prestazione) => (
                       <div
                         key={prestazione.id}
                         className={cn(
@@ -484,7 +593,7 @@ const Fatture = () => {
                           onChange={() => {}}
                           className="h-4 w-4"
                         />
-                        <div className="flex-1 grid grid-cols-4 gap-4">
+                        <div className="flex-1 grid grid-cols-5 gap-4 items-center">
                           <div>
                             <p className="text-sm text-muted-foreground">Data</p>
                             <p className="font-medium">
@@ -502,6 +611,10 @@ const Fatture = () => {
                           <div>
                             <p className="text-sm text-muted-foreground">Prestazione</p>
                             <p className="font-medium">{prestazione.prestazioni?.nome || "N/A"}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Stato</p>
+                            {getStatoAppuntamentoBadge(prestazione.stato)}
                           </div>
                           <div className="text-right">
                             <p className="text-sm text-muted-foreground">Importo</p>
@@ -573,7 +686,7 @@ const Fatture = () => {
                                     onChange={() => {}}
                                     className="h-4 w-4"
                                   />
-                                  <div className="flex-1 grid grid-cols-3 gap-4">
+                                  <div className="flex-1 grid grid-cols-4 gap-4 items-center">
                                     <div>
                                       <p className="text-sm text-muted-foreground">Data</p>
                                       <p className="font-medium">
@@ -583,6 +696,10 @@ const Fatture = () => {
                                     <div>
                                       <p className="text-sm text-muted-foreground">Prestazione</p>
                                       <p className="font-medium">{prestazione.prestazioni?.nome || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm text-muted-foreground">Stato</p>
+                                      {getStatoAppuntamentoBadge(prestazione.stato)}
                                     </div>
                                     <div className="text-right">
                                       <p className="text-sm text-muted-foreground">Importo</p>
