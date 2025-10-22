@@ -215,8 +215,8 @@ const Impostazioni = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6 p-6">
-          <form onSubmit={handleSaveSettings}>
+        <CardContent className="space-y-8 p-6">
+          <form onSubmit={handleSaveSettings} className="space-y-8">
             {/* Logo */}
             <div className="space-y-4">
               <div>
@@ -276,10 +276,10 @@ const Impostazioni = () => {
               </div>
             </div>
 
-            <Separator />
+            <Separator className="my-8" />
 
             {/* Dati Anagrafici */}
-            <div className="space-y-4">
+            <div className="space-y-6">
               <h3 className="text-lg font-semibold">Dati Anagrafici</h3>
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
@@ -322,7 +322,7 @@ const Impostazioni = () => {
                     defaultValue={settings?.cognome || ""} 
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="qualifica">Qualifica *</Label>
                   <Select name="qualifica" defaultValue={settings?.qualifica || ""}>
                     <SelectTrigger>
@@ -361,10 +361,10 @@ const Impostazioni = () => {
               </div>
             </div>
 
-            <Separator />
+            <Separator className="my-8" />
 
             {/* Dati Fiscali */}
-            <div className="space-y-4">
+            <div className="space-y-6">
               <h3 className="text-lg font-semibold">Dati Fiscali</h3>
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
@@ -386,10 +386,10 @@ const Impostazioni = () => {
               </div>
             </div>
 
-            <Separator />
+            <Separator className="my-8" />
 
             {/* Iscrizione Albo */}
-            <div className="space-y-4">
+            <div className="space-y-6">
               <h3 className="text-lg font-semibold">Iscrizione Albo</h3>
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
@@ -411,10 +411,10 @@ const Impostazioni = () => {
               </div>
             </div>
 
-            <Separator />
+            <Separator className="my-8" />
 
             {/* Contatti e Sede */}
-            <div className="space-y-4">
+            <div className="space-y-6">
               <h3 className="text-lg font-semibold">Contatti e Sede</h3>
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
@@ -463,7 +463,7 @@ const Impostazioni = () => {
             </div>
 
             {/* Azioni */}
-            <div className="flex justify-end gap-4 pt-6">
+            <div className="flex justify-end gap-4 pt-8 border-t">
               <Button type="button" variant="outline">Annulla</Button>
               <Button type="submit">Salva Modifiche</Button>
             </div>
