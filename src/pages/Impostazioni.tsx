@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { User, Upload, Trash2 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -226,17 +225,8 @@ const Impostazioni = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="anagrafica" className="w-full">
-        <TabsList>
-          <TabsTrigger value="anagrafica">
-            <User className="h-4 w-4 mr-2" />
-            Anagrafica
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="anagrafica" className="space-y-6">
-          {/* Anagrafica Professionista */}
-          <Card className="shadow-medical-sm">
+      {/* Anagrafica Professionista */}
+      <Card className="shadow-medical-sm">
         <CardHeader className="border-b bg-muted/50">
           <div className="flex items-center gap-2">
             <User className="h-5 w-5 text-primary" />
@@ -603,8 +593,6 @@ const Impostazioni = () => {
           </form>
         </CardContent>
       </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };
