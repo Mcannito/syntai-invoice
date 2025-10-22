@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { NuovaFatturaDialog } from "@/components/Fatture/NuovaFatturaDialog";
 import { InserisciFatturaInEntrataDialog } from "@/components/Fatture/InserisciFatturaInEntrataDialog";
+import { CaricaFatturaXMLDialog } from "@/components/Fatture/CaricaFatturaXMLDialog";
 import {
   Table,
   TableBody,
@@ -95,6 +96,7 @@ const Fatture = () => {
   const [altroMetodo, setAltroMetodo] = useState('');
   const [fattureInEntrata, setFattureInEntrata] = useState<any[]>([]);
   const [inserisciFatturaInEntrataOpen, setInserisciFatturaInEntrataOpen] = useState(false);
+  const [caricaXMLDialogOpen, setCaricaXMLDialogOpen] = useState(false);
   
   const { toast } = useToast();
 
@@ -1065,7 +1067,11 @@ const Fatture = () => {
             <CardHeader className="border-b bg-muted/50">
               <div className="flex items-center justify-between gap-4">
                 <CardTitle>Documenti Ricevuti</CardTitle>
-                <Button variant="outline" className="gap-2">
+                <Button 
+                  variant="outline" 
+                  className="gap-2"
+                  onClick={() => setCaricaXMLDialogOpen(true)}
+                >
                   <Upload className="h-4 w-4" />
                   Carica Fattura
                 </Button>
@@ -1681,6 +1687,14 @@ const Fatture = () => {
       <InserisciFatturaInEntrataDialog
         open={inserisciFatturaInEntrataOpen}
         onOpenChange={setInserisciFatturaInEntrataOpen}
+        onSuccess={() => {
+          loadFattureInEntrata();
+        }}
+      />
+
+      <CaricaFatturaXMLDialog
+        open={caricaXMLDialogOpen}
+        onOpenChange={setCaricaXMLDialogOpen}
         onSuccess={() => {
           loadFattureInEntrata();
         }}
