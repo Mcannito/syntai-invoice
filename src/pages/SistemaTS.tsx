@@ -3,11 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Send, CheckCircle, Clock, XCircle, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Send, CheckCircle, Clock, XCircle, AlertCircle, ChevronDown, ChevronUp, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -28,6 +29,7 @@ const SistemaTS = () => {
   const [fattureTS, setFattureTS] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCredentials, setShowCredentials] = useState(false);
+  const [filtroStatoTS, setFiltroStatoTS] = useState<string | null>(null);
 
   const credentialsComplete = credentials.pincode && credentials.password && credentials.codiceFiscale;
 
@@ -126,14 +128,45 @@ const SistemaTS = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+      <div className="grid gap-4 md:grid-cols-5">
+        <Card 
+          className={cn(
+            "cursor-pointer transition-all hover:shadow-md border-primary/20 bg-primary-light",
+            filtroStatoTS === null && "ring-2 ring-primary"
+          )}
+          onClick={() => setFiltroStatoTS(null)}
+        >
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Tutte le Fatture</p>
+                <p className="text-2xl font-bold">
+                  {fattureTS.length}
+                </p>
+              </div>
+              <FileText className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className={cn(
+            "cursor-pointer transition-all hover:shadow-md",
+            filtroStatoTS === 'da_inviare' && "ring-2 ring-primary"
+          )}
+          onClick={() => setFiltroStatoTS(filtroStatoTS === 'da_inviare' ? null : 'da_inviare')}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Da Inviare</p>
                 <p className="text-2xl font-bold text-warning">
-                  {fattureTS.filter(f => f.stato === "da_inviare").length}
+                  {fattureTS.filter(f => {
+                    const statoTS = f.ts_inviata 
+                      ? (f.acube_status === 'accepted' ? 'accettata' : 'inviata')
+                      : 'da_inviare';
+                    return statoTS === 'da_inviare';
+                  }).length}
                 </p>
               </div>
               <Clock className="h-8 w-8 text-warning" />
@@ -141,13 +174,24 @@ const SistemaTS = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className={cn(
+            "cursor-pointer transition-all hover:shadow-md",
+            filtroStatoTS === 'inviata' && "ring-2 ring-primary"
+          )}
+          onClick={() => setFiltroStatoTS(filtroStatoTS === 'inviata' ? null : 'inviata')}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Inviate</p>
                 <p className="text-2xl font-bold text-blue-500">
-                  {fattureTS.filter(f => f.stato === "inviata").length}
+                  {fattureTS.filter(f => {
+                    const statoTS = f.ts_inviata 
+                      ? (f.acube_status === 'accepted' ? 'accettata' : 'inviata')
+                      : 'da_inviare';
+                    return statoTS === 'inviata';
+                  }).length}
                 </p>
               </div>
               <Send className="h-8 w-8 text-blue-500" />
@@ -155,13 +199,24 @@ const SistemaTS = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className={cn(
+            "cursor-pointer transition-all hover:shadow-md",
+            filtroStatoTS === 'accettata' && "ring-2 ring-primary"
+          )}
+          onClick={() => setFiltroStatoTS(filtroStatoTS === 'accettata' ? null : 'accettata')}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Accettate</p>
                 <p className="text-2xl font-bold text-secondary">
-                  {fattureTS.filter(f => f.stato === "accettata").length}
+                  {fattureTS.filter(f => {
+                    const statoTS = f.ts_inviata 
+                      ? (f.acube_status === 'accepted' ? 'accettata' : 'inviata')
+                      : 'da_inviare';
+                    return statoTS === 'accettata';
+                  }).length}
                 </p>
               </div>
               <CheckCircle className="h-8 w-8 text-secondary" />
@@ -169,13 +224,19 @@ const SistemaTS = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className={cn(
+            "cursor-pointer transition-all hover:shadow-md",
+            filtroStatoTS === 'errore' && "ring-2 ring-primary"
+          )}
+          onClick={() => setFiltroStatoTS(filtroStatoTS === 'errore' ? null : 'errore')}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Errori</p>
                 <p className="text-2xl font-bold text-destructive">
-                  {fattureTS.filter(f => f.stato === "errore").length}
+                  {fattureTS.filter(f => f.acube_error).length}
                 </p>
               </div>
               <XCircle className="h-8 w-8 text-destructive" />
@@ -348,7 +409,16 @@ const SistemaTS = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {fattureTS.map((fattura) => {
+                {fattureTS
+                  .filter(f => {
+                    if (!filtroStatoTS) return true;
+                    const statoTS = f.ts_inviata 
+                      ? (f.acube_status === 'accepted' ? 'accettata' : 'inviata')
+                      : 'da_inviare';
+                    if (filtroStatoTS === 'errore') return f.acube_error;
+                    return statoTS === filtroStatoTS;
+                  })
+                  .map((fattura) => {
                   const statoTS = fattura.ts_inviata 
                     ? (fattura.acube_status === 'accepted' ? 'accettata' : 'inviata')
                     : 'da_inviare';
