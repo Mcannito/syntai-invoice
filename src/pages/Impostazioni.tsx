@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Settings, User, FileText, CreditCard } from "lucide-react";
+import { Settings, User } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -67,93 +67,6 @@ const Impostazioni = () => {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="studio@email.it" defaultValue="studio@email.it" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Impostazioni Fiscali */}
-      <Card className="shadow-medical-sm">
-        <CardHeader className="border-b bg-muted/50">
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            <div>
-              <CardTitle>Impostazioni Fiscali</CardTitle>
-              <CardDescription>Regime fiscale e cassa previdenziale</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6 p-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="regime">Regime Fiscale *</Label>
-              <Select defaultValue="forfettario">
-                <SelectTrigger id="regime">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="forfettario">Regime Forfettario</SelectItem>
-                  <SelectItem value="ordinario">Regime Ordinario</SelectItem>
-                  <SelectItem value="semplificato">Regime Semplificato</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cassa">Cassa Previdenziale *</Label>
-              <Select defaultValue="enpam">
-                <SelectTrigger id="cassa">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="enpam">ENPAM</SelectItem>
-                  <SelectItem value="enpapi">ENPAPI</SelectItem>
-                  <SelectItem value="inps">INPS</SelectItem>
-                  <SelectItem value="cassa-forense">Cassa Forense</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="aliquota-cassa">Aliquota Cassa (%)</Label>
-              <Input id="aliquota-cassa" type="number" placeholder="4" defaultValue="4" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ritenuta">Ritenuta d'Acconto (%)</Label>
-              <Input id="ritenuta" type="number" placeholder="20" defaultValue="20" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Metodi di Pagamento */}
-      <Card className="shadow-medical-sm">
-        <CardHeader className="border-b bg-muted/50">
-          <div className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-primary" />
-            <div>
-              <CardTitle>Metodi di Pagamento</CardTitle>
-              <CardDescription>Configura i metodi di pagamento predefiniti</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6 p-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="metodo-default">Metodo Predefinito</Label>
-              <Select defaultValue="bonifico">
-                <SelectTrigger id="metodo-default">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bonifico">Bonifico Bancario</SelectItem>
-                  <SelectItem value="contanti">Contanti</SelectItem>
-                  <SelectItem value="pos">POS/Carta</SelectItem>
-                  <SelectItem value="assegno">Assegno</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="iban">IBAN</Label>
-              <Input id="iban" placeholder="IT00X0000000000000000000000" />
             </div>
           </div>
         </CardContent>
