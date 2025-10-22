@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Settings, User, FileText, CreditCard, Key } from "lucide-react";
+import { Settings, User, FileText, CreditCard } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -154,35 +154,6 @@ const Impostazioni = () => {
             <div className="space-y-2">
               <Label htmlFor="iban">IBAN</Label>
               <Input id="iban" placeholder="IT00X0000000000000000000000" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Credenziali Sistema Tessera Sanitaria */}
-      <Card className="shadow-medical-sm">
-        <CardHeader className="border-b bg-muted/50">
-          <div className="flex items-center gap-2">
-            <Key className="h-5 w-5 text-primary" />
-            <div>
-              <CardTitle>Sistema Tessera Sanitaria</CardTitle>
-              <CardDescription>Credenziali per l'invio automatico al TS</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6 p-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="ts-username">Username TS</Label>
-              <Input id="ts-username" placeholder="Il tuo username" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ts-password">Password TS</Label>
-              <Input id="ts-password" type="password" placeholder="••••••••" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ts-pincode">PINCODE</Label>
-              <Input id="ts-pincode" placeholder="Il tuo PIN" />
             </div>
           </div>
         </CardContent>
