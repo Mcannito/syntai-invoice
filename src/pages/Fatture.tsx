@@ -47,6 +47,9 @@ const Fatture = () => {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [fatturaToMarkPaid, setFatturaToMarkPaid] = useState<any>(null);
   const [paymentDate, setPaymentDate] = useState<Date | undefined>(new Date());
+  const [prestazioniDaFatturare, setPrestazioniDaFatturare] = useState<any[]>([]);
+  const [selectedPrestazioni, setSelectedPrestazioni] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<"list" | "grouped">("grouped");
   const { toast } = useToast();
 
   const loadFatture = async () => {
@@ -74,8 +77,59 @@ const Fatture = () => {
     }
   };
 
+  const loadPrestazioniDaFatturare = async () => {
+    try {
+      // Carica appuntamenti completati non ancora fatturati
+      const { data, error } = await supabase
+        .from("appuntamenti")
+        .select(`
+          id,
+          data,
+          ora_inizio,
+          ora_fine,
+          note,
+          paziente_id,
+          prestazione_id,
+          pazienti (id, nome, cognome, ragione_sociale, tipo_paziente),
+          prestazioni (id, nome, prezzo, iva)
+        `)
+        .eq("stato", "completato")
+        .is("fatturato", null)
+        .order("data", { ascending: false });
+
+      if (error) throw error;
+      setPrestazioniDaFatturare(data || []);
+    } catch (error) {
+      console.error("Error loading prestazioni:", error);
+      // Fallback: se non esiste il campo fatturato, mostra tutti gli appuntamenti completati
+      try {
+        const { data, error } = await supabase
+          .from("appuntamenti")
+          .select(`
+            id,
+            data,
+            ora_inizio,
+            ora_fine,
+            note,
+            paziente_id,
+            prestazione_id,
+            pazienti (id, nome, cognome, ragione_sociale, tipo_paziente),
+            prestazioni (id, nome, prezzo, iva)
+          `)
+          .eq("stato", "completato")
+          .order("data", { ascending: false });
+
+        if (error) throw error;
+        setPrestazioniDaFatturare(data || []);
+      } catch (fallbackError) {
+        console.error("Fallback error:", fallbackError);
+      }
+    }
+  };
+
   useEffect(() => {
     loadFatture();
+    loadPrestazioniDaFatturare();
   }, []);
 
   const getPazienteDisplayName = (fattura: any) => {
@@ -217,9 +271,94 @@ const Fatture = () => {
       toast({
         title: "Errore",
         description: error.message || "Impossibile convertire il documento",
-        variant: "destructive",
+      variant: "destructive",
       });
     }
+  };
+
+  const handleTogglePrestazione = (id: string, pazienteId: string) => {
+    const newSelected = new Set(selectedPrestazioni);
+    
+    // Se stiamo aggiungendo e ci sono già prestazioni selezionate
+    if (!newSelected.has(id) && newSelected.size > 0) {
+      // Verifica che sia dello stesso paziente
+      const firstSelected = prestazioniDaFatturare.find(p => newSelected.has(p.id));
+      if (firstSelected && firstSelected.paziente_id !== pazienteId) {
+        toast({
+          title: "Attenzione",
+          description: "Non puoi selezionare prestazioni di pazienti diversi",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedPrestazioni(newSelected);
+  };
+
+  const handleToggleAllPaziente = (pazienteId: string) => {
+    const prestazioniPaziente = prestazioniDaFatturare.filter(p => p.paziente_id === pazienteId);
+    const allSelected = prestazioniPaziente.every(p => selectedPrestazioni.has(p.id));
+    
+    const newSelected = new Set(selectedPrestazioni);
+    
+    if (allSelected) {
+      // Deseleziona tutte
+      prestazioniPaziente.forEach(p => newSelected.delete(p.id));
+    } else {
+      // Seleziona tutte (ma prima controlla che non ci siano già altre selezioni)
+      if (newSelected.size > 0) {
+        const firstSelected = prestazioniDaFatturare.find(p => newSelected.has(p.id));
+        if (firstSelected && firstSelected.paziente_id !== pazienteId) {
+          toast({
+            title: "Attenzione",
+            description: "Devi prima deselezionare le prestazioni dell'altro paziente",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      prestazioniPaziente.forEach(p => newSelected.add(p.id));
+    }
+    
+    setSelectedPrestazioni(newSelected);
+  };
+
+  const handleCreaFatturaDaPrestazioni = () => {
+    if (selectedPrestazioni.size === 0) {
+      toast({
+        title: "Attenzione",
+        description: "Seleziona almeno una prestazione",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Qui apriremo il dialog di creazione fattura con le prestazioni pre-compilate
+    // Per ora mostriamo solo un toast
+    toast({
+      title: "Funzionalità in sviluppo",
+      description: `Stai per creare una fattura con ${selectedPrestazioni.size} prestazioni`,
+    });
+  };
+
+  const getPrestazioniGroupedByPaziente = () => {
+    const grouped = new Map<string, any[]>();
+    
+    prestazioniDaFatturare.forEach(prestazione => {
+      const pazienteId = prestazione.paziente_id;
+      if (!grouped.has(pazienteId)) {
+        grouped.set(pazienteId, []);
+      }
+      grouped.get(pazienteId)!.push(prestazione);
+    });
+    
+    return Array.from(grouped.entries());
   };
 
   const openPaymentDialog = (fattura: any) => {
@@ -273,11 +412,208 @@ const Fatture = () => {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="uscita" className="space-y-4">
+      <Tabs defaultValue="da-fatturare" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="da-fatturare">Prestazioni da Fatturare</TabsTrigger>
           <TabsTrigger value="uscita">Documenti in Uscita</TabsTrigger>
           <TabsTrigger value="entrata">Documenti in Entrata</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="da-fatturare" className="space-y-4">
+          <Card className="shadow-medical-sm">
+            <CardHeader className="border-b bg-muted/50">
+              <div className="flex items-center justify-between gap-4">
+                <CardTitle>Prestazioni da Fatturare</CardTitle>
+                <div className="flex gap-2">
+                  <Button
+                    variant={viewMode === "list" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("list")}
+                  >
+                    Elenco
+                  </Button>
+                  <Button
+                    variant={viewMode === "grouped" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("grouped")}
+                  >
+                    Per Paziente
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              {selectedPrestazioni.size > 0 && (
+                <div className="mb-4 p-4 bg-primary/10 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                    <span className="font-medium">
+                      {selectedPrestazioni.size} prestazioni selezionate
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedPrestazioni(new Set())}
+                    >
+                      Deseleziona tutto
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleCreaFatturaDaPrestazioni}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Crea Fattura
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {viewMode === "list" ? (
+                <div className="space-y-2">
+                  {prestazioniDaFatturare.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p className="text-lg font-medium mb-2">Nessuna prestazione da fatturare</p>
+                      <p className="text-sm">Tutte le prestazioni sono state fatturate</p>
+                    </div>
+                  ) : (
+                    prestazioniDaFatturare.map((prestazione) => (
+                      <div
+                        key={prestazione.id}
+                        className={cn(
+                          "flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/30 cursor-pointer transition-colors",
+                          selectedPrestazioni.has(prestazione.id) && "bg-primary/5 border-primary"
+                        )}
+                        onClick={() => handleTogglePrestazione(prestazione.id, prestazione.paziente_id)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedPrestazioni.has(prestazione.id)}
+                          onChange={() => {}}
+                          className="h-4 w-4"
+                        />
+                        <div className="flex-1 grid grid-cols-4 gap-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Data</p>
+                            <p className="font-medium">
+                              {new Date(prestazione.data).toLocaleDateString('it-IT')}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Paziente</p>
+                            <p className="font-medium">
+                              {prestazione.pazienti?.tipo_paziente === "persona_fisica"
+                                ? `${prestazione.pazienti.nome} ${prestazione.pazienti.cognome || ""}`
+                                : prestazione.pazienti?.ragione_sociale || "N/A"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Prestazione</p>
+                            <p className="font-medium">{prestazione.prestazioni?.nome || "N/A"}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-muted-foreground">Importo</p>
+                            <p className="font-semibold text-primary">
+                              €{Number(prestazione.prestazioni?.prezzo || 0).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {getPrestazioniGroupedByPaziente().length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p className="text-lg font-medium mb-2">Nessuna prestazione da fatturare</p>
+                      <p className="text-sm">Tutte le prestazioni sono state fatturate</p>
+                    </div>
+                  ) : (
+                    getPrestazioniGroupedByPaziente().map(([pazienteId, prestazioni]) => {
+                      const paziente = prestazioni[0].pazienti;
+                      const totale = prestazioni.reduce((sum, p) => sum + Number(p.prestazioni?.prezzo || 0), 0);
+                      const allSelected = prestazioni.every(p => selectedPrestazioni.has(p.id));
+                      
+                      return (
+                        <Card key={pazienteId} className={cn(
+                          "border-2",
+                          allSelected && "border-primary"
+                        )}>
+                          <CardHeader className="cursor-pointer" onClick={() => handleToggleAllPaziente(pazienteId)}>
+                            <div className="flex items-center gap-4">
+                              <input
+                                type="checkbox"
+                                checked={allSelected}
+                                onChange={() => {}}
+                                className="h-5 w-5"
+                              />
+                              <div className="flex-1">
+                                <CardTitle className="text-lg">
+                                  {paziente?.tipo_paziente === "persona_fisica"
+                                    ? `${paziente.nome} ${paziente.cognome || ""}`
+                                    : paziente?.ragione_sociale || "N/A"}
+                                </CardTitle>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {prestazioni.length} prestazioni • Totale: €{totale.toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              {prestazioni.map((prestazione) => (
+                                <div
+                                  key={prestazione.id}
+                                  className={cn(
+                                    "flex items-center gap-4 p-3 border rounded hover:bg-muted/30 cursor-pointer transition-colors",
+                                    selectedPrestazioni.has(prestazione.id) && "bg-primary/5 border-primary"
+                                  )}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleTogglePrestazione(prestazione.id, pazienteId);
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedPrestazioni.has(prestazione.id)}
+                                    onChange={() => {}}
+                                    className="h-4 w-4"
+                                  />
+                                  <div className="flex-1 grid grid-cols-3 gap-4">
+                                    <div>
+                                      <p className="text-sm text-muted-foreground">Data</p>
+                                      <p className="font-medium">
+                                        {new Date(prestazione.data).toLocaleDateString('it-IT')}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm text-muted-foreground">Prestazione</p>
+                                      <p className="font-medium">{prestazione.prestazioni?.nome || "N/A"}</p>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-sm text-muted-foreground">Importo</p>
+                                      <p className="font-semibold text-primary">
+                                        €{Number(prestazione.prestazioni?.prezzo || 0).toFixed(2)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="uscita" className="space-y-4">
           {/* Stats */}
