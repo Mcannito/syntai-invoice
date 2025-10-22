@@ -25,6 +25,23 @@ const Prestazioni = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const { toast } = useToast();
 
+  // Funzione per estrarre la percentuale IVA dal valore selezionato
+  const getIvaPercentuale = (ivaValue: string): string => {
+    if (!ivaValue) return "0";
+    
+    // Se il valore è direttamente una percentuale (22, 10, 5, 4)
+    if (['22', '10', '5', '4'].includes(ivaValue)) {
+      return ivaValue;
+    }
+    
+    // Se inizia con "0% -", ritorna 0
+    if (ivaValue.startsWith('0%') || ivaValue.startsWith('N')) {
+      return "0";
+    }
+    
+    return "0";
+  };
+
   const handleEditClick = (prestazione: any) => {
     setEditingPrestazione(prestazione);
     setShowEditDialog(true);
@@ -138,6 +155,7 @@ const Prestazioni = () => {
                 <TableHead>Nome</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead>IVA</TableHead>
+                <TableHead className="text-right">Aliquota IVA (%)</TableHead>
                 <TableHead className="text-right">Prezzo</TableHead>
                 <TableHead className="text-right">Azioni</TableHead>
               </TableRow>
@@ -145,18 +163,18 @@ const Prestazioni = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     Caricamento...
                   </TableCell>
                 </TableRow>
               ) : filteredPrestazioni.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     Nessuna prestazione trovata
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredPrestazioni.map((prestazione) => (
+                 filteredPrestazioni.map((prestazione) => (
                 <TableRow key={prestazione.id} className="hover:bg-muted/30">
                   <TableCell className="font-mono text-xs">{prestazione.codice}</TableCell>
                   <TableCell className="font-medium">{prestazione.nome}</TableCell>
@@ -164,6 +182,7 @@ const Prestazioni = () => {
                     <Badge variant="outline">{prestazione.categoria}</Badge>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{prestazione.iva}</TableCell>
+                  <TableCell className="text-right font-medium">{getIvaPercentuale(prestazione.iva)}%</TableCell>
                   <TableCell className="text-right font-semibold text-primary">
                     €{prestazione.prezzo}
                   </TableCell>
