@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { NuovaPrestazioneDialog } from "@/components/Prestazioni/NuovaPrestazioneDialog";
+import { ModificaPrestazioneDialog } from "@/components/Prestazioni/ModificaPrestazioneDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,7 +21,14 @@ const Prestazioni = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [prestazioni, setPrestazioni] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingPrestazione, setEditingPrestazione] = useState<any>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const { toast } = useToast();
+
+  const handleEditClick = (prestazione: any) => {
+    setEditingPrestazione(prestazione);
+    setShowEditDialog(true);
+  };
 
   const loadPrestazioni = async () => {
     try {
@@ -161,7 +169,12 @@ const Prestazioni = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => handleEditClick(prestazione)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
@@ -175,6 +188,13 @@ const Prestazioni = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <ModificaPrestazioneDialog
+        prestazione={editingPrestazione}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onPrestazioneUpdated={loadPrestazioni}
+      />
     </div>
   );
 };
