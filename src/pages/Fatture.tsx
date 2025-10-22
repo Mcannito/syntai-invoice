@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Eye, Download, Send, FileText } from "lucide-react";
+import { Plus, Search, Eye, Download, Send, FileText, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { NuovaFatturaDialog } from "@/components/Fatture/NuovaFatturaDialog";
@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Fatture = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -85,79 +86,81 @@ const Fatture = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Fatture</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Gestione Fatture</h1>
           <p className="text-muted-foreground">
-            Gestisci le fatture e i documenti fiscali
+            Documenti in uscita e in entrata
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Send className="h-4 w-4" />
-            Invio Massivo TS
-          </Button>
-          <NuovaFatturaDialog onFatturaAdded={loadFatture} />
-        </div>
+        <NuovaFatturaDialog onFatturaAdded={loadFatture} />
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-primary/20 bg-primary-light">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Totale Fatturato</p>
-                <p className="text-2xl font-bold">€{fatture.reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}</p>
-              </div>
-              <FileText className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Fatture Emesse</p>
-              <p className="text-2xl font-bold">{fatture.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Da Inviare</p>
-              <p className="text-2xl font-bold text-destructive">
-                {fatture.filter(f => f.stato === "Da Inviare").length}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Inviate</p>
-              <p className="text-2xl font-bold text-secondary">
-                {fatture.filter(f => f.stato.includes("Inviata")).length}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Tabs */}
+      <Tabs defaultValue="uscita" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="uscita">Documenti in Uscita</TabsTrigger>
+          <TabsTrigger value="entrata">Documenti in Entrata</TabsTrigger>
+        </TabsList>
 
-      {/* Search and Table */}
-      <Card className="shadow-medical-sm">
-        <CardHeader className="border-b bg-muted/50">
-          <div className="flex items-center justify-between gap-4">
-            <CardTitle>Elenco Fatture</CardTitle>
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Cerca fattura..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+        <TabsContent value="uscita" className="space-y-4">
+          {/* Stats */}
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card className="border-primary/20 bg-primary-light">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Totale Fatturato</p>
+                    <p className="text-2xl font-bold">€{fatture.reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}</p>
+                  </div>
+                  <FileText className="h-8 w-8 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Fatture Emesse</p>
+                  <p className="text-2xl font-bold">{fatture.length}</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Da Inviare</p>
+                  <p className="text-2xl font-bold text-destructive">
+                    {fatture.filter(f => f.stato === "Da Inviare").length}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Inviate</p>
+                  <p className="text-2xl font-bold text-secondary">
+                    {fatture.filter(f => f.stato.includes("Inviata")).length}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardHeader>
+
+          {/* Table */}
+          <Card className="shadow-medical-sm">
+            <CardHeader className="border-b bg-muted/50">
+              <div className="flex items-center justify-between gap-4">
+                <CardTitle>Documenti Emessi</CardTitle>
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Cerca documento..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+            </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -229,6 +232,39 @@ const Fatture = () => {
           </Table>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="entrata" className="space-y-4">
+          <Card className="shadow-medical-sm">
+            <CardHeader className="border-b bg-muted/50">
+              <div className="flex items-center justify-between gap-4">
+                <CardTitle>Documenti Ricevuti</CardTitle>
+                <Button variant="outline" className="gap-2">
+                  <Upload className="h-4 w-4" />
+                  Carica Fattura
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="text-center py-12 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-2">Nessun documento ricevuto</p>
+                <p className="text-sm">Carica le fatture elettroniche ricevute o inserisci manualmente le spese</p>
+                <div className="flex gap-2 justify-center mt-6">
+                  <Button variant="outline">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Carica XML
+                  </Button>
+                  <Button variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Inserisci Manualmente
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

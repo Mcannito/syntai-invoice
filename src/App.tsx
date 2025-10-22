@@ -9,7 +9,9 @@ import Dashboard from "./pages/Dashboard";
 import Pazienti from "./pages/Pazienti";
 import Prestazioni from "./pages/Prestazioni";
 import Calendario from "./pages/Calendario";
+import Contabilita from "./pages/Contabilita";
 import Fatture from "./pages/Fatture";
+import SistemaTS from "./pages/SistemaTS";
 import Impostazioni from "./pages/Impostazioni";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
@@ -28,7 +30,9 @@ const App = () => (
           <Route path="/pazienti" element={<ProtectedRoute><MainLayout><Pazienti /></MainLayout></ProtectedRoute>} />
           <Route path="/prestazioni" element={<ProtectedRoute><MainLayout><Prestazioni /></MainLayout></ProtectedRoute>} />
           <Route path="/calendario" element={<ProtectedRoute><MainLayout><Calendario /></MainLayout></ProtectedRoute>} />
-          <Route path="/fatture" element={<ProtectedRoute><MainLayout><Fatture /></MainLayout></ProtectedRoute>} />
+          <Route path="/contabilita" element={<ProtectedRoute><MainLayout><Contabilita /></MainLayout></ProtectedRoute>} />
+          <Route path="/contabilita/fatture" element={<ProtectedRoute><MainLayout><Fatture /></MainLayout></ProtectedRoute>} />
+          <Route path="/contabilita/sistema-ts" element={<ProtectedRoute><MainLayout><SistemaTS /></MainLayout></ProtectedRoute>} />
           <Route path="/impostazioni" element={<ProtectedRoute><MainLayout><Impostazioni /></MainLayout></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

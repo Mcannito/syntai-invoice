@@ -20,7 +20,7 @@ const navigation = [
   { name: "Pazienti", href: "/pazienti", icon: Users },
   { name: "Prestazioni", href: "/prestazioni", icon: Stethoscope },
   { name: "Calendario", href: "/calendario", icon: Calendar },
-  { name: "Fatture", href: "/fatture", icon: FileText },
+  { name: "Contabilità", href: "/contabilita", icon: FileText },
   { name: "Statistiche", href: "/statistiche", icon: TrendingUp },
   { name: "Pagamenti", href: "/pagamenti", icon: CreditCard },
   { name: "Impostazioni", href: "/impostazioni", icon: Settings },
