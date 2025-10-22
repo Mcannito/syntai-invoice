@@ -402,12 +402,25 @@ export const NuovaFatturaDialog = ({
 
   const calcolaTotali = () => {
     let imponibile = 0;
-    let iva_totale = 0;
 
+    // Calcola l'imponibile totale
     dettagli.forEach(d => {
       const imp = d.quantita * d.prezzo_unitario * (1 - d.sconto / 100);
-      const iva = imp * (d.iva_percentuale / 100);
       imponibile += imp;
+    });
+
+    // Base imponibile per IVA = imponibile + rivalsa/cassa previdenziale
+    const base_imponibile_iva = imponibile + tassazione.cassa_previdenziale;
+    
+    // Calcola IVA sulla base imponibile (imponibile + rivalsa)
+    let iva_totale = 0;
+    dettagli.forEach(d => {
+      const imp = d.quantita * d.prezzo_unitario * (1 - d.sconto / 100);
+      // Proporzione di questa riga rispetto all'imponibile totale
+      const proporzione = imponibile > 0 ? imp / imponibile : 0;
+      // Base IVA per questa riga include la sua quota proporzionale di rivalsa
+      const base_iva_riga = imp + (tassazione.cassa_previdenziale * proporzione);
+      const iva = base_iva_riga * (d.iva_percentuale / 100);
       iva_totale += iva;
     });
 
