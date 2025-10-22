@@ -96,24 +96,32 @@ export const NuovaFatturaDialog = ({
   const getIvaPercentuale = (ivaDescrizione: string): number => {
     if (!ivaDescrizione) return 0;
     
-    const desc = ivaDescrizione.toLowerCase();
+    const desc = ivaDescrizione.trim();
     
-    // Se contiene "esente", ritorna 0
-    if (desc.includes('esente')) return 0;
+    // PRIORITÀ 1: Controlla se è un numero puro (5, 10, 22, 4)
+    const pureNumber = parseFloat(desc);
+    if (!isNaN(pureNumber) && desc === pureNumber.toString()) {
+      return pureNumber;
+    }
     
-    // Codici natura IVA
-    if (desc.includes('n2.1') || desc.includes('n2,1')) return 4;
-    if (desc.includes('n2.2') || desc.includes('n2,2')) return 10;
-    if (desc.includes('n2.3') || desc.includes('n2,3')) return 5;
+    const descLower = desc.toLowerCase();
     
-    // Cerca un numero seguito da % o "iva" seguito da un numero
-    const match = desc.match(/(\d+(?:[.,]\d+)?)\s*%/) || desc.match(/iva\s*(\d+(?:[.,]\d+)?)/);
+    // PRIORITÀ 2: Esente = 0%
+    if (descLower.includes('esente')) return 0;
+    
+    // PRIORITÀ 3: Codici natura specifici
+    if (descLower.includes('n2.1') || descLower.includes('n2,1')) return 4;
+    if (descLower.includes('n2.2') || descLower.includes('n2,2')) return 10;
+    if (descLower.includes('n2.3') || descLower.includes('n2,3')) return 5;
+    
+    // PRIORITÀ 4: Pattern con percentuale
+    const match = descLower.match(/(\d+(?:[.,]\d+)?)\s*%/) || descLower.match(/iva\s*(\d+(?:[.,]\d+)?)/);
     if (match) {
       return parseFloat(match[1].replace(',', '.'));
     }
     
-    // Default 22% se non si trova nulla
-    return 22;
+    // DEFAULT SICURO: 0% invece di 22%
+    return 0;
   };
 
   useEffect(() => {
