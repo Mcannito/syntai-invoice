@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2, Heart, Zap, FileQuestion, FileClock } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -990,14 +990,17 @@ const Fatture = () => {
               onClick={() => setFiltroTipoDocumento(filtroTipoDocumento === 'fattura_sanitaria' ? null : 'fattura_sanitaria')}
             >
               <CardContent className="p-6">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Fatture Sanitarie</p>
-                  <p className="text-2xl font-bold">
-                    {fatture.filter(f => f.tipo_documento === 'fattura_sanitaria').length}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    €{fatture.filter(f => f.tipo_documento === 'fattura_sanitaria').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Fatture Sanitarie</p>
+                    <p className="text-2xl font-bold">
+                      {fatture.filter(f => f.tipo_documento === 'fattura_sanitaria').length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      €{fatture.filter(f => f.tipo_documento === 'fattura_sanitaria').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <Heart className="h-8 w-8 text-red-500" />
                 </div>
               </CardContent>
             </Card>
@@ -1010,14 +1013,17 @@ const Fatture = () => {
               onClick={() => setFiltroTipoDocumento(filtroTipoDocumento === 'fattura_elettronica_pg' ? null : 'fattura_elettronica_pg')}
             >
               <CardContent className="p-6">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Fatture Elettroniche</p>
-                  <p className="text-2xl font-bold">
-                    {fatture.filter(f => f.tipo_documento === 'fattura_elettronica_pg').length}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    €{fatture.filter(f => f.tipo_documento === 'fattura_elettronica_pg').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Fatture Elettroniche</p>
+                    <p className="text-2xl font-bold">
+                      {fatture.filter(f => f.tipo_documento === 'fattura_elettronica_pg').length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      €{fatture.filter(f => f.tipo_documento === 'fattura_elettronica_pg').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <Zap className="h-8 w-8 text-yellow-500" />
                 </div>
               </CardContent>
             </Card>
@@ -1030,14 +1036,17 @@ const Fatture = () => {
               onClick={() => setFiltroTipoDocumento(filtroTipoDocumento === 'preventivo' ? null : 'preventivo')}
             >
               <CardContent className="p-6">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Preventivi</p>
-                  <p className="text-2xl font-bold">
-                    {fatture.filter(f => f.tipo_documento === 'preventivo').length}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    €{fatture.filter(f => f.tipo_documento === 'preventivo').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Preventivi</p>
+                    <p className="text-2xl font-bold">
+                      {fatture.filter(f => f.tipo_documento === 'preventivo').length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      €{fatture.filter(f => f.tipo_documento === 'preventivo').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <FileQuestion className="h-8 w-8 text-blue-500" />
                 </div>
               </CardContent>
             </Card>
@@ -1050,14 +1059,17 @@ const Fatture = () => {
               onClick={() => setFiltroTipoDocumento(filtroTipoDocumento === 'fattura_proforma' ? null : 'fattura_proforma')}
             >
               <CardContent className="p-6">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Fatture Proforma</p>
-                  <p className="text-2xl font-bold">
-                    {fatture.filter(f => f.tipo_documento === 'fattura_proforma').length}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    €{fatture.filter(f => f.tipo_documento === 'fattura_proforma').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Fatture Proforma</p>
+                    <p className="text-2xl font-bold">
+                      {fatture.filter(f => f.tipo_documento === 'fattura_proforma').length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      €{fatture.filter(f => f.tipo_documento === 'fattura_proforma').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <FileClock className="h-8 w-8 text-orange-500" />
                 </div>
               </CardContent>
             </Card>
