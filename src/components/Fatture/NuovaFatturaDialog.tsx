@@ -320,6 +320,7 @@ export const NuovaFatturaDialog = ({
         descrizione: prestazione.nome,
         prezzo_unitario: parseFloat(prestazione.prezzo?.toString() || "0"),
         iva_percentuale: prestazione.iva === "Esente IVA Art.10" ? 0 : 22,
+        iva_descrizione: prestazione.iva, // Salva la descrizione IVA dalla prestazione
       };
       setDettagli(nuoviDettagli);
     }
@@ -702,12 +703,11 @@ export const NuovaFatturaDialog = ({
                       </div>
 
                       <div className="space-y-2">
-                        <Label>IVA %</Label>
+                        <Label>IVA</Label>
                         <Input
-                          type="number"
-                          step="0.01"
-                          value={dettaglio.iva_percentuale}
-                          onChange={(e) => aggiornaDettaglio(index, "iva_percentuale", parseFloat(e.target.value))}
+                          value={dettaglio.iva_descrizione || 'Non specificata'}
+                          disabled
+                          className="bg-muted"
                         />
                       </div>
 
