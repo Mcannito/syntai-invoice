@@ -102,6 +102,8 @@ export const NuovaFatturaDialog = ({
     bollo: true,
   });
 
+  const [percentualeRivalsa, setPercentualeRivalsa] = useState(4);
+
   // Funzione per estrarre la percentuale IVA dalla descrizione
   const getIvaPercentuale = (ivaDescrizione: string): number => {
     if (!ivaDescrizione) return 0;
@@ -149,6 +151,10 @@ export const NuovaFatturaDialog = ({
       
       if (data) {
         setUserSettings(data);
+        // Imposta la percentuale rivalsa dalle impostazioni
+        if (data.rivalsa_percentuale) {
+          setPercentualeRivalsa(data.rivalsa_percentuale);
+        }
         // Non impostiamo i valori subito, aspettiamo che ci siano dettagli/imponibile
         // I valori saranno calcolati automaticamente nel useEffect di ricalcolo
       }
@@ -165,7 +171,7 @@ export const NuovaFatturaDialog = ({
     // Rivalsa/Contributo Integrativo (Cassa Previdenziale)
     if (settings.rivalsa_attiva && tassazioneAttiva.cassa_previdenziale) {
       nuovaTassazione.cassa_previdenziale = 
-        imponibile * ((settings.rivalsa_percentuale || 4) / 100);
+        imponibile * (percentualeRivalsa / 100);
     } else {
       nuovaTassazione.cassa_previdenziale = 0;
     }
@@ -219,7 +225,7 @@ export const NuovaFatturaDialog = ({
         calcolaTassazioneDefault(totali.imponibile, userSettings);
       }
     }
-  }, [dettagli, userSettings, tassazioneModificataManualmente, tassazioneAttiva]);
+  }, [dettagli, userSettings, tassazioneModificataManualmente, tassazioneAttiva, percentualeRivalsa]);
 
   // Gestisce la precompilazione separatamente dopo che pazienti sono caricati
   useEffect(() => {
@@ -600,6 +606,7 @@ export const NuovaFatturaDialog = ({
         ritenuta_acconto: true,
         bollo: true,
       });
+      setPercentualeRivalsa(4);
       setOpen(false);
       onFatturaAdded();
     } catch (error) {
@@ -923,7 +930,7 @@ export const NuovaFatturaDialog = ({
               <CardContent className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between mb-2">
-                    <Label>Rivalsa/Contributo Integrativo (€)</Label>
+                    <Label>Rivalsa/Contributo Integrativo (%)</Label>
                     <div className="flex items-center gap-2">
                       <Switch
                         checked={tassazioneAttiva.cassa_previdenziale}
@@ -939,16 +946,21 @@ export const NuovaFatturaDialog = ({
                       </span>
                     </div>
                   </div>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={tassazione.cassa_previdenziale}
-                    onChange={(e) => {
-                      setTassazione({ ...tassazione, cassa_previdenziale: parseFloat(e.target.value) || 0 });
-                      setTassazioneModificataManualmente(true);
-                    }}
-                    disabled={!tassazioneAttiva.cassa_previdenziale}
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={percentualeRivalsa}
+                      onChange={(e) => {
+                        setPercentualeRivalsa(parseFloat(e.target.value) || 0);
+                      }}
+                      disabled={!tassazioneAttiva.cassa_previdenziale}
+                      className="flex-1"
+                    />
+                    <div className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                      = €{tassazione.cassa_previdenziale.toFixed(2)}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
