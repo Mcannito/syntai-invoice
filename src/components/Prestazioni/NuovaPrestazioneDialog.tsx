@@ -39,6 +39,23 @@ export const NuovaPrestazioneDialog = ({ onPrestazioneAdded }: NuovaPrestazioneD
     categoria: "",
   });
 
+  // Funzione per estrarre la percentuale IVA dal valore selezionato
+  const getIvaPercentuale = (ivaValue: string): string => {
+    if (!ivaValue) return "0";
+    
+    // Se il valore è direttamente una percentuale (22, 10, 5, 4)
+    if (['22', '10', '5', '4'].includes(ivaValue)) {
+      return ivaValue;
+    }
+    
+    // Se inizia con "0% -", ritorna 0
+    if (ivaValue.startsWith('0%') || ivaValue.startsWith('N')) {
+      return "0";
+    }
+    
+    return "0";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -164,47 +181,58 @@ export const NuovaPrestazioneDialog = ({ onPrestazioneAdded }: NuovaPrestazioneD
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="iva">IVA *</Label>
-              <Select
-                value={formData.iva}
-                onValueChange={(value) => setFormData({ ...formData, iva: value })}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="N1">0% - N1 - Escluse ex. art. 15</SelectItem>
-                  <SelectItem value="N2">0% - N2 - Non soggette</SelectItem>
-                  <SelectItem value="N2.1">0% - N2.1 - Non soggette ad IVA ai sensi degli artt da 7 a 7-septies del DPR 633/72</SelectItem>
-                  <SelectItem value="N2.2">0% - N2.2 - Non soggette - altri casi</SelectItem>
-                  <SelectItem value="N3">0% - N3 - Non imponibili</SelectItem>
-                  <SelectItem value="N3.1">0% - N3.1 - Non imponibili - esportazioni</SelectItem>
-                  <SelectItem value="N3.2">0% - N3.2 - Non imponibili - cessioni intracomunitarie</SelectItem>
-                  <SelectItem value="N3.3">0% - N3.3 - Non imponibili - cessioni verso San Marino</SelectItem>
-                  <SelectItem value="N3.4">0% - N3.4 - Non imponibili - operazioni assimilate alle cessioni all'esportazione</SelectItem>
-                  <SelectItem value="N3.5">0% - N3.5 - Non imponibili - a seguito di dichiarazioni d'intento</SelectItem>
-                  <SelectItem value="N3.6">0% - N3.6 - Non imponibili - altre operazioni che non concorrono alla formazione del plafond</SelectItem>
-                  <SelectItem value="N4">0% - N4 - Esenti</SelectItem>
-                  <SelectItem value="N5">0% - N5 - Regime del margine / IVA non esposta in fattura</SelectItem>
-                  <SelectItem value="N6">0% - N6 - Inversione contabile</SelectItem>
-                  <SelectItem value="N6.1">0% - N6.1 - Inversione contabile - cessione di rottami e altri materiali di recupero</SelectItem>
-                  <SelectItem value="N6.2">0% - N6.2 - Inversione contabile - cessione di oro e argento puro</SelectItem>
-                  <SelectItem value="N6.3">0% - N6.3 - Inversione contabile - subappalto nel settore edile</SelectItem>
-                  <SelectItem value="N6.4">0% - N6.4 - Inversione contabile - cessione di fabbricati</SelectItem>
-                  <SelectItem value="N6.5">0% - N6.5 - Inversione contabile - cessione di telefoni cellulari</SelectItem>
-                  <SelectItem value="N6.6">0% - N6.6 - Inversione contabile - cessione di prodotti elettronici</SelectItem>
-                  <SelectItem value="N6.7">0% - N6.7 - Inversione contabile - prestazioni comparto edile e settori connessi</SelectItem>
-                  <SelectItem value="N6.8">0% - N6.8 - Inversione contabile - operazioni settore energetico</SelectItem>
-                  <SelectItem value="N6.9">0% - N6.9 - Inversione contabile - altri casi</SelectItem>
-                  <SelectItem value="N7">0% - N7 - IVA assolta in altro stato UE</SelectItem>
-                  <SelectItem value="22">22%</SelectItem>
-                  <SelectItem value="10">10%</SelectItem>
-                  <SelectItem value="5">5%</SelectItem>
-                  <SelectItem value="4">4%</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="iva">IVA *</Label>
+                <Select
+                  value={formData.iva}
+                  onValueChange={(value) => setFormData({ ...formData, iva: value })}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="N1">0% - N1 - Escluse ex. art. 15</SelectItem>
+                    <SelectItem value="N2">0% - N2 - Non soggette</SelectItem>
+                    <SelectItem value="N2.1">0% - N2.1 - Non soggette ad IVA ai sensi degli artt da 7 a 7-septies del DPR 633/72</SelectItem>
+                    <SelectItem value="N2.2">0% - N2.2 - Non soggette - altri casi</SelectItem>
+                    <SelectItem value="N3">0% - N3 - Non imponibili</SelectItem>
+                    <SelectItem value="N3.1">0% - N3.1 - Non imponibili - esportazioni</SelectItem>
+                    <SelectItem value="N3.2">0% - N3.2 - Non imponibili - cessioni intracomunitarie</SelectItem>
+                    <SelectItem value="N3.3">0% - N3.3 - Non imponibili - cessioni verso San Marino</SelectItem>
+                    <SelectItem value="N3.4">0% - N3.4 - Non imponibili - operazioni assimilate alle cessioni all'esportazione</SelectItem>
+                    <SelectItem value="N3.5">0% - N3.5 - Non imponibili - a seguito di dichiarazioni d'intento</SelectItem>
+                    <SelectItem value="N3.6">0% - N3.6 - Non imponibili - altre operazioni che non concorrono alla formazione del plafond</SelectItem>
+                    <SelectItem value="N4">0% - N4 - Esenti</SelectItem>
+                    <SelectItem value="N5">0% - N5 - Regime del margine / IVA non esposta in fattura</SelectItem>
+                    <SelectItem value="N6">0% - N6 - Inversione contabile</SelectItem>
+                    <SelectItem value="N6.1">0% - N6.1 - Inversione contabile - cessione di rottami e altri materiali di recupero</SelectItem>
+                    <SelectItem value="N6.2">0% - N6.2 - Inversione contabile - cessione di oro e argento puro</SelectItem>
+                    <SelectItem value="N6.3">0% - N6.3 - Inversione contabile - subappalto nel settore edile</SelectItem>
+                    <SelectItem value="N6.4">0% - N6.4 - Inversione contabile - cessione di fabbricati</SelectItem>
+                    <SelectItem value="N6.5">0% - N6.5 - Inversione contabile - cessione di telefoni cellulari</SelectItem>
+                    <SelectItem value="N6.6">0% - N6.6 - Inversione contabile - cessione di prodotti elettronici</SelectItem>
+                    <SelectItem value="N6.7">0% - N6.7 - Inversione contabile - prestazioni comparto edile e settori connessi</SelectItem>
+                    <SelectItem value="N6.8">0% - N6.8 - Inversione contabile - operazioni settore energetico</SelectItem>
+                    <SelectItem value="N6.9">0% - N6.9 - Inversione contabile - altri casi</SelectItem>
+                    <SelectItem value="N7">0% - N7 - IVA assolta in altro stato UE</SelectItem>
+                    <SelectItem value="22">22%</SelectItem>
+                    <SelectItem value="10">10%</SelectItem>
+                    <SelectItem value="5">5%</SelectItem>
+                    <SelectItem value="4">4%</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="iva_percentuale">Aliquota IVA (%)</Label>
+                <Input
+                  id="iva_percentuale"
+                  value={getIvaPercentuale(formData.iva)}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
