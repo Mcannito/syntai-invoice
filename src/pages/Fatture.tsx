@@ -1021,10 +1021,66 @@ const Fatture = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="aliquota-cassa">Rivalsa/Contributo integrativo (%)</Label>
-                    <Input id="aliquota-cassa" type="number" placeholder="4" defaultValue="4" />
+                </div>
+                
+                {/* Rivalsa/Contributo integrativo */}
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">Rivalsa/Contributo integrativo</h4>
+                      <p className="text-sm text-muted-foreground">Attiva e configura la rivalsa previdenziale</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="rivalsa-attiva" className="text-sm">Attiva</Label>
+                      <input 
+                        type="checkbox" 
+                        id="rivalsa-attiva" 
+                        className="h-4 w-4 rounded border-gray-300"
+                        defaultChecked
+                      />
+                    </div>
                   </div>
+                  
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="aliquota-rivalsa">Percentuale Rivalsa (%)</Label>
+                      <Input id="aliquota-rivalsa" type="number" placeholder="4" defaultValue="4" step="0.01" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Applicazione</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <input 
+                            type="radio" 
+                            id="rivalsa-separata" 
+                            name="rivalsa-applicazione" 
+                            value="separata"
+                            defaultChecked
+                            className="h-4 w-4"
+                          />
+                          <Label htmlFor="rivalsa-separata" className="font-normal cursor-pointer">
+                            Separata dal prezzo prestazione
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input 
+                            type="radio" 
+                            id="rivalsa-inclusa" 
+                            name="rivalsa-applicazione" 
+                            value="inclusa"
+                            className="h-4 w-4"
+                          />
+                          <Label htmlFor="rivalsa-inclusa" className="font-normal cursor-pointer">
+                            Inclusa nel prezzo prestazione
+                          </Label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="ritenuta">Ritenuta d'Acconto (%)</Label>
                     <Input id="ritenuta" type="number" placeholder="20" defaultValue="20" />
