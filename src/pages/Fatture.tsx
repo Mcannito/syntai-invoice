@@ -18,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { NuovaFatturaDialog } from "@/components/Fatture/NuovaFatturaDialog";
 import { InserisciFatturaInEntrataDialog } from "@/components/Fatture/InserisciFatturaInEntrataDialog";
 import { CaricaFatturaXMLDialog } from "@/components/Fatture/CaricaFatturaXMLDialog";
+import TemplateEditor from "@/components/Impostazioni/TemplateEditor";
+import TemplatePreview from "@/components/Impostazioni/TemplatePreview";
 import {
   Table,
   TableBody,
@@ -109,6 +111,19 @@ const Fatture = () => {
   const [filtroStatoPagamento, setFiltroStatoPagamento] = useState<string>("tutti");
   const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
   
+  // Stati per template
+  const [templateSettings, setTemplateSettings] = useState({
+    pdf_template_colore_primario: '#2563eb',
+    pdf_template_colore_secondario: '#64748b',
+    pdf_template_font_size: 'medium',
+    pdf_template_mostra_logo: true,
+    pdf_template_posizione_logo: 'left',
+    pdf_template_footer_text: '',
+    pdf_template_layout: 'classic',
+    pdf_template_testo_centrale: '',
+  });
+  const [logo, setLogo] = useState<string | null>(null);
+  
   const { toast } = useToast();
 
   const loadUserSettings = async () => {
@@ -146,6 +161,26 @@ const Fatture = () => {
         setAltroMetodo(data.altro_metodo_pagamento ?? '');
         if (data.metodi_pagamento) {
           setMetodiPagamento(new Set(data.metodi_pagamento));
+        }
+        
+        // Carica anche impostazioni template
+        setTemplateSettings({
+          pdf_template_colore_primario: data.pdf_template_colore_primario || '#2563eb',
+          pdf_template_colore_secondario: data.pdf_template_colore_secondario || '#64748b',
+          pdf_template_font_size: data.pdf_template_font_size || 'medium',
+          pdf_template_mostra_logo: data.pdf_template_mostra_logo ?? true,
+          pdf_template_posizione_logo: data.pdf_template_posizione_logo || 'left',
+          pdf_template_footer_text: data.pdf_template_footer_text || '',
+          pdf_template_layout: data.pdf_template_layout || 'classic',
+          pdf_template_testo_centrale: data.pdf_template_testo_centrale || '',
+        });
+        
+        // Carica logo
+        if (data.logo_path) {
+          const { data: logoData } = supabase.storage
+            .from('logos')
+            .getPublicUrl(data.logo_path);
+          setLogo(logoData.publicUrl);
         }
       }
     } catch (error) {
@@ -693,6 +728,34 @@ const Fatture = () => {
     }
   };
 
+  const handleSaveTemplate = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("user_settings")
+        .update(templateSettings)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Successo",
+        description: "Template salvato con successo",
+      });
+      
+      await loadUserSettings();
+    } catch (error) {
+      console.error("Error saving template:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile salvare il template",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -724,6 +787,7 @@ const Fatture = () => {
           <TabsTrigger value="da-fatturare">Prestazioni da Fatturare</TabsTrigger>
           <TabsTrigger value="uscita">Documenti in Uscita</TabsTrigger>
           <TabsTrigger value="entrata">Documenti in Entrata</TabsTrigger>
+          <TabsTrigger value="template">Template Fatture</TabsTrigger>
         </TabsList>
 
         <TabsContent value="da-fatturare" className="space-y-4">
@@ -1595,6 +1659,53 @@ const Fatture = () => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="template" className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Editor */}
+            <Card className="shadow-medical-sm">
+              <CardHeader className="border-b bg-muted/50">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-primary" />
+                  <div>
+                    <CardTitle>Personalizza Template</CardTitle>
+                    <CardDescription>Modifica l'aspetto delle tue fatture</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <TemplateEditor
+                  settings={templateSettings}
+                  onSettingsChange={setTemplateSettings}
+                />
+                <div className="flex justify-end gap-4 pt-6 border-t mt-6">
+                  <Button variant="outline" onClick={loadUserSettings}>
+                    Annulla
+                  </Button>
+                  <Button onClick={handleSaveTemplate}>
+                    Salva Template
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Preview */}
+            <Card className="shadow-medical-sm">
+              <CardHeader className="border-b bg-muted/50">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <div>
+                    <CardTitle>Anteprima</CardTitle>
+                    <CardDescription>Come apparirà la tua fattura</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <TemplatePreview settings={templateSettings} logoUrl={logo || undefined} />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
 
