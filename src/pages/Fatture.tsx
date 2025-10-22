@@ -75,7 +75,83 @@ const Fatture = () => {
   const [bolloAttivo, setBolloAttivo] = useState(false);
   const [bolloVirtuale, setBolloVirtuale] = useState(false);
   const [metodiPagamento, setMetodiPagamento] = useState<Set<string>>(new Set(['bonifico']));
+  const [userSettingsId, setUserSettingsId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const loadUserSettings = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+      
+      if (data) {
+        setUserSettingsId(data.id);
+        setRivalsaAttiva(data.rivalsa_attiva ?? true);
+        setRitenutaAttiva(data.ritenuta_attiva ?? false);
+        setBolloAttivo(data.bollo_attivo ?? false);
+        setBolloVirtuale(data.bollo_virtuale ?? false);
+        if (data.metodi_pagamento) {
+          setMetodiPagamento(new Set(data.metodi_pagamento));
+        }
+      }
+    } catch (error) {
+      console.error("Error loading user settings:", error);
+    }
+  };
+
+  const saveUserSettings = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const settings = {
+        metodi_pagamento: Array.from(metodiPagamento),
+        altro_metodo_pagamento: (document.getElementById('altro-metodo') as HTMLInputElement)?.value,
+        nome_banca: (document.getElementById('nome-banca') as HTMLInputElement)?.value,
+        intestatario_cc: (document.getElementById('intestatario') as HTMLInputElement)?.value,
+        iban: (document.getElementById('iban') as HTMLInputElement)?.value,
+        bic_swift: (document.getElementById('bic-swift') as HTMLInputElement)?.value,
+        rivalsa_attiva: rivalsaAttiva,
+        rivalsa_percentuale: parseFloat((document.getElementById('aliquota-rivalsa') as HTMLInputElement)?.value) || 4,
+        rivalsa_applicazione: (document.querySelector('input[name="rivalsa-applicazione"]:checked') as HTMLInputElement)?.value || 'separata',
+        ritenuta_attiva: ritenutaAttiva,
+        ritenuta_aliquota: parseFloat((document.getElementById('aliquota-ritenuta') as HTMLInputElement)?.value) || 20,
+        ritenuta_tipo: (document.getElementById('tipo-ritenuta') as HTMLSelectElement)?.value || 'persone-fisiche',
+        ritenuta_causale: (document.getElementById('causale-pagamento') as HTMLSelectElement)?.value || 'A',
+        bollo_attivo: bolloAttivo,
+        bollo_importo: parseFloat((document.getElementById('importo-bollo') as HTMLInputElement)?.value) || 2.00,
+        bollo_carico: (document.querySelector('input[name="bollo-carico"]:checked') as HTMLInputElement)?.value || 'paziente',
+        bollo_virtuale: bolloVirtuale,
+      };
+
+      const { error } = await supabase
+        .from('user_settings')
+        .update(settings)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Impostazioni salvate",
+        description: "Le modifiche sono state salvate con successo",
+      });
+      setImpostazioniDialogOpen(false);
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile salvare le impostazioni",
+        variant: "destructive",
+      });
+    }
+  };
 
   const loadFatture = async () => {
     try {
@@ -143,6 +219,7 @@ const Fatture = () => {
   useEffect(() => {
     loadFatture();
     loadPrestazioniDaFatturare();
+    loadUserSettings();
   }, []);
 
   const getPazienteDisplayName = (fattura: any) => {
@@ -473,7 +550,8 @@ const Fatture = () => {
             onFatturaAdded={() => {
               loadFatture();
               loadPrestazioniDaFatturare();
-            }} 
+            }}
+            metodiPagamento={Array.from(metodiPagamento)}
           />
         </div>
       </div>
@@ -1333,13 +1411,7 @@ const Fatture = () => {
               <Button variant="outline" onClick={() => setImpostazioniDialogOpen(false)}>
                 Annulla
               </Button>
-              <Button onClick={() => {
-                toast({
-                  title: "Impostazioni salvate",
-                  description: "Le modifiche sono state salvate con successo",
-                });
-                setImpostazioniDialogOpen(false);
-              }}>
+              <Button onClick={saveUserSettings}>
                 Salva Modifiche
               </Button>
             </div>
@@ -1426,6 +1498,7 @@ const Fatture = () => {
           setShowNuovaFatturaDialog(false);
         }}
         prestazioniPrecompilate={prestazioniPerFattura}
+        metodiPagamento={Array.from(metodiPagamento)}
         trigger={<span style={{ display: 'none' }} />}
       />
     </div>

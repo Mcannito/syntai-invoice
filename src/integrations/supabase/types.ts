@@ -431,6 +431,12 @@ export type Database = {
           albo_nome: string | null
           albo_numero: string | null
           aliquota_cassa: number | null
+          altro_metodo_pagamento: string | null
+          bic_swift: string | null
+          bollo_attivo: boolean | null
+          bollo_carico: string | null
+          bollo_importo: number | null
+          bollo_virtuale: boolean | null
           cassa_previdenziale: string | null
           citta: string | null
           codice_fiscale: string | null
@@ -440,14 +446,24 @@ export type Database = {
           iban: string | null
           id: string
           indirizzo: string | null
+          intestatario_cc: string | null
           logo_path: string | null
+          metodi_pagamento: string[] | null
           metodo_pagamento_default: string | null
           nome: string | null
+          nome_banca: string | null
           partita_iva: string | null
           pec: string | null
           qualifica: string | null
           regime_fiscale: string | null
           ritenuta_acconto: number | null
+          ritenuta_aliquota: number | null
+          ritenuta_attiva: boolean | null
+          ritenuta_causale: string | null
+          ritenuta_tipo: string | null
+          rivalsa_applicazione: string | null
+          rivalsa_attiva: boolean | null
+          rivalsa_percentuale: number | null
           sesso: string | null
           specializzazione: string | null
           telefono: string | null
@@ -459,6 +475,12 @@ export type Database = {
           albo_nome?: string | null
           albo_numero?: string | null
           aliquota_cassa?: number | null
+          altro_metodo_pagamento?: string | null
+          bic_swift?: string | null
+          bollo_attivo?: boolean | null
+          bollo_carico?: string | null
+          bollo_importo?: number | null
+          bollo_virtuale?: boolean | null
           cassa_previdenziale?: string | null
           citta?: string | null
           codice_fiscale?: string | null
@@ -468,14 +490,24 @@ export type Database = {
           iban?: string | null
           id?: string
           indirizzo?: string | null
+          intestatario_cc?: string | null
           logo_path?: string | null
+          metodi_pagamento?: string[] | null
           metodo_pagamento_default?: string | null
           nome?: string | null
+          nome_banca?: string | null
           partita_iva?: string | null
           pec?: string | null
           qualifica?: string | null
           regime_fiscale?: string | null
           ritenuta_acconto?: number | null
+          ritenuta_aliquota?: number | null
+          ritenuta_attiva?: boolean | null
+          ritenuta_causale?: string | null
+          ritenuta_tipo?: string | null
+          rivalsa_applicazione?: string | null
+          rivalsa_attiva?: boolean | null
+          rivalsa_percentuale?: number | null
           sesso?: string | null
           specializzazione?: string | null
           telefono?: string | null
@@ -487,6 +519,12 @@ export type Database = {
           albo_nome?: string | null
           albo_numero?: string | null
           aliquota_cassa?: number | null
+          altro_metodo_pagamento?: string | null
+          bic_swift?: string | null
+          bollo_attivo?: boolean | null
+          bollo_carico?: string | null
+          bollo_importo?: number | null
+          bollo_virtuale?: boolean | null
           cassa_previdenziale?: string | null
           citta?: string | null
           codice_fiscale?: string | null
@@ -496,14 +534,24 @@ export type Database = {
           iban?: string | null
           id?: string
           indirizzo?: string | null
+          intestatario_cc?: string | null
           logo_path?: string | null
+          metodi_pagamento?: string[] | null
           metodo_pagamento_default?: string | null
           nome?: string | null
+          nome_banca?: string | null
           partita_iva?: string | null
           pec?: string | null
           qualifica?: string | null
           regime_fiscale?: string | null
           ritenuta_acconto?: number | null
+          ritenuta_aliquota?: number | null
+          ritenuta_attiva?: boolean | null
+          ritenuta_causale?: string | null
+          ritenuta_tipo?: string | null
+          rivalsa_applicazione?: string | null
+          rivalsa_attiva?: boolean | null
+          rivalsa_percentuale?: number | null
           sesso?: string | null
           specializzazione?: string | null
           telefono?: string | null

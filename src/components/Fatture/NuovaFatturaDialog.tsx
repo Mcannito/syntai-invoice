@@ -31,6 +31,7 @@ interface NuovaFatturaDialogProps {
   prestazioniPrecompilate?: any[]; // Array di appuntamenti da fatturare
   open?: boolean; // Controllo esterno del dialog
   onOpenChange?: (open: boolean) => void; // Callback per cambiamenti di stato
+  metodiPagamento?: string[]; // Metodi di pagamento accettati dal professionista
 }
 
 export const NuovaFatturaDialog = ({ 
@@ -39,7 +40,8 @@ export const NuovaFatturaDialog = ({
   trigger,
   prestazioniPrecompilate,
   open: controlledOpen,
-  onOpenChange: controlledOnOpenChange
+  onOpenChange: controlledOnOpenChange,
+  metodiPagamento = ['bonifico', 'contanti', 'carta-credito', 'carta-debito']
 }: NuovaFatturaDialogProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -564,10 +566,23 @@ export const NuovaFatturaDialog = ({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Bonifico">Bonifico</SelectItem>
-                        <SelectItem value="Contanti">Contanti</SelectItem>
-                        <SelectItem value="POS">POS</SelectItem>
-                        <SelectItem value="Assegno">Assegno</SelectItem>
+                        {metodiPagamento.map((metodo) => {
+                          const metodiMap: Record<string, string> = {
+                            'contanti': 'Contanti',
+                            'carta-credito': 'Carta di credito',
+                            'carta-debito': 'Carta di debito',
+                            'bonifico': 'Bonifico bancario',
+                            'assegno': 'Assegno',
+                            'paypal': 'PayPal',
+                            'altro': 'Altro'
+                          };
+                          const label = metodiMap[metodo] || metodo;
+                          return (
+                            <SelectItem key={metodo} value={label}>
+                              {label}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </div>
