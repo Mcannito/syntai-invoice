@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2, Heart, Zap, FileQuestion, FileClock } from "lucide-react";
+import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2, Heart, Zap, FileQuestion, FileClock, TrendingUp } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -977,7 +977,7 @@ const Fatture = () => {
                       }).length === 1 ? 'documento' : 'documenti'}
                     </p>
                   </div>
-                  <FileText className="h-8 w-8 text-primary" />
+                  <TrendingUp className="h-8 w-8 text-primary" />
                 </div>
               </CardContent>
             </Card>
