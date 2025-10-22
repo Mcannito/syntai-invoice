@@ -1022,7 +1022,7 @@ const Fatture = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="aliquota-cassa">Aliquota Cassa (%)</Label>
+                    <Label htmlFor="aliquota-cassa">Rivalsa/Contributo integrativo (%)</Label>
                     <Input id="aliquota-cassa" type="number" placeholder="4" defaultValue="4" />
                   </div>
                   <div className="space-y-2">
