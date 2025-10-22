@@ -211,7 +211,7 @@ const Impostazioni = () => {
             <User className="h-5 w-5 text-primary" />
             <div>
               <CardTitle>Anagrafica Professionista</CardTitle>
-              <CardDescription>I tuoi dati professionali e fiscali</CardDescription>
+              <CardDescription>I tuoi dati professionali</CardDescription>
             </div>
           </div>
         </CardHeader>
