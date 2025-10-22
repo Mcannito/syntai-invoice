@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -94,6 +95,12 @@ export const NuovaFatturaDialog = ({
   });
 
   const [tassazioneModificataManualmente, setTassazioneModificataManualmente] = useState(false);
+  
+  const [tassazioneAttiva, setTassazioneAttiva] = useState({
+    cassa_previdenziale: true,
+    ritenuta_acconto: true,
+    bollo: true,
+  });
 
   // Funzione per estrarre la percentuale IVA dalla descrizione
   const getIvaPercentuale = (ivaDescrizione: string): number => {
@@ -156,7 +163,7 @@ export const NuovaFatturaDialog = ({
     const nuovaTassazione = { ...tassazione };
     
     // Rivalsa/Contributo Integrativo (Cassa Previdenziale)
-    if (settings.rivalsa_attiva) {
+    if (settings.rivalsa_attiva && tassazioneAttiva.cassa_previdenziale) {
       nuovaTassazione.cassa_previdenziale = 
         imponibile * ((settings.rivalsa_percentuale || 4) / 100);
     } else {
@@ -164,7 +171,7 @@ export const NuovaFatturaDialog = ({
     }
     
     // Ritenuta d'Acconto (calcolata solo su imponibile)
-    if (settings.ritenuta_attiva) {
+    if (settings.ritenuta_attiva && tassazioneAttiva.ritenuta_acconto) {
       nuovaTassazione.ritenuta_acconto = 
         imponibile * ((settings.ritenuta_aliquota || 20) / 100);
     } else {
@@ -172,7 +179,7 @@ export const NuovaFatturaDialog = ({
     }
     
     // Marca da Bollo (applica solo se bollo_attivo E imponibile > 77.47€)
-    if (settings.bollo_attivo && imponibile > 77.47) {
+    if (settings.bollo_attivo && tassazioneAttiva.bollo && imponibile > 77.47) {
       // Il bollo viene conteggiato in fattura SOLO se a carico del paziente
       if (settings.bollo_carico === 'paziente') {
         nuovaTassazione.bollo_virtuale = settings.bollo_importo || 2.00;
@@ -212,7 +219,7 @@ export const NuovaFatturaDialog = ({
         calcolaTassazioneDefault(totali.imponibile, userSettings);
       }
     }
-  }, [dettagli, userSettings, tassazioneModificataManualmente]);
+  }, [dettagli, userSettings, tassazioneModificataManualmente, tassazioneAttiva]);
 
   // Gestisce la precompilazione separatamente dopo che pazienti sono caricati
   useEffect(() => {
@@ -588,6 +595,11 @@ export const NuovaFatturaDialog = ({
         bollo_virtuale: 0,
       });
       setTassazioneModificataManualmente(false);
+      setTassazioneAttiva({
+        cassa_previdenziale: true,
+        ritenuta_acconto: true,
+        bollo: true,
+      });
       setOpen(false);
       onFatturaAdded();
     } catch (error) {
@@ -910,7 +922,23 @@ export const NuovaFatturaDialog = ({
               </CardHeader>
               <CardContent className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label>Rivalsa/Contributo Integrativo (€)</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>Rivalsa/Contributo Integrativo (€)</Label>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={tassazioneAttiva.cassa_previdenziale}
+                        onCheckedChange={(checked) => {
+                          setTassazioneAttiva({ ...tassazioneAttiva, cassa_previdenziale: checked });
+                          if (!checked) {
+                            setTassazione({ ...tassazione, cassa_previdenziale: 0 });
+                          }
+                        }}
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        {tassazioneAttiva.cassa_previdenziale ? 'Attiva' : 'Disattiva'}
+                      </span>
+                    </div>
+                  </div>
                   <Input
                     type="number"
                     step="0.01"
@@ -919,11 +947,28 @@ export const NuovaFatturaDialog = ({
                       setTassazione({ ...tassazione, cassa_previdenziale: parseFloat(e.target.value) || 0 });
                       setTassazioneModificataManualmente(true);
                     }}
+                    disabled={!tassazioneAttiva.cassa_previdenziale}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Ritenuta d'Acconto (€)</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>Ritenuta d'Acconto (€)</Label>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={tassazioneAttiva.ritenuta_acconto}
+                        onCheckedChange={(checked) => {
+                          setTassazioneAttiva({ ...tassazioneAttiva, ritenuta_acconto: checked });
+                          if (!checked) {
+                            setTassazione({ ...tassazione, ritenuta_acconto: 0 });
+                          }
+                        }}
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        {tassazioneAttiva.ritenuta_acconto ? 'Attiva' : 'Disattiva'}
+                      </span>
+                    </div>
+                  </div>
                   <Input
                     type="number"
                     step="0.01"
@@ -932,11 +977,28 @@ export const NuovaFatturaDialog = ({
                       setTassazione({ ...tassazione, ritenuta_acconto: parseFloat(e.target.value) || 0 });
                       setTassazioneModificataManualmente(true);
                     }}
+                    disabled={!tassazioneAttiva.ritenuta_acconto}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Marca da Bollo (€)</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>Marca da Bollo (€)</Label>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={tassazioneAttiva.bollo}
+                        onCheckedChange={(checked) => {
+                          setTassazioneAttiva({ ...tassazioneAttiva, bollo: checked });
+                          if (!checked) {
+                            setTassazione({ ...tassazione, bollo_virtuale: 0 });
+                          }
+                        }}
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        {tassazioneAttiva.bollo ? 'Attiva' : 'Disattiva'}
+                      </span>
+                    </div>
+                  </div>
                   <Input
                     type="number"
                     step="0.01"
@@ -945,6 +1007,7 @@ export const NuovaFatturaDialog = ({
                       setTassazione({ ...tassazione, bollo_virtuale: parseFloat(e.target.value) || 0 });
                       setTassazioneModificataManualmente(true);
                     }}
+                    disabled={!tassazioneAttiva.bollo}
                   />
                 </div>
               </CardContent>
