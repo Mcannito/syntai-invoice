@@ -982,9 +982,23 @@ const Fatture = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="forfettario">Regime Forfettario</SelectItem>
-                        <SelectItem value="ordinario">Regime Ordinario</SelectItem>
-                        <SelectItem value="semplificato">Regime Semplificato</SelectItem>
+                        <SelectItem value="ordinario">Regime ordinario</SelectItem>
+                        <SelectItem value="contribuenti_minimi">Regime dei contribuenti minimi (art. 1,c.96-117, L. 244/2007)</SelectItem>
+                        <SelectItem value="agricoltura_pesca">Agricoltura e attività connesse e pesca (artt. 34 e 34-bis, D.P.R. 633/1972)</SelectItem>
+                        <SelectItem value="sali_tabacchi">Vendita sali e tabacchi (art. 74, c.1, D.P.R. 633/1972) Commercio dei fiammiferi (art. 74, c.1, D.P.R. 633/1972)</SelectItem>
+                        <SelectItem value="editoria">Editoria (art. 74, c.1, D.P.R. 633/1972)</SelectItem>
+                        <SelectItem value="telefonia">Gestione di servizi di telefonia pubblica (art. 74, c.1, D.P.R. 633/1972)</SelectItem>
+                        <SelectItem value="trasporto_sosta">Rivendita di documenti di trasporto pubblico e di sosta (art. 74, c.1, D.P.R. 633/1972)</SelectItem>
+                        <SelectItem value="intrattenimenti">Intrattenimenti, giochi e altre attività di cui alla tariffa allegata al D.P.R. 640/72 (art. 74, c.6, D.P.R. 633/1972)</SelectItem>
+                        <SelectItem value="viaggi_turismo">Agenzie di viaggi e turismo (art. 74-ter, D.P.R. 633/1972)</SelectItem>
+                        <SelectItem value="agriturismo">Agriturismo (art. 5, c.2, L. 413/1991)</SelectItem>
+                        <SelectItem value="vendite_domicilio">Vendite a domicilio (art. 25-bis, c.6, D.P.R. 600/1973)</SelectItem>
+                        <SelectItem value="beni_usati">Rivendita di beni usati, di oggetti d'arte, d'antiquariato o da collezione (art. 36, D.L. 41/1995)</SelectItem>
+                        <SelectItem value="aste_arte">Agenzie di vendite all'asta di oggetti d'arte, antiquariato o da collezione (art. 40-bis, D.L. 41/1995)</SelectItem>
+                        <SelectItem value="iva_cassa_pa">IVA per cassa P.A. (art. 6, c.5, D.P.R. 633/1972)</SelectItem>
+                        <SelectItem value="iva_cassa">IVA per cassa (art. 32-bis, D.L. 83/2012)</SelectItem>
+                        <SelectItem value="altro">Altro</SelectItem>
+                        <SelectItem value="forfettario">Regime forfettario</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
