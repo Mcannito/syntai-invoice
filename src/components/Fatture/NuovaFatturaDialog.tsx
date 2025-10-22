@@ -729,9 +729,9 @@ export const NuovaFatturaDialog = ({
                       </div>
 
                       <div className="space-y-2">
-                        <Label>IVA</Label>
+                        <Label>Aliquota IVA (%)</Label>
                         <Input
-                          value={dettaglio.iva_descrizione || 'Non specificata'}
+                          value={dettaglio.iva_percentuale || '0'}
                           disabled
                           className="bg-muted"
                         />
