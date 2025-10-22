@@ -1164,7 +1164,7 @@ const Fatture = () => {
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8 text-primary"
-                            onClick={() => navigate('/sistema-ts')}
+                            onClick={() => navigate('/contabilita/sistema-ts')}
                             title="Apri Sistema TS"
                           >
                             <Send className="h-4 w-4" />
