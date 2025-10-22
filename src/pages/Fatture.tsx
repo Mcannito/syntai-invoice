@@ -71,6 +71,7 @@ const Fatture = () => {
   const [filtroPaziente, setFiltroPaziente] = useState<string>("tutti");
   const [impostazioniDialogOpen, setImpostazioniDialogOpen] = useState(false);
   const [rivalsaAttiva, setRivalsaAttiva] = useState(true);
+  const [ritenutaAttiva, setRitenutaAttiva] = useState(false);
   const { toast } = useToast();
 
   const loadFatture = async () => {
@@ -1092,11 +1093,15 @@ const Fatture = () => {
                       <Label htmlFor="ritenuta-switch" className="text-base">Ritenuta d'Acconto</Label>
                       <p className="text-sm text-muted-foreground">Applica ritenuta d'acconto</p>
                     </div>
-                    <Switch id="ritenuta-switch" />
+                    <Switch 
+                      id="ritenuta-switch" 
+                      checked={ritenutaAttiva} 
+                      onCheckedChange={setRitenutaAttiva}
+                    />
                   </div>
                   
                   {/* Mostra questi campi solo se la ritenuta è attivata */}
-                  {true && (
+                  {ritenutaAttiva && (
                     <div className="space-y-4 pl-6 border-l-2 border-muted">
                       <div className="space-y-2">
                         <Label htmlFor="aliquota-ritenuta">Aliquota (%)</Label>
