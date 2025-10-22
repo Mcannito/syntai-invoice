@@ -101,6 +101,7 @@ const Fatture = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fatturaToDelete, setFatturaToDelete] = useState<any>(null);
   const [filtroTipoDocumento, setFiltroTipoDocumento] = useState<string | null>(null);
+  const [filtroFattureEntrata, setFiltroFattureEntrata] = useState<string | null>(null);
   
   const { toast } = useToast();
 
@@ -1174,6 +1175,92 @@ const Fatture = () => {
         </TabsContent>
 
         <TabsContent value="entrata" className="space-y-4">
+          {/* Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card 
+              className={cn(
+                "border-primary/20 bg-primary-light cursor-pointer transition-all hover:shadow-md",
+                filtroFattureEntrata === null && "ring-2 ring-primary"
+              )}
+              onClick={() => setFiltroFattureEntrata(null)}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Totale Documenti {format(new Date(), 'MMMM yyyy', { locale: it })}
+                    </p>
+                    <p className="text-2xl font-bold">
+                      €{fattureInEntrata
+                        .filter(f => {
+                          const fatturaDate = new Date(f.data);
+                          const now = new Date();
+                          return fatturaDate.getMonth() === now.getMonth() && 
+                                 fatturaDate.getFullYear() === now.getFullYear();
+                        })
+                        .reduce((sum, f) => sum + (f.importo || 0), 0)
+                        .toFixed(2)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {fattureInEntrata.filter(f => {
+                        const fatturaDate = new Date(f.data);
+                        const now = new Date();
+                        return fatturaDate.getMonth() === now.getMonth() && 
+                               fatturaDate.getFullYear() === now.getFullYear();
+                      }).length} {fattureInEntrata.filter(f => {
+                        const fatturaDate = new Date(f.data);
+                        const now = new Date();
+                        return fatturaDate.getMonth() === now.getMonth() && 
+                               fatturaDate.getFullYear() === now.getFullYear();
+                      }).length === 1 ? 'documento' : 'documenti'}
+                    </p>
+                  </div>
+                  <FileText className="h-8 w-8 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className={cn(
+                "cursor-pointer transition-all hover:shadow-md",
+                filtroFattureEntrata === 'xml' && "ring-2 ring-primary"
+              )}
+              onClick={() => setFiltroFattureEntrata(filtroFattureEntrata === 'xml' ? null : 'xml')}
+            >
+              <CardContent className="p-6">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Fatture XML</p>
+                  <p className="text-2xl font-bold">
+                    {fattureInEntrata.filter(f => f.xml_path).length}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    €{fattureInEntrata.filter(f => f.xml_path).reduce((sum, f) => sum + (f.importo || 0), 0).toFixed(2)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className={cn(
+                "cursor-pointer transition-all hover:shadow-md",
+                filtroFattureEntrata === 'manuale' && "ring-2 ring-primary"
+              )}
+              onClick={() => setFiltroFattureEntrata(filtroFattureEntrata === 'manuale' ? null : 'manuale')}
+            >
+              <CardContent className="p-6">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Inserite Manualmente</p>
+                  <p className="text-2xl font-bold">
+                    {fattureInEntrata.filter(f => !f.xml_path).length}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    €{fattureInEntrata.filter(f => !f.xml_path).reduce((sum, f) => sum + (f.importo || 0), 0).toFixed(2)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <Card className="shadow-medical-sm">
             <CardHeader className="border-b bg-muted/50 flex flex-row items-center justify-between">
               <CardTitle>Documenti Ricevuti</CardTitle>
@@ -1217,7 +1304,13 @@ const Fatture = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {fattureInEntrata.map((fattura) => (
+                    {fattureInEntrata
+                      .filter(f => {
+                        if (filtroFattureEntrata === 'xml') return f.xml_path;
+                        if (filtroFattureEntrata === 'manuale') return !f.xml_path;
+                        return true;
+                      })
+                      .map((fattura) => (
                       <TableRow key={fattura.id}>
                         <TableCell className="font-medium">{fattura.numero}</TableCell>
                         <TableCell>{new Date(fattura.data).toLocaleDateString("it-IT")}</TableCell>
