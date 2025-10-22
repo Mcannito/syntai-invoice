@@ -940,12 +940,21 @@ const Fatture = () => {
         <TabsContent value="uscita" className="space-y-4">
           {/* Stats */}
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="border-primary/20 bg-primary-light">
+            <Card 
+              className={cn(
+                "border-primary/20 bg-primary-light cursor-pointer transition-all hover:shadow-md",
+                filtroTipoDocumento === null && "ring-2 ring-primary"
+              )}
+              onClick={() => setFiltroTipoDocumento(null)}
+            >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Totale Fatturato</p>
                     <p className="text-2xl font-bold">€{fatture.reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {fatture.length} {fatture.length === 1 ? 'documento' : 'documenti'}
+                    </p>
                   </div>
                   <FileText className="h-8 w-8 text-primary" />
                 </div>
