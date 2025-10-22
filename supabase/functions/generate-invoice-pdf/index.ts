@@ -69,14 +69,18 @@ Deno.serve(async (req) => {
 
     if (dettagliError) throw dettagliError;
 
-    // Fetch patient data
-    const { data: paziente, error: pazienteError } = await supabase
-      .from('pazienti')
-      .select('*')
-      .eq('id', fattura.paziente_id)
-      .single();
+    // Fetch patient data (if paziente_id exists)
+    let paziente = null;
+    if (fattura.paziente_id) {
+      const { data: pazienteData, error: pazienteError } = await supabase
+        .from('pazienti')
+        .select('*')
+        .eq('id', fattura.paziente_id)
+        .single();
 
-    if (pazienteError) throw pazienteError;
+      if (pazienteError) throw pazienteError;
+      paziente = pazienteData;
+    }
 
     // Fetch user settings
     const { data: settings, error: settingsError } = await supabase
@@ -355,13 +359,15 @@ function generateInvoiceHTML(
     <div class="party">
       <div class="party-title">Cliente</div>
       <div class="party-info">
-        <p><strong>${paziente.tipo_paziente === 'privato' ? `${paziente.nome} ${paziente.cognome || ''}` : paziente.ragione_sociale}</strong></p>
-        ${paziente.codice_fiscale ? `<p>C.F.: ${paziente.codice_fiscale}</p>` : ''}
-        ${paziente.partita_iva ? `<p>P.IVA: ${paziente.partita_iva}</p>` : ''}
-        ${paziente.indirizzo ? `<p>${paziente.indirizzo}</p>` : ''}
-        ${paziente.cap || paziente.citta ? `<p>${paziente.cap || ''} ${paziente.citta || ''}</p>` : ''}
-        ${paziente.email ? `<p>Email: ${paziente.email}</p>` : ''}
-        ${paziente.pec ? `<p>PEC: ${paziente.pec}</p>` : ''}
+        ${paziente ? `
+          <p><strong>${paziente.tipo_paziente === 'privato' ? `${paziente.nome} ${paziente.cognome || ''}` : paziente.ragione_sociale}</strong></p>
+          ${paziente.codice_fiscale ? `<p>C.F.: ${paziente.codice_fiscale}</p>` : ''}
+          ${paziente.partita_iva ? `<p>P.IVA: ${paziente.partita_iva}</p>` : ''}
+          ${paziente.indirizzo ? `<p>${paziente.indirizzo}</p>` : ''}
+          ${paziente.cap || paziente.citta ? `<p>${paziente.cap || ''} ${paziente.citta || ''}</p>` : ''}
+          ${paziente.email ? `<p>Email: ${paziente.email}</p>` : ''}
+          ${paziente.pec ? `<p>PEC: ${paziente.pec}</p>` : ''}
+        ` : '<p><em>Nessun cliente specificato</em></p>'}
       </div>
     </div>
   </div>
