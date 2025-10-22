@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil } from "lucide-react";
+import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -98,6 +98,8 @@ const Fatture = () => {
   const [inserisciFatturaInEntrataOpen, setInserisciFatturaInEntrataOpen] = useState(false);
   const [caricaXMLDialogOpen, setCaricaXMLDialogOpen] = useState(false);
   const [fatturaInEntrataToEdit, setFatturaInEntrataToEdit] = useState<any>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [fatturaToDelete, setFatturaToDelete] = useState<any>(null);
   
   const { toast } = useToast();
 
@@ -586,6 +588,39 @@ const Fatture = () => {
       toast({
         title: "Errore",
         description: "Impossibile aggiornare lo stato del pagamento",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteFatturaInEntrata = (fattura: any) => {
+    setFatturaToDelete(fattura);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!fatturaToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('fatture_in_entrata')
+        .delete()
+        .eq('id', fatturaToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Successo",
+        description: "Fattura eliminata correttamente",
+      });
+      loadFattureInEntrata();
+      setDeleteDialogOpen(false);
+      setFatturaToDelete(null);
+    } catch (error) {
+      console.error('Error deleting fattura:', error);
+      toast({
+        title: "Errore",
+        description: "Impossibile eliminare la fattura",
         variant: "destructive",
       });
     }
@@ -1162,6 +1197,15 @@ const Fatture = () => {
                                 <CheckCircle className="h-4 w-4" />
                               </Button>
                             )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteFatturaInEntrata(fattura)}
+                              title="Elimina fattura"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1712,6 +1756,29 @@ const Fatture = () => {
           loadFattureInEntrata();
         }}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Conferma Eliminazione</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sei sicuro di voler eliminare la fattura {fatturaToDelete?.numero}?
+              <br /><br />
+              Questa azione non può essere annullata.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Elimina
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
