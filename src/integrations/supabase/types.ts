@@ -76,20 +76,28 @@ export type Database = {
       }
       fatture: {
         Row: {
+          acube_error: string | null
+          acube_id: string | null
+          acube_status: string | null
           bollo_virtuale: number | null
           cassa_previdenziale: number | null
           contributo_integrativo: number | null
+          convertita_da_id: string | null
+          convertita_in_id: string | null
           created_at: string
           data: string
+          data_pagamento: string | null
           email_inviata: boolean | null
           fattura_originale_id: string | null
           id: string
           imponibile: number | null
           importo: number
+          invio_data: string | null
           iva_importo: number | null
           metodo_pagamento: string
           note: string | null
           numero: string
+          pagata: boolean | null
           paziente_id: string | null
           pdf_path: string | null
           ritenuta_acconto: number | null
@@ -105,20 +113,28 @@ export type Database = {
           xml_path: string | null
         }
         Insert: {
+          acube_error?: string | null
+          acube_id?: string | null
+          acube_status?: string | null
           bollo_virtuale?: number | null
           cassa_previdenziale?: number | null
           contributo_integrativo?: number | null
+          convertita_da_id?: string | null
+          convertita_in_id?: string | null
           created_at?: string
           data: string
+          data_pagamento?: string | null
           email_inviata?: boolean | null
           fattura_originale_id?: string | null
           id?: string
           imponibile?: number | null
           importo: number
+          invio_data?: string | null
           iva_importo?: number | null
           metodo_pagamento: string
           note?: string | null
           numero: string
+          pagata?: boolean | null
           paziente_id?: string | null
           pdf_path?: string | null
           ritenuta_acconto?: number | null
@@ -134,20 +150,28 @@ export type Database = {
           xml_path?: string | null
         }
         Update: {
+          acube_error?: string | null
+          acube_id?: string | null
+          acube_status?: string | null
           bollo_virtuale?: number | null
           cassa_previdenziale?: number | null
           contributo_integrativo?: number | null
+          convertita_da_id?: string | null
+          convertita_in_id?: string | null
           created_at?: string
           data?: string
+          data_pagamento?: string | null
           email_inviata?: boolean | null
           fattura_originale_id?: string | null
           id?: string
           imponibile?: number | null
           importo?: number
+          invio_data?: string | null
           iva_importo?: number | null
           metodo_pagamento?: string
           note?: string | null
           numero?: string
+          pagata?: boolean | null
           paziente_id?: string | null
           pdf_path?: string | null
           ritenuta_acconto?: number | null
@@ -163,6 +187,20 @@ export type Database = {
           xml_path?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fatture_convertita_da_fkey"
+            columns: ["convertita_da_id"]
+            isOneToOne: false
+            referencedRelation: "fatture"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fatture_convertita_in_fkey"
+            columns: ["convertita_in_id"]
+            isOneToOne: false
+            referencedRelation: "fatture"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fatture_paziente_id_fkey"
             columns: ["paziente_id"]
@@ -240,6 +278,7 @@ export type Database = {
           cap: string | null
           citta: string | null
           codice_destinatario: string | null
+          codice_destinatario_length: number | null
           codice_fiscale: string | null
           cognome: string | null
           created_at: string | null
@@ -259,6 +298,7 @@ export type Database = {
           cap?: string | null
           citta?: string | null
           codice_destinatario?: string | null
+          codice_destinatario_length?: number | null
           codice_fiscale?: string | null
           cognome?: string | null
           created_at?: string | null
@@ -278,6 +318,7 @@ export type Database = {
           cap?: string | null
           citta?: string | null
           codice_destinatario?: string | null
+          codice_destinatario_length?: number | null
           codice_fiscale?: string | null
           cognome?: string | null
           created_at?: string | null
