@@ -8,8 +8,7 @@ import {
   Settings,
   CreditCard,
   TrendingUp,
-  LogOut,
-  Send
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +20,6 @@ const navigation = [
   { name: "Pazienti", href: "/pazienti", icon: Users },
   { name: "Prestazioni", href: "/prestazioni", icon: Stethoscope },
   { name: "Calendario", href: "/calendario", icon: Calendar },
-  { name: "Sistema TS", href: "/contabilita/sistema-ts", icon: Send },
   { name: "Contabilità", href: "/contabilita", icon: FileText },
   { name: "Statistiche", href: "/statistiche", icon: TrendingUp },
   { name: "Pagamenti", href: "/pagamenti", icon: CreditCard },
