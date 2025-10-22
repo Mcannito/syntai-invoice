@@ -1100,8 +1100,26 @@ const Fatture = () => {
 
         <TabsContent value="entrata" className="space-y-4">
           <Card className="shadow-medical-sm">
-            <CardHeader className="border-b bg-muted/50">
+            <CardHeader className="border-b bg-muted/50 flex flex-row items-center justify-between">
               <CardTitle>Documenti Ricevuti</CardTitle>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCaricaXMLDialogOpen(true)}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Carica XML
+                </Button>
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setInserisciFatturaInEntrataOpen(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Inserisci Manualmente
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="p-6">
               {fattureInEntrata.length === 0 ? (
@@ -1109,22 +1127,6 @@ const Fatture = () => {
                   <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p className="text-lg font-medium mb-2">Nessun documento ricevuto</p>
                   <p className="text-sm">Carica le fatture elettroniche ricevute o inserisci manualmente le spese</p>
-                  <div className="flex gap-2 justify-center mt-6">
-                    <Button 
-                      variant="outline"
-                      onClick={() => setCaricaXMLDialogOpen(true)}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Carica XML
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => setInserisciFatturaInEntrataOpen(true)}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Inserisci Manualmente
-                    </Button>
-                  </div>
                 </div>
               ) : (
                 <Table>
