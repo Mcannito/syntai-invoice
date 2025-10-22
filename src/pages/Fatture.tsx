@@ -100,6 +100,7 @@ const Fatture = () => {
   const [fatturaInEntrataToEdit, setFatturaInEntrataToEdit] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fatturaToDelete, setFatturaToDelete] = useState<any>(null);
+  const [filtroTipoDocumento, setFiltroTipoDocumento] = useState<string | null>(null);
   
   const { toast } = useToast();
 
@@ -295,7 +296,18 @@ const Fatture = () => {
   const filteredFatture = fatture.filter(f => {
     const searchLower = searchTerm.toLowerCase();
     const pazienteNome = getPazienteDisplayName(f).toLowerCase();
-    return f.numero.toLowerCase().includes(searchLower) || pazienteNome.includes(searchLower);
+    const matchesSearch = f.numero.toLowerCase().includes(searchLower) || pazienteNome.includes(searchLower);
+    
+    let matchesTipo = true;
+    if (filtroTipoDocumento) {
+      if (filtroTipoDocumento === 'preventivo_proforma') {
+        matchesTipo = f.tipo_documento === 'preventivo' || f.tipo_documento === 'fattura_proforma';
+      } else {
+        matchesTipo = f.tipo_documento === filtroTipoDocumento;
+      }
+    }
+    
+    return matchesSearch && matchesTipo;
   });
 
   const getStatoBadge = (stato: string) => {
@@ -939,30 +951,62 @@ const Fatture = () => {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            
+            <Card 
+              className={cn(
+                "cursor-pointer transition-all hover:shadow-md",
+                filtroTipoDocumento === 'fattura_sanitaria' && "ring-2 ring-primary"
+              )}
+              onClick={() => setFiltroTipoDocumento(filtroTipoDocumento === 'fattura_sanitaria' ? null : 'fattura_sanitaria')}
+            >
               <CardContent className="p-6">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Fatture Emesse</p>
-                  <p className="text-2xl font-bold">{fatture.length}</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Da Inviare</p>
-                  <p className="text-2xl font-bold text-destructive">
-                    {fatture.filter(f => f.stato === "Da Inviare").length}
+                  <p className="text-sm font-medium text-muted-foreground">Fatture Sanitarie</p>
+                  <p className="text-2xl font-bold">
+                    {fatture.filter(f => f.tipo_documento === 'fattura_sanitaria').length}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    €{fatture.filter(f => f.tipo_documento === 'fattura_sanitaria').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
                   </p>
                 </div>
               </CardContent>
             </Card>
-            <Card>
+
+            <Card 
+              className={cn(
+                "cursor-pointer transition-all hover:shadow-md",
+                filtroTipoDocumento === 'fattura_elettronica_pg' && "ring-2 ring-primary"
+              )}
+              onClick={() => setFiltroTipoDocumento(filtroTipoDocumento === 'fattura_elettronica_pg' ? null : 'fattura_elettronica_pg')}
+            >
               <CardContent className="p-6">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Inviate</p>
-                  <p className="text-2xl font-bold text-secondary">
-                    {fatture.filter(f => f.stato.includes("Inviata")).length}
+                  <p className="text-sm font-medium text-muted-foreground">Fatture PG</p>
+                  <p className="text-2xl font-bold">
+                    {fatture.filter(f => f.tipo_documento === 'fattura_elettronica_pg').length}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    €{fatture.filter(f => f.tipo_documento === 'fattura_elettronica_pg').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className={cn(
+                "cursor-pointer transition-all hover:shadow-md",
+                filtroTipoDocumento === 'preventivo_proforma' && "ring-2 ring-primary"
+              )}
+              onClick={() => setFiltroTipoDocumento(filtroTipoDocumento === 'preventivo_proforma' ? null : 'preventivo_proforma')}
+            >
+              <CardContent className="p-6">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Preventivi/Proforma</p>
+                  <p className="text-2xl font-bold">
+                    {fatture.filter(f => f.tipo_documento === 'preventivo' || f.tipo_documento === 'fattura_proforma').length}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    €{fatture.filter(f => f.tipo_documento === 'preventivo' || f.tipo_documento === 'fattura_proforma').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
                   </p>
                 </div>
               </CardContent>
