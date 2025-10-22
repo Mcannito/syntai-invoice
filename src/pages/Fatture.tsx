@@ -950,10 +950,32 @@ const Fatture = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Totale Fatturato</p>
-                    <p className="text-2xl font-bold">€{fatture.reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}</p>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Fatturato {format(new Date(), 'MMMM yyyy', { locale: it })}
+                    </p>
+                    <p className="text-2xl font-bold">
+                      €{fatture
+                        .filter(f => {
+                          const fatturaDate = new Date(f.data);
+                          const now = new Date();
+                          return fatturaDate.getMonth() === now.getMonth() && 
+                                 fatturaDate.getFullYear() === now.getFullYear();
+                        })
+                        .reduce((sum, f) => sum + (f.totale || f.importo), 0)
+                        .toFixed(2)}
+                    </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {fatture.length} {fatture.length === 1 ? 'documento' : 'documenti'}
+                      {fatture.filter(f => {
+                        const fatturaDate = new Date(f.data);
+                        const now = new Date();
+                        return fatturaDate.getMonth() === now.getMonth() && 
+                               fatturaDate.getFullYear() === now.getFullYear();
+                      }).length} {fatture.filter(f => {
+                        const fatturaDate = new Date(f.data);
+                        const now = new Date();
+                        return fatturaDate.getMonth() === now.getMonth() && 
+                               fatturaDate.getFullYear() === now.getFullYear();
+                      }).length === 1 ? 'documento' : 'documenti'}
                     </p>
                   </div>
                   <FileText className="h-8 w-8 text-primary" />
