@@ -137,6 +137,30 @@ export const NuovaFatturaDialog = ({
     }
   }, [open, appuntamento, prestazioniPrecompilate]);
 
+  // Imposta automaticamente pazienteSelezionato e tipo documento quando pazienti è caricato
+  useEffect(() => {
+    if (pazienti.length > 0 && formData.paziente_id && !pazienteSelezionato) {
+      const paziente = pazienti.find(p => p.id === formData.paziente_id);
+      if (paziente) {
+        setPazienteSelezionato(paziente);
+        
+        // Imposta automaticamente il tipo documento in base al tipo paziente
+        if (paziente.tipo_paziente === "persona_fisica") {
+          setFormData(prev => ({ ...prev, tipo_documento: "fattura_sanitaria" }));
+        } else {
+          const length = paziente.codice_destinatario_length;
+          if (length === 6) {
+            setFormData(prev => ({ ...prev, tipo_documento: "fattura_elettronica_pa" }));
+          } else if (length === 7) {
+            setFormData(prev => ({ ...prev, tipo_documento: "fattura_elettronica_pg" }));
+          } else {
+            setFormData(prev => ({ ...prev, tipo_documento: "fattura_proforma" }));
+          }
+        }
+      }
+    }
+  }, [pazienti, formData.paziente_id, pazienteSelezionato]);
+
   const loadPazienti = async () => {
     try {
       const { data, error } = await supabase
