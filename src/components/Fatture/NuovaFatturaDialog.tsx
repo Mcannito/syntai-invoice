@@ -949,12 +949,12 @@ export const NuovaFatturaDialog = ({
                   <span className="font-semibold">€{totali.imponibile.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>IVA:</span>
-                  <span className="font-semibold">€{totali.iva_importo.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
                   <span>Rivalsa/Contributo Integrativo:</span>
                   <span className="font-semibold">€{tassazione.cassa_previdenziale.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>IVA:</span>
+                  <span className="font-semibold">€{totali.iva_importo.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Contributo Integrativo:</span>
