@@ -181,6 +181,81 @@ function generateInvoiceHTML(
   const fontSize = settings.pdf_template_font_size === 'small' ? '12px' : 
                    settings.pdf_template_font_size === 'large' ? '16px' : '14px';
   const logoPosition = settings.pdf_template_posizione_logo || 'left';
+  const layout = settings.pdf_template_layout || 'classic';
+
+  const getLayoutStyles = () => {
+    switch(layout) {
+      case 'modern':
+        return `
+          .header {
+            background: linear-gradient(135deg, ${primaryColor}15, ${primaryColor}05);
+            border-bottom: none;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+          }
+          .party {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+          }
+          .items-table th {
+            background: linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd);
+            border-radius: 4px 4px 0 0;
+          }
+          .payment-info {
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+          }
+        `;
+      case 'minimal':
+        return `
+          .header {
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 20px;
+          }
+          .party {
+            background: transparent;
+            border-left: 2px solid ${primaryColor};
+            padding-left: 15px;
+          }
+          .party-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+          }
+          .items-table th {
+            background: transparent;
+            color: ${primaryColor};
+            border-bottom: 2px solid ${primaryColor};
+            font-weight: 600;
+          }
+          .payment-info {
+            background: transparent;
+            border-left: 2px solid ${primaryColor};
+            padding-left: 15px;
+          }
+        `;
+      default: // classic
+        return `
+          .header {
+            border-bottom: 3px solid ${primaryColor};
+          }
+          .party {
+            background: #f8f9fa;
+            border-left: 4px solid ${primaryColor};
+          }
+          .items-table th {
+            background: ${primaryColor};
+          }
+          .payment-info {
+            background: #f8f9fa;
+            border-radius: 5px;
+          }
+        `;
+    }
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('it-IT', {
@@ -224,8 +299,6 @@ function generateInvoiceHTML(
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 3px solid ${primaryColor};
     }
     .logo-container {
       text-align: ${logoPosition};
@@ -256,8 +329,6 @@ function generateInvoiceHTML(
     }
     .party {
       padding: 15px;
-      background: #f8f9fa;
-      border-left: 4px solid ${primaryColor};
     }
     .party-title {
       font-weight: bold;
@@ -274,7 +345,6 @@ function generateInvoiceHTML(
       margin-bottom: 30px;
     }
     .items-table th {
-      background: ${primaryColor};
       color: white;
       padding: 12px;
       text-align: left;
@@ -310,9 +380,7 @@ function generateInvoiceHTML(
       margin-top: 10px;
     }
     .payment-info {
-      background: #f8f9fa;
       padding: 20px;
-      border-radius: 5px;
       margin-bottom: 20px;
     }
     .payment-info h3 {
@@ -327,6 +395,7 @@ function generateInvoiceHTML(
       margin-top: 40px;
       font-size: 12px;
     }
+    ${getLayoutStyles()}
   </style>
 </head>
 <body>

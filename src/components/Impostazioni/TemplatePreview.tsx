@@ -22,17 +22,107 @@ export default function TemplatePreview({ settings, logoUrl }: TemplatePreviewPr
   const fontSize = settings.pdf_template_font_size === 'small' ? '0.75rem' : 
                    settings.pdf_template_font_size === 'large' ? '0.95rem' : '0.875rem';
   const logoPosition = settings.pdf_template_posizione_logo || 'left';
+  const layout = settings.pdf_template_layout || 'classic';
 
   const justifyContent = logoPosition === 'center' ? 'center' : 
                          logoPosition === 'right' ? 'flex-end' : 'flex-start';
+
+  const getHeaderStyle = () => {
+    switch(layout) {
+      case 'modern':
+        return {
+          background: `linear-gradient(135deg, ${primaryColor}15, ${primaryColor}05)`,
+          borderBottom: 'none',
+          borderRadius: '8px',
+          padding: '1rem'
+        };
+      case 'minimal':
+        return {
+          borderBottom: '1px solid #e0e0e0',
+          paddingBottom: '1rem'
+        };
+      default: // classic
+        return {
+          borderBottom: `3px solid ${primaryColor}`,
+          paddingBottom: '1rem'
+        };
+    }
+  };
+
+  const getPartyStyle = () => {
+    switch(layout) {
+      case 'modern':
+        return {
+          backgroundColor: 'white',
+          border: '1px solid #e0e0e0',
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+          borderLeft: 'none'
+        };
+      case 'minimal':
+        return {
+          backgroundColor: 'transparent',
+          borderLeft: `2px solid ${primaryColor}`,
+          paddingLeft: '1rem'
+        };
+      default: // classic
+        return {
+          backgroundColor: '#f8f9fa',
+          borderLeft: `4px solid ${primaryColor}`
+        };
+    }
+  };
+
+  const getTableHeaderStyle = () => {
+    switch(layout) {
+      case 'modern':
+        return {
+          background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd)`,
+          color: 'white',
+          borderRadius: '4px 4px 0 0'
+        };
+      case 'minimal':
+        return {
+          backgroundColor: 'transparent',
+          color: primaryColor,
+          borderBottom: `2px solid ${primaryColor}`
+        };
+      default: // classic
+        return {
+          backgroundColor: primaryColor,
+          color: 'white'
+        };
+    }
+  };
+
+  const getPaymentStyle = () => {
+    switch(layout) {
+      case 'modern':
+        return {
+          backgroundColor: 'white',
+          border: '1px solid #e0e0e0',
+          borderRadius: '8px'
+        };
+      case 'minimal':
+        return {
+          backgroundColor: 'transparent',
+          borderLeft: `2px solid ${primaryColor}`,
+          paddingLeft: '1rem'
+        };
+      default: // classic
+        return {
+          backgroundColor: '#f8f9fa'
+        };
+    }
+  };
 
   return (
     <Card className="p-6 bg-white shadow-lg">
       <div className="space-y-4" style={{ fontSize }}>
         {/* Header */}
         <div 
-          className="flex justify-between items-start pb-4"
-          style={{ borderBottom: `3px solid ${primaryColor}` }}
+          className="flex justify-between items-start"
+          style={getHeaderStyle()}
         >
           {settings.pdf_template_mostra_logo && (
             <div style={{ display: 'flex', justifyContent, width: '100%' }}>
@@ -68,10 +158,7 @@ export default function TemplatePreview({ settings, logoUrl }: TemplatePreviewPr
         <div className="grid grid-cols-2 gap-4">
           <div 
             className="p-3 rounded"
-            style={{ 
-              backgroundColor: '#f8f9fa',
-              borderLeft: `4px solid ${primaryColor}`
-            }}
+            style={getPartyStyle()}
           >
             <div 
               className="font-bold mb-2"
@@ -89,10 +176,7 @@ export default function TemplatePreview({ settings, logoUrl }: TemplatePreviewPr
 
           <div 
             className="p-3 rounded"
-            style={{ 
-              backgroundColor: '#f8f9fa',
-              borderLeft: `4px solid ${primaryColor}`
-            }}
+            style={getPartyStyle()}
           >
             <div 
               className="font-bold mb-2"
@@ -112,7 +196,7 @@ export default function TemplatePreview({ settings, logoUrl }: TemplatePreviewPr
         {/* Items Table */}
         <table className="w-full text-xs border-collapse">
           <thead>
-            <tr style={{ backgroundColor: primaryColor, color: 'white' }}>
+            <tr style={getTableHeaderStyle()}>
               <th className="p-2 text-left">Descrizione</th>
               <th className="p-2 text-right">Qtà</th>
               <th className="p-2 text-right">Prezzo</th>
@@ -150,7 +234,7 @@ export default function TemplatePreview({ settings, logoUrl }: TemplatePreviewPr
         {/* Payment Info */}
         <div 
           className="p-3 rounded text-xs"
-          style={{ backgroundColor: '#f8f9fa' }}
+          style={getPaymentStyle()}
         >
           <div 
             className="font-bold mb-1"
