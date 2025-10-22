@@ -47,6 +47,7 @@ export const NuovaFatturaDialog = ({
   const [loading, setLoading] = useState(false);
   const [pazienti, setPazienti] = useState<any[]>([]);
   const [prestazioni, setPrestazioni] = useState<any[]>([]);
+  const [userSettings, setUserSettings] = useState<any>(null);
   const { toast } = useToast();
 
   // Usa lo stato controllato se fornito, altrimenti usa lo stato interno
@@ -124,13 +125,79 @@ export const NuovaFatturaDialog = ({
     return 0;
   };
 
+  const loadUserSettings = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      if (data) {
+        setUserSettings(data);
+        
+        // Imposta i valori di default per la tassazione
+        const cassaPrevidenziale = data.rivalsa_attiva 
+          ? (data.rivalsa_percentuale || 4) 
+          : 0;
+        
+        const ritenutaAcconto = data.ritenuta_attiva 
+          ? (data.ritenuta_aliquota || 20) 
+          : 0;
+        
+        const bolloVirtuale = (data.bollo_attivo && data.bollo_virtuale) 
+          ? (data.bollo_importo || 2.00) 
+          : 0;
+        
+        setTassazione({
+          cassa_previdenziale: cassaPrevidenziale,
+          ritenuta_acconto: ritenutaAcconto,
+          contributo_integrativo: 0,
+          bollo_virtuale: bolloVirtuale,
+        });
+      }
+    } catch (error) {
+      console.error("Error loading user settings:", error);
+    }
+  };
+
   useEffect(() => {
     if (open) {
       loadPazienti();
       loadPrestazioni();
       generateNumeroFattura();
+      loadUserSettings();
     }
   }, [open]);
+
+  // Reset tassazione ai valori di default quando si chiude il dialog
+  useEffect(() => {
+    if (!open && userSettings) {
+      const cassaPrevidenziale = userSettings.rivalsa_attiva 
+        ? (userSettings.rivalsa_percentuale || 4) 
+        : 0;
+      
+      const ritenutaAcconto = userSettings.ritenuta_attiva 
+        ? (userSettings.ritenuta_aliquota || 20) 
+        : 0;
+      
+      const bolloVirtuale = (userSettings.bollo_attivo && userSettings.bollo_virtuale) 
+        ? (userSettings.bollo_importo || 2.00) 
+        : 0;
+      
+      setTassazione({
+        cassa_previdenziale: cassaPrevidenziale,
+        ritenuta_acconto: ritenutaAcconto,
+        contributo_integrativo: 0,
+        bollo_virtuale: bolloVirtuale,
+      });
+    }
+  }, [open, userSettings]);
 
   // Gestisce la precompilazione separatamente dopo che pazienti sono caricati
   useEffect(() => {
