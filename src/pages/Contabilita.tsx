@@ -1,7 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Send, Euro, TrendingUp, Calendar, FileDown } from "lucide-react";
+import { FileText, Send, Euro, TrendingUp, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
+import { InvioCommercialistaDialog } from "@/components/Contabilita/InvioCommercialistaDialog";
 
 const Contabilita = () => {
   return (
@@ -182,33 +183,39 @@ const Contabilita = () => {
         </Card>
       </div>
 
-      {/* Report */}
+      {/* Invio Commercialista */}
       <Card className="shadow-medical-sm">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Report e Esportazioni</h3>
-            <Button variant="outline" size="sm">
-              <FileDown className="h-4 w-4 mr-2" />
-              Esporta Report
-            </Button>
+            <div>
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Send className="h-5 w-5 text-primary" />
+                Invio Contabilità al Commercialista
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Configura l'invio automatico dei documenti contabili
+              </p>
+            </div>
+            <InvioCommercialistaDialog />
           </div>
-          <div className="grid gap-3 md:grid-cols-4">
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2">
-              <FileText className="h-6 w-6" />
-              <span className="text-xs">Registro IVA</span>
-            </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2">
-              <FileText className="h-6 w-6" />
-              <span className="text-xs">Liquidazione IVA</span>
-            </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2">
-              <FileText className="h-6 w-6" />
-              <span className="text-xs">Riepilogo TS</span>
-            </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2">
-              <FileText className="h-6 w-6" />
-              <span className="text-xs">Corrispettivi</span>
-            </Button>
+          
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <div className="p-4 rounded-lg bg-muted/50 space-y-1">
+              <p className="text-xs text-muted-foreground">Email Configurata</p>
+              <p className="text-sm font-medium">Nessuna</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50 space-y-1">
+              <p className="text-xs text-muted-foreground">Frequenza Invio</p>
+              <p className="text-sm font-medium">Non impostata</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50 space-y-1">
+              <p className="text-xs text-muted-foreground">Ultimo Invio</p>
+              <p className="text-sm font-medium">Mai</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50 space-y-1">
+              <p className="text-xs text-muted-foreground">Prossimo Invio</p>
+              <p className="text-sm font-medium">-</p>
+            </div>
           </div>
         </CardContent>
       </Card>
