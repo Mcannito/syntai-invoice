@@ -428,41 +428,62 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          albo_nome: string | null
+          albo_numero: string | null
           aliquota_cassa: number | null
           cassa_previdenziale: string | null
+          cognome: string | null
           created_at: string
           iban: string | null
           id: string
           logo_path: string | null
           metodo_pagamento_default: string | null
+          nome: string | null
+          pec: string | null
           regime_fiscale: string | null
           ritenuta_acconto: number | null
+          sesso: string | null
+          tipo_persona: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          albo_nome?: string | null
+          albo_numero?: string | null
           aliquota_cassa?: number | null
           cassa_previdenziale?: string | null
+          cognome?: string | null
           created_at?: string
           iban?: string | null
           id?: string
           logo_path?: string | null
           metodo_pagamento_default?: string | null
+          nome?: string | null
+          pec?: string | null
           regime_fiscale?: string | null
           ritenuta_acconto?: number | null
+          sesso?: string | null
+          tipo_persona?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          albo_nome?: string | null
+          albo_numero?: string | null
           aliquota_cassa?: number | null
           cassa_previdenziale?: string | null
+          cognome?: string | null
           created_at?: string
           iban?: string | null
           id?: string
           logo_path?: string | null
           metodo_pagamento_default?: string | null
+          nome?: string | null
+          pec?: string | null
           regime_fiscale?: string | null
           ritenuta_acconto?: number | null
+          sesso?: string | null
+          tipo_persona?: string | null
           updated_at?: string
           user_id?: string
         }

@@ -52,6 +52,45 @@ const Impostazioni = () => {
     }
   };
 
+  const handleSaveSettings = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const formData = new FormData(e.currentTarget);
+      
+      const { error } = await supabase
+        .from("user_settings")
+        .upsert({
+          user_id: user.id,
+          tipo_persona: formData.get("tipo_persona") as string,
+          sesso: formData.get("sesso") as string,
+          nome: formData.get("nome") as string,
+          cognome: formData.get("cognome") as string,
+          albo_nome: formData.get("albo_nome") as string,
+          albo_numero: formData.get("albo_numero") as string,
+          pec: formData.get("pec") as string,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Successo",
+        description: "Impostazioni salvate con successo",
+      });
+
+      await loadSettings();
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile salvare le impostazioni",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
@@ -170,108 +209,144 @@ const Impostazioni = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-6 p-6">
-          {/* Logo */}
-          <div className="space-y-4">
-            <div>
-              <Label>Logo Studio</Label>
-              <p className="text-sm text-muted-foreground">
-                Verrà utilizzato per personalizzare fatture e documenti
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              {logo ? (
-                <div className="flex items-center gap-4">
-                  <div className="relative w-32 h-32 border rounded-lg overflow-hidden bg-muted">
-                    <img
-                      src={logo}
-                      alt="Logo"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="logo-upload" className="cursor-pointer">
-                      <Button variant="outline" size="sm" asChild>
-                        <span>
-                          <Upload className="h-4 w-4 mr-2" />
-                          Cambia Logo
-                        </span>
+          <form onSubmit={handleSaveSettings}>
+            {/* Logo */}
+            <div className="space-y-4">
+              <div>
+                <Label>Logo Studio</Label>
+                <p className="text-sm text-muted-foreground">
+                  Verrà utilizzato per personalizzare fatture e documenti
+                </p>
+              </div>
+              <div className="flex items-center gap-4">
+                {logo ? (
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-32 h-32 border rounded-lg overflow-hidden bg-muted">
+                      <img
+                        src={logo}
+                        alt="Logo"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="logo-upload" className="cursor-pointer">
+                        <Button variant="outline" size="sm" asChild>
+                          <span>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Cambia Logo
+                          </span>
+                        </Button>
+                      </Label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRemoveLogo}
+                        type="button"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Rimuovi
                       </Button>
-                    </Label>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRemoveLogo}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Rimuovi
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Label htmlFor="logo-upload" className="cursor-pointer">
-                  <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="text-center">
-                      <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">Carica Logo</p>
                     </div>
                   </div>
-                </Label>
-              )}
-              <Input
-                id="logo-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleLogoUpload}
-                disabled={uploading}
-              />
+                ) : (
+                  <Label htmlFor="logo-upload" className="cursor-pointer">
+                    <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="text-center">
+                        <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Carica Logo</p>
+                      </div>
+                    </div>
+                  </Label>
+                )}
+                <Input
+                  id="logo-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleLogoUpload}
+                  disabled={uploading}
+                />
+              </div>
             </div>
-          </div>
 
-          <Separator />
+            <Separator />
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="nome">Nome e Cognome *</Label>
-              <Input id="nome" placeholder="Dr. Mario Rossi" defaultValue="Dr. Mario Rossi" />
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="tipo_persona">Tipo Persona *</Label>
+                <Select name="tipo_persona" defaultValue={settings?.tipo_persona || "fisica"}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleziona tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fisica">Persona Fisica</SelectItem>
+                    <SelectItem value="giuridica">Persona Giuridica</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sesso">Sesso</Label>
+                <Select name="sesso" defaultValue={settings?.sesso || ""}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleziona sesso" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="M">Maschio</SelectItem>
+                    <SelectItem value="F">Femmina</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nome">Nome *</Label>
+                <Input 
+                  name="nome" 
+                  placeholder="Mario" 
+                  defaultValue={settings?.nome || ""} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cognome">Cognome *</Label>
+                <Input 
+                  name="cognome" 
+                  placeholder="Rossi" 
+                  defaultValue={settings?.cognome || ""} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="albo_nome">Nome Albo</Label>
+                <Input 
+                  name="albo_nome" 
+                  placeholder="Ordine dei Medici" 
+                  defaultValue={settings?.albo_nome || ""} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="albo_numero">Numero Iscrizione Albo</Label>
+                <Input 
+                  name="albo_numero" 
+                  placeholder="12345" 
+                  defaultValue={settings?.albo_numero || ""} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pec">PEC</Label>
+                <Input 
+                  name="pec" 
+                  type="email" 
+                  placeholder="pec@studio.it" 
+                  defaultValue={settings?.pec || ""} 
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="qualifica">Qualifica</Label>
-              <Input id="qualifica" placeholder="Medico Chirurgo" defaultValue="Medico Chirurgo" />
+
+            {/* Azioni */}
+            <div className="flex justify-end gap-4 pt-6">
+              <Button type="button" variant="outline">Annulla</Button>
+              <Button type="submit">Salva Modifiche</Button>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="cf">Codice Fiscale *</Label>
-              <Input id="cf" placeholder="RSSMRA80A01H501Z" defaultValue="RSSMRA80A01H501Z" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="piva">Partita IVA *</Label>
-              <Input id="piva" placeholder="12345678901" defaultValue="12345678901" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="indirizzo">Indirizzo Studio</Label>
-              <Input id="indirizzo" placeholder="Via Roma, 123" defaultValue="Via Roma, 123" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="citta">Città e CAP</Label>
-              <Input id="citta" placeholder="Milano, 20121" defaultValue="Milano, 20121" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="telefono">Telefono</Label>
-              <Input id="telefono" placeholder="+39 02 12345678" defaultValue="+39 02 12345678" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="studio@email.it" defaultValue="studio@email.it" />
-            </div>
-          </div>
+          </form>
         </CardContent>
       </Card>
-
-      {/* Azioni */}
-      <div className="flex justify-end gap-4">
-        <Button variant="outline">Annulla</Button>
-        <Button>Salva Modifiche</Button>
-      </div>
     </div>
   );
 };
