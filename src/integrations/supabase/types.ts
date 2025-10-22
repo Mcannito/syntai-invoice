@@ -432,17 +432,24 @@ export type Database = {
           albo_numero: string | null
           aliquota_cassa: number | null
           cassa_previdenziale: string | null
+          citta: string | null
+          codice_fiscale: string | null
           cognome: string | null
           created_at: string
+          email: string | null
           iban: string | null
           id: string
+          indirizzo: string | null
           logo_path: string | null
           metodo_pagamento_default: string | null
           nome: string | null
+          partita_iva: string | null
           pec: string | null
+          qualifica: string | null
           regime_fiscale: string | null
           ritenuta_acconto: number | null
           sesso: string | null
+          telefono: string | null
           tipo_persona: string | null
           updated_at: string
           user_id: string
@@ -452,17 +459,24 @@ export type Database = {
           albo_numero?: string | null
           aliquota_cassa?: number | null
           cassa_previdenziale?: string | null
+          citta?: string | null
+          codice_fiscale?: string | null
           cognome?: string | null
           created_at?: string
+          email?: string | null
           iban?: string | null
           id?: string
+          indirizzo?: string | null
           logo_path?: string | null
           metodo_pagamento_default?: string | null
           nome?: string | null
+          partita_iva?: string | null
           pec?: string | null
+          qualifica?: string | null
           regime_fiscale?: string | null
           ritenuta_acconto?: number | null
           sesso?: string | null
+          telefono?: string | null
           tipo_persona?: string | null
           updated_at?: string
           user_id: string
@@ -472,17 +486,24 @@ export type Database = {
           albo_numero?: string | null
           aliquota_cassa?: number | null
           cassa_previdenziale?: string | null
+          citta?: string | null
+          codice_fiscale?: string | null
           cognome?: string | null
           created_at?: string
+          email?: string | null
           iban?: string | null
           id?: string
+          indirizzo?: string | null
           logo_path?: string | null
           metodo_pagamento_default?: string | null
           nome?: string | null
+          partita_iva?: string | null
           pec?: string | null
+          qualifica?: string | null
           regime_fiscale?: string | null
           ritenuta_acconto?: number | null
           sesso?: string | null
+          telefono?: string | null
           tipo_persona?: string | null
           updated_at?: string
           user_id?: string

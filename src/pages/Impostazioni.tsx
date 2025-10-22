@@ -68,8 +68,15 @@ const Impostazioni = () => {
           sesso: formData.get("sesso") as string,
           nome: formData.get("nome") as string,
           cognome: formData.get("cognome") as string,
+          qualifica: formData.get("qualifica") as string,
+          codice_fiscale: formData.get("codice_fiscale") as string,
+          partita_iva: formData.get("partita_iva") as string,
           albo_nome: formData.get("albo_nome") as string,
           albo_numero: formData.get("albo_numero") as string,
+          indirizzo: formData.get("indirizzo") as string,
+          citta: formData.get("citta") as string,
+          telefono: formData.get("telefono") as string,
+          email: formData.get("email") as string,
           pec: formData.get("pec") as string,
         });
 
@@ -271,71 +278,159 @@ const Impostazioni = () => {
 
             <Separator />
 
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="tipo_persona">Tipo Persona *</Label>
-                <Select name="tipo_persona" defaultValue={settings?.tipo_persona || "fisica"}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleziona tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="fisica">Persona Fisica</SelectItem>
-                    <SelectItem value="giuridica">Persona Giuridica</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Dati Anagrafici */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Dati Anagrafici</h3>
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="tipo_persona">Tipo Persona *</Label>
+                  <Select name="tipo_persona" defaultValue={settings?.tipo_persona || "fisica"}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleziona tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fisica">Persona Fisica</SelectItem>
+                      <SelectItem value="giuridica">Persona Giuridica</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sesso">Sesso</Label>
+                  <Select name="sesso" defaultValue={settings?.sesso || ""}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleziona sesso" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="M">Maschio</SelectItem>
+                      <SelectItem value="F">Femmina</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nome">Nome *</Label>
+                  <Input 
+                    name="nome" 
+                    placeholder="Mario" 
+                    defaultValue={settings?.nome || ""} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cognome">Cognome *</Label>
+                  <Input 
+                    name="cognome" 
+                    placeholder="Rossi" 
+                    defaultValue={settings?.cognome || ""} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="qualifica">Qualifica</Label>
+                  <Input 
+                    name="qualifica" 
+                    placeholder="Medico Chirurgo" 
+                    defaultValue={settings?.qualifica || ""} 
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="sesso">Sesso</Label>
-                <Select name="sesso" defaultValue={settings?.sesso || ""}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleziona sesso" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="M">Maschio</SelectItem>
-                    <SelectItem value="F">Femmina</SelectItem>
-                  </SelectContent>
-                </Select>
+            </div>
+
+            <Separator />
+
+            {/* Dati Fiscali */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Dati Fiscali</h3>
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="codice_fiscale">Codice Fiscale *</Label>
+                  <Input 
+                    name="codice_fiscale" 
+                    placeholder="RSSMRA80A01H501Z" 
+                    defaultValue={settings?.codice_fiscale || ""} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="partita_iva">Partita IVA *</Label>
+                  <Input 
+                    name="partita_iva" 
+                    placeholder="12345678901" 
+                    defaultValue={settings?.partita_iva || ""} 
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="nome">Nome *</Label>
-                <Input 
-                  name="nome" 
-                  placeholder="Mario" 
-                  defaultValue={settings?.nome || ""} 
-                />
+            </div>
+
+            <Separator />
+
+            {/* Iscrizione Albo */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Iscrizione Albo</h3>
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="albo_nome">Nome Albo</Label>
+                  <Input 
+                    name="albo_nome" 
+                    placeholder="Ordine dei Medici" 
+                    defaultValue={settings?.albo_nome || ""} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="albo_numero">Numero Iscrizione</Label>
+                  <Input 
+                    name="albo_numero" 
+                    placeholder="12345" 
+                    defaultValue={settings?.albo_numero || ""} 
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="cognome">Cognome *</Label>
-                <Input 
-                  name="cognome" 
-                  placeholder="Rossi" 
-                  defaultValue={settings?.cognome || ""} 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="albo_nome">Nome Albo</Label>
-                <Input 
-                  name="albo_nome" 
-                  placeholder="Ordine dei Medici" 
-                  defaultValue={settings?.albo_nome || ""} 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="albo_numero">Numero Iscrizione Albo</Label>
-                <Input 
-                  name="albo_numero" 
-                  placeholder="12345" 
-                  defaultValue={settings?.albo_numero || ""} 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="pec">PEC</Label>
-                <Input 
-                  name="pec" 
-                  type="email" 
-                  placeholder="pec@studio.it" 
-                  defaultValue={settings?.pec || ""} 
-                />
+            </div>
+
+            <Separator />
+
+            {/* Contatti e Sede */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Contatti e Sede</h3>
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="indirizzo">Indirizzo Studio</Label>
+                  <Input 
+                    name="indirizzo" 
+                    placeholder="Via Roma, 123" 
+                    defaultValue={settings?.indirizzo || ""} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="citta">Città e CAP</Label>
+                  <Input 
+                    name="citta" 
+                    placeholder="Milano, 20121" 
+                    defaultValue={settings?.citta || ""} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="telefono">Telefono</Label>
+                  <Input 
+                    name="telefono" 
+                    placeholder="+39 02 12345678" 
+                    defaultValue={settings?.telefono || ""} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input 
+                    name="email" 
+                    type="email" 
+                    placeholder="studio@email.it" 
+                    defaultValue={settings?.email || ""} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pec">PEC</Label>
+                  <Input 
+                    name="pec" 
+                    type="email" 
+                    placeholder="pec@studio.it" 
+                    defaultValue={settings?.pec || ""} 
+                  />
+                </div>
               </div>
             </div>
 
