@@ -282,6 +282,75 @@ export type Database = {
           },
         ]
       }
+      fatture_in_entrata: {
+        Row: {
+          categoria: string | null
+          codice_fiscale: string | null
+          created_at: string
+          data: string
+          data_pagamento: string | null
+          descrizione: string | null
+          fornitore: string
+          id: string
+          imponibile: number
+          importo: number
+          iva_importo: number | null
+          metodo_pagamento: string | null
+          note: string | null
+          numero: string
+          pagata: boolean | null
+          partita_iva: string | null
+          pdf_path: string | null
+          updated_at: string
+          user_id: string
+          xml_path: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          codice_fiscale?: string | null
+          created_at?: string
+          data: string
+          data_pagamento?: string | null
+          descrizione?: string | null
+          fornitore: string
+          id?: string
+          imponibile: number
+          importo: number
+          iva_importo?: number | null
+          metodo_pagamento?: string | null
+          note?: string | null
+          numero: string
+          pagata?: boolean | null
+          partita_iva?: string | null
+          pdf_path?: string | null
+          updated_at?: string
+          user_id: string
+          xml_path?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          codice_fiscale?: string | null
+          created_at?: string
+          data?: string
+          data_pagamento?: string | null
+          descrizione?: string | null
+          fornitore?: string
+          id?: string
+          imponibile?: number
+          importo?: number
+          iva_importo?: number | null
+          metodo_pagamento?: string | null
+          note?: string | null
+          numero?: string
+          pagata?: boolean | null
+          partita_iva?: string | null
+          pdf_path?: string | null
+          updated_at?: string
+          user_id?: string
+          xml_path?: string | null
+        }
+        Relationships: []
+      }
       pazienti: {
         Row: {
           cap: string | null

@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { NuovaFatturaDialog } from "@/components/Fatture/NuovaFatturaDialog";
+import { InserisciFatturaInEntrataDialog } from "@/components/Fatture/InserisciFatturaInEntrataDialog";
 import {
   Table,
   TableBody,
@@ -92,6 +93,8 @@ const Fatture = () => {
   const [iban, setIban] = useState('');
   const [bicSwift, setBicSwift] = useState('');
   const [altroMetodo, setAltroMetodo] = useState('');
+  const [fattureInEntrata, setFattureInEntrata] = useState<any[]>([]);
+  const [inserisciFatturaInEntrataOpen, setInserisciFatturaInEntrataOpen] = useState(false);
   
   const { toast } = useToast();
 
@@ -247,9 +250,23 @@ const Fatture = () => {
       setPrestazioniDaFatturare(data || []);
     } catch (error) {
       console.error("Error loading prestazioni da fatturare:", error);
+    }
+  };
+
+  const loadFattureInEntrata = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("fatture_in_entrata")
+        .select("*")
+        .order("data", { ascending: false });
+
+      if (error) throw error;
+      setFattureInEntrata(data || []);
+    } catch (error) {
+      console.error("Error loading fatture in entrata:", error);
       toast({
         title: "Errore",
-        description: "Impossibile caricare le prestazioni da fatturare",
+        description: "Impossibile caricare le fatture in entrata",
         variant: "destructive",
       });
     }
@@ -259,6 +276,7 @@ const Fatture = () => {
     loadFatture();
     loadPrestazioniDaFatturare();
     loadUserSettings();
+    loadFattureInEntrata();
   }, []);
 
   const getPazienteDisplayName = (fattura: any) => {
@@ -1054,21 +1072,91 @@ const Fatture = () => {
               </div>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="text-center py-12 text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium mb-2">Nessun documento ricevuto</p>
-                <p className="text-sm">Carica le fatture elettroniche ricevute o inserisci manualmente le spese</p>
-                <div className="flex gap-2 justify-center mt-6">
-                  <Button variant="outline">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Carica XML
-                  </Button>
-                  <Button variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Inserisci Manualmente
-                  </Button>
+              {fattureInEntrata.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">Nessun documento ricevuto</p>
+                  <p className="text-sm">Carica le fatture elettroniche ricevute o inserisci manualmente le spese</p>
+                  <div className="flex gap-2 justify-center mt-6">
+                    <Button variant="outline">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Carica XML
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setInserisciFatturaInEntrataOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Inserisci Manualmente
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Numero</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Fornitore</TableHead>
+                      <TableHead>Categoria</TableHead>
+                      <TableHead>Importo</TableHead>
+                      <TableHead>Stato</TableHead>
+                      <TableHead className="text-right">Azioni</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {fattureInEntrata.map((fattura) => (
+                      <TableRow key={fattura.id}>
+                        <TableCell className="font-medium">{fattura.numero}</TableCell>
+                        <TableCell>{new Date(fattura.data).toLocaleDateString("it-IT")}</TableCell>
+                        <TableCell>{fattura.fornitore}</TableCell>
+                        <TableCell>
+                          {fattura.categoria ? (
+                            <Badge variant="outline" className="capitalize">
+                              {fattura.categoria.replace('-', ' ')}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>€ {fattura.importo?.toFixed(2)}</TableCell>
+                        <TableCell>
+                          {fattura.pagata ? (
+                            <Badge className="bg-green-500">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Pagata
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                              Da Pagare
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {!fattura.pagata && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -1588,6 +1676,14 @@ const Fatture = () => {
         prestazioniPrecompilate={prestazioniPerFattura}
         metodiPagamento={Array.from(metodiPagamento)}
         trigger={<span style={{ display: 'none' }} />}
+      />
+
+      <InserisciFatturaInEntrataDialog
+        open={inserisciFatturaInEntrataOpen}
+        onOpenChange={setInserisciFatturaInEntrataOpen}
+        onSuccess={() => {
+          loadFattureInEntrata();
+        }}
       />
     </div>
   );

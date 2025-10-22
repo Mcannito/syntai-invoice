@@ -1,0 +1,305 @@
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+
+interface InserisciFatturaInEntrataDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+}
+
+export function InserisciFatturaInEntrataDialog({ 
+  open, 
+  onOpenChange, 
+  onSuccess 
+}: InserisciFatturaInEntrataDialogProps) {
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    numero: "",
+    data: new Date().toISOString().split('T')[0],
+    fornitore: "",
+    partita_iva: "",
+    codice_fiscale: "",
+    imponibile: "",
+    iva_importo: "",
+    descrizione: "",
+    categoria: "",
+    metodo_pagamento: "bonifico",
+    pagata: false,
+    data_pagamento: "",
+    note: ""
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Utente non autenticato");
+
+      const imponibile = parseFloat(formData.imponibile) || 0;
+      const iva = parseFloat(formData.iva_importo) || 0;
+      const totale = imponibile + iva;
+
+      const { error } = await supabase
+        .from('fatture_in_entrata')
+        .insert({
+          user_id: user.id,
+          numero: formData.numero,
+          data: formData.data,
+          fornitore: formData.fornitore,
+          partita_iva: formData.partita_iva || null,
+          codice_fiscale: formData.codice_fiscale || null,
+          imponibile,
+          iva_importo: iva,
+          importo: totale,
+          descrizione: formData.descrizione || null,
+          categoria: formData.categoria || null,
+          metodo_pagamento: formData.metodo_pagamento || null,
+          pagata: formData.pagata,
+          data_pagamento: formData.pagata && formData.data_pagamento ? formData.data_pagamento : null,
+          note: formData.note || null
+        });
+
+      if (error) throw error;
+
+      toast.success("Fattura in entrata inserita con successo");
+      onSuccess();
+      onOpenChange(false);
+      resetForm();
+    } catch (error: any) {
+      console.error("Errore inserimento fattura in entrata:", error);
+      toast.error("Errore durante l'inserimento della fattura");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      numero: "",
+      data: new Date().toISOString().split('T')[0],
+      fornitore: "",
+      partita_iva: "",
+      codice_fiscale: "",
+      imponibile: "",
+      iva_importo: "",
+      descrizione: "",
+      categoria: "",
+      metodo_pagamento: "bonifico",
+      pagata: false,
+      data_pagamento: "",
+      note: ""
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Inserisci Fattura Ricevuta</DialogTitle>
+          <DialogDescription>
+            Inserisci manualmente i dati di una fattura ricevuta da un fornitore
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="numero">Numero Fattura *</Label>
+              <Input
+                id="numero"
+                value={formData.numero}
+                onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
+                placeholder="es. 2025/001"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="data">Data Fattura *</Label>
+              <Input
+                id="data"
+                type="date"
+                value={formData.data}
+                onChange={(e) => setFormData({ ...formData, data: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="fornitore">Fornitore *</Label>
+            <Input
+              id="fornitore"
+              value={formData.fornitore}
+              onChange={(e) => setFormData({ ...formData, fornitore: e.target.value })}
+              placeholder="Nome del fornitore"
+              required
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="partita_iva">Partita IVA</Label>
+              <Input
+                id="partita_iva"
+                value={formData.partita_iva}
+                onChange={(e) => setFormData({ ...formData, partita_iva: e.target.value })}
+                placeholder="es. 12345678901"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="codice_fiscale">Codice Fiscale</Label>
+              <Input
+                id="codice_fiscale"
+                value={formData.codice_fiscale}
+                onChange={(e) => setFormData({ ...formData, codice_fiscale: e.target.value })}
+                placeholder="es. RSSMRA80A01H501U"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="imponibile">Imponibile *</Label>
+              <Input
+                id="imponibile"
+                type="number"
+                step="0.01"
+                value={formData.imponibile}
+                onChange={(e) => setFormData({ ...formData, imponibile: e.target.value })}
+                placeholder="0.00"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="iva_importo">IVA</Label>
+              <Input
+                id="iva_importo"
+                type="number"
+                step="0.01"
+                value={formData.iva_importo}
+                onChange={(e) => setFormData({ ...formData, iva_importo: e.target.value })}
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="descrizione">Descrizione</Label>
+            <Textarea
+              id="descrizione"
+              value={formData.descrizione}
+              onChange={(e) => setFormData({ ...formData, descrizione: e.target.value })}
+              placeholder="Descrizione della spesa"
+              rows={3}
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="categoria">Categoria</Label>
+              <Select
+                value={formData.categoria}
+                onValueChange={(value) => setFormData({ ...formData, categoria: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleziona categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="materiali">Materiali sanitari</SelectItem>
+                  <SelectItem value="strumenti">Strumenti e attrezzature</SelectItem>
+                  <SelectItem value="affitto">Affitto</SelectItem>
+                  <SelectItem value="utenze">Utenze</SelectItem>
+                  <SelectItem value="consulenze">Consulenze professionali</SelectItem>
+                  <SelectItem value="formazione">Formazione</SelectItem>
+                  <SelectItem value="marketing">Marketing</SelectItem>
+                  <SelectItem value="software">Software e abbonamenti</SelectItem>
+                  <SelectItem value="altro">Altro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="metodo_pagamento">Metodo di Pagamento</Label>
+              <Select
+                value={formData.metodo_pagamento}
+                onValueChange={(value) => setFormData({ ...formData, metodo_pagamento: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bonifico">Bonifico</SelectItem>
+                  <SelectItem value="carta-credito">Carta di Credito</SelectItem>
+                  <SelectItem value="carta-debito">Carta di Debito</SelectItem>
+                  <SelectItem value="contanti">Contanti</SelectItem>
+                  <SelectItem value="assegno">Assegno</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="pagata"
+              checked={formData.pagata}
+              onCheckedChange={(checked) => setFormData({ ...formData, pagata: checked })}
+            />
+            <Label htmlFor="pagata" className="cursor-pointer">Fattura già pagata</Label>
+          </div>
+
+          {formData.pagata && (
+            <div className="space-y-2">
+              <Label htmlFor="data_pagamento">Data Pagamento</Label>
+              <Input
+                id="data_pagamento"
+                type="date"
+                value={formData.data_pagamento}
+                onChange={(e) => setFormData({ ...formData, data_pagamento: e.target.value })}
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="note">Note</Label>
+            <Textarea
+              id="note"
+              value={formData.note}
+              onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+              placeholder="Note aggiuntive"
+              rows={2}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
+              Annulla
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Salva Fattura
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
