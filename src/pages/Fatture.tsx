@@ -952,7 +952,7 @@ const Fatture = () => {
                     <p className="text-sm font-medium text-muted-foreground">
                       Fatturato {format(new Date(), 'MMMM yyyy', { locale: it })}
                     </p>
-                    <p className="text-2xl font-bold">
+                    <p className="text-xl font-bold">
                       €{fatture
                         .filter(f => {
                           const fatturaDate = new Date(f.data);
@@ -977,7 +977,7 @@ const Fatture = () => {
                       }).length === 1 ? 'documento' : 'documenti'}
                     </p>
                   </div>
-                  <FileText className="h-8 w-8 text-primary" />
+                  <FileText className="h-10 w-10 text-primary" />
                 </div>
               </CardContent>
             </Card>
