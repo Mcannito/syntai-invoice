@@ -90,6 +90,8 @@ const Fatture = () => {
 
   const loadPrestazioniDaFatturare = async () => {
     try {
+      console.log("🔍 Caricamento prestazioni da fatturare...");
+      
       const { data, error } = await supabase
         .from("appuntamenti")
         .select(`
@@ -104,8 +106,13 @@ const Fatture = () => {
           pazienti (id, nome, cognome, ragione_sociale, tipo_paziente),
           prestazioni (id, nome, prezzo, iva)
         `)
-        .eq("fatturato", false)
+        .or("fatturato.eq.false,fatturato.is.null")
         .order("data", { ascending: false });
+
+      console.log("📊 Prestazioni trovate:", data?.length || 0);
+      if (data && data.length > 0) {
+        console.log("📋 Stati appuntamenti:", data.map(p => ({ stato: p.stato, fatturato: (p as any).fatturato, data: p.data })));
+      }
 
       if (error) throw error;
       setPrestazioniDaFatturare(data || []);
@@ -345,6 +352,8 @@ const Fatture = () => {
     switch (stato) {
       case "completato":
         return <Badge className="bg-green-500 text-white">Completato</Badge>;
+      case "confermato":
+        return <Badge className="bg-emerald-500 text-white">Confermato</Badge>;
       case "programmato":
         return <Badge className="bg-blue-500 text-white">Programmato</Badge>;
       case "annullato":
@@ -492,6 +501,7 @@ const Fatture = () => {
                       <SelectContent>
                         <SelectItem value="tutti">Tutti gli stati</SelectItem>
                         <SelectItem value="programmato">Programmato</SelectItem>
+                        <SelectItem value="confermato">Confermato</SelectItem>
                         <SelectItem value="completato">Completato</SelectItem>
                         <SelectItem value="in_corso">In corso</SelectItem>
                         <SelectItem value="annullato">Annullato</SelectItem>
