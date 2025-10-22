@@ -170,10 +170,16 @@ export const NuovaFatturaDialog = ({
       nuovaTassazione.ritenuta_acconto = 0;
     }
     
-    // Marca da Bollo (applica solo se imponibile > 77.47€)
+    // Marca da Bollo (applica solo se imponibile > 77.47€ E a carico del paziente)
     if (settings.bollo_attivo && settings.bollo_virtuale) {
-      nuovaTassazione.bollo_virtuale = 
-        imponibile > 77.47 ? (settings.bollo_importo || 2.00) : 0;
+      // Il bollo viene conteggiato in fattura SOLO se a carico del paziente
+      if (settings.bollo_carico === 'paziente') {
+        nuovaTassazione.bollo_virtuale = 
+          imponibile > 77.47 ? (settings.bollo_importo || 2.00) : 0;
+      } else {
+        // Se a carico del professionista, non viene addebitato al paziente
+        nuovaTassazione.bollo_virtuale = 0;
+      }
     } else {
       nuovaTassazione.bollo_virtuale = 0;
     }
