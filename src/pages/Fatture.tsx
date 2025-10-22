@@ -74,6 +74,7 @@ const Fatture = () => {
   const [ritenutaAttiva, setRitenutaAttiva] = useState(false);
   const [bolloAttivo, setBolloAttivo] = useState(false);
   const [bolloVirtuale, setBolloVirtuale] = useState(false);
+  const [metodiPagamento, setMetodiPagamento] = useState<Set<string>>(new Set(['bonifico']));
   const { toast } = useToast();
 
   const loadFatture = async () => {
@@ -1255,26 +1256,65 @@ const Fatture = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6 p-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="metodo-default">Metodo Predefinito</Label>
-                    <Select defaultValue="bonifico">
-                      <SelectTrigger id="metodo-default">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="bonifico">Bonifico Bancario</SelectItem>
-                        <SelectItem value="contanti">Contanti</SelectItem>
-                        <SelectItem value="pos">POS/Carta</SelectItem>
-                        <SelectItem value="assegno">Assegno</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="iban">IBAN</Label>
-                    <Input id="iban" placeholder="IT00X0000000000000000000000" />
+                <div className="space-y-4">
+                  <Label className="text-base">Metodi di Pagamento Accettati</Label>
+                  <div className="space-y-3">
+                    {[
+                      { id: 'contanti', label: 'Contanti' },
+                      { id: 'carta-credito', label: 'Carta di credito' },
+                      { id: 'carta-debito', label: 'Carta di debito' },
+                      { id: 'bonifico', label: 'Bonifico bancario' },
+                      { id: 'assegno', label: 'Assegno' },
+                      { id: 'paypal', label: 'PayPal' },
+                      { id: 'altro', label: 'Altro' },
+                    ].map((metodo) => (
+                      <div key={metodo.id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`metodo-${metodo.id}`}
+                          checked={metodiPagamento.has(metodo.id)}
+                          onChange={(e) => {
+                            const newMetodi = new Set(metodiPagamento);
+                            if (e.target.checked) {
+                              newMetodi.add(metodo.id);
+                            } else {
+                              newMetodi.delete(metodo.id);
+                            }
+                            setMetodiPagamento(newMetodi);
+                          }}
+                          className="h-4 w-4 rounded border-input"
+                        />
+                        <Label htmlFor={`metodo-${metodo.id}`} className="font-normal cursor-pointer">
+                          {metodo.label}
+                        </Label>
+                      </div>
+                    ))}
                   </div>
                 </div>
+                
+                {metodiPagamento.has('bonifico') && (
+                  <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                    <h4 className="font-medium text-sm">Informazioni Bonifico Bancario</h4>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="nome-banca">Nome Banca</Label>
+                        <Input id="nome-banca" placeholder="Es: Banca Intesa" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="intestatario">Intestatario Conto Corrente</Label>
+                        <Input id="intestatario" placeholder="Nome e Cognome" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="iban">IBAN</Label>
+                        <Input id="iban" placeholder="IT00X0000000000000000000000" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bic-swift">BIC/SWIFT</Label>
+                        <Input id="bic-swift" placeholder="BCITITMM" />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
