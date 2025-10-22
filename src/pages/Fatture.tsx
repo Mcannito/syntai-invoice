@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Eye, Download, Send, FileText, Upload } from "lucide-react";
+import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { NuovaFatturaDialog } from "@/components/Fatture/NuovaFatturaDialog";
@@ -16,11 +16,24 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Fatture = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [fatture, setFatture] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+  const [fatturaToConvert, setFatturaToConvert] = useState<any>(null);
   const { toast } = useToast();
 
   const loadFatture = async () => {
@@ -78,6 +91,148 @@ const Fatture = () => {
         return <Badge variant="outline" className="border-secondary text-secondary">Pagata</Badge>;
       default:
         return <Badge variant="outline">{stato}</Badge>;
+    }
+  };
+
+  const getTipoDocumentoBadge = (tipo: string) => {
+    switch (tipo) {
+      case "fattura_sanitaria":
+        return <Badge className="bg-green-500 text-white">🏥 Sanitaria</Badge>;
+      case "fattura_elettronica_pg":
+        return <Badge className="bg-blue-500 text-white">📄 B2B</Badge>;
+      case "fattura_elettronica_pa":
+        return <Badge className="bg-cyan-500 text-white">🏛️ PA</Badge>;
+      case "fattura_proforma":
+        return <Badge className="bg-yellow-500 text-white">📋 Pro Forma</Badge>;
+      case "preventivo":
+        return <Badge className="bg-orange-500 text-white">📝 Preventivo</Badge>;
+      case "nota_credito":
+        return <Badge className="bg-red-500 text-white">↩️ Nota Credito</Badge>;
+      default:
+        return <Badge variant="outline">{tipo}</Badge>;
+    }
+  };
+
+  const handleSendTS = async (fatturaId: string) => {
+    setSendingId(fatturaId);
+    try {
+      const { data, error } = await supabase.functions.invoke('acube-send-ts', {
+        body: { fattura_id: fatturaId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Successo",
+        description: data.message || "Fattura inviata al Sistema TS",
+      });
+      loadFatture();
+    } catch (error: any) {
+      console.error('Error sending to TS:', error);
+      toast({
+        title: "Errore",
+        description: error.message || "Impossibile inviare la fattura al Sistema TS",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingId(null);
+    }
+  };
+
+  const handleSendSDI = async (fatturaId: string) => {
+    setSendingId(fatturaId);
+    try {
+      const { data, error } = await supabase.functions.invoke('acube-send-sdi', {
+        body: { fattura_id: fatturaId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Successo",
+        description: data.message || "Fattura inviata al Sistema di Interscambio",
+      });
+      loadFatture();
+    } catch (error: any) {
+      console.error('Error sending to SDI:', error);
+      toast({
+        title: "Errore",
+        description: error.message || "Impossibile inviare la fattura al SDI",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingId(null);
+    }
+  };
+
+  const handleConvert = (fattura: any) => {
+    setFatturaToConvert(fattura);
+    setConvertDialogOpen(true);
+  };
+
+  const confirmConvert = async () => {
+    if (!fatturaToConvert) return;
+
+    const tipoDestinazione = fatturaToConvert.pazienti?.tipo_paziente === "persona_fisica" 
+      ? "fattura_sanitaria" 
+      : "fattura_elettronica_pg";
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('fattura-convert', {
+        body: { 
+          documento_id: fatturaToConvert.id,
+          tipo_destinazione: tipoDestinazione
+        },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Successo",
+        description: `Documento convertito in ${data.numero}`,
+      });
+      loadFatture();
+      setConvertDialogOpen(false);
+      setFatturaToConvert(null);
+    } catch (error: any) {
+      console.error('Error converting:', error);
+      toast({
+        title: "Errore",
+        description: error.message || "Impossibile convertire il documento",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleMarkAsPaid = async (fatturaId: string) => {
+    try {
+      const { error } = await supabase
+        .from('fatture')
+        .update({ 
+          pagata: true, 
+          data_pagamento: new Date().toISOString().split('T')[0] 
+        })
+        .eq('id', fatturaId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Successo",
+        description: "Fattura segnata come pagata",
+      });
+      loadFatture();
+    } catch (error) {
+      console.error('Error marking as paid:', error);
+      toast({
+        title: "Errore",
+        description: "Impossibile aggiornare lo stato del pagamento",
+        variant: "destructive",
+      });
     }
   };
 
@@ -168,7 +323,7 @@ const Fatture = () => {
                 <TableHead>Numero</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Paziente</TableHead>
-                <TableHead>Tipo</TableHead>
+                <TableHead>Tipo Documento</TableHead>
                 <TableHead>Pagamento</TableHead>
                 <TableHead className="text-right">Importo</TableHead>
                 <TableHead>Stato</TableHead>
@@ -196,37 +351,77 @@ const Fatture = () => {
                       {new Date(fattura.data).toLocaleDateString('it-IT')}
                     </TableCell>
                     <TableCell className="font-medium">{getPazienteDisplayName(fattura)}</TableCell>
+                    <TableCell>{getTipoDocumentoBadge(fattura.tipo_documento)}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {fattura.pazienti?.tipo_paziente === "persona_fisica" 
-                          ? "Persona Fisica" 
-                          : "Persona Giuridica"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {fattura.metodo_pagamento}
+                      {fattura.pagata ? (
+                        <Badge className="bg-green-500 text-white">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Pagata
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">Non pagata</Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-right font-semibold text-primary">
                       €{Number(fattura.totale || fattura.importo).toFixed(2)}
                     </TableCell>
-                  <TableCell>{getStatoBadge(fattura.stato)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      {fattura.stato === "Da Inviare" && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary">
-                          <Send className="h-4 w-4" />
+                    <TableCell>{getStatoBadge(fattura.stato)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Eye className="h-4 w-4" />
                         </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        {!fattura.pagata && fattura.tipo_documento !== 'preventivo' && fattura.tipo_documento !== 'fattura_proforma' && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => handleMarkAsPaid(fattura.id)}
+                            title="Segna come pagata"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {(fattura.tipo_documento === 'preventivo' || fattura.tipo_documento === 'fattura_proforma') && !fattura.convertita_in_id && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-orange-500"
+                            onClick={() => handleConvert(fattura)}
+                            title="Converti in fattura"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {fattura.stato === "Da Inviare" && fattura.tipo_documento === "fattura_sanitaria" && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-primary"
+                            onClick={() => handleSendTS(fattura.id)}
+                            disabled={sendingId === fattura.id}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {fattura.stato === "Da Inviare" && (fattura.tipo_documento === "fattura_elettronica_pg" || fattura.tipo_documento === "fattura_elettronica_pa") && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-primary"
+                            onClick={() => handleSendSDI(fattura.id)}
+                            disabled={sendingId === fattura.id}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
@@ -265,6 +460,24 @@ const Fatture = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Convert Dialog */}
+      <AlertDialog open={convertDialogOpen} onOpenChange={setConvertDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Converti Documento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vuoi convertire {fatturaToConvert?.tipo_documento === 'preventivo' ? 'il preventivo' : 'la fattura pro forma'} {fatturaToConvert?.numero} in una fattura definitiva?
+              <br /><br />
+              Verrà creata una nuova fattura con un nuovo numero progressivo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmConvert}>Converti</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

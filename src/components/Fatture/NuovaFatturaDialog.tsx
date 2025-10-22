@@ -45,12 +45,16 @@ export const NuovaFatturaDialog = ({
     numero: "",
     data: new Date().toISOString().split('T')[0],
     paziente_id: "",
-    tipo_documento: "fattura",
+    tipo_documento: "fattura_sanitaria",
     metodo_pagamento: "Bonifico",
     stato: "Da Inviare",
     scadenza_pagamento: "",
     note: "",
+    pagata: false,
+    data_pagamento: "",
   });
+  
+  const [pazienteSelezionato, setPazienteSelezionato] = useState<any>(null);
 
   const [dettagli, setDettagli] = useState<any[]>([
     {
@@ -102,13 +106,45 @@ export const NuovaFatturaDialog = ({
     try {
       const { data, error } = await supabase
         .from("pazienti")
-        .select("id, nome, cognome, ragione_sociale, tipo_paziente")
+        .select("*")
         .order("nome");
 
       if (error) throw error;
       setPazienti(data || []);
     } catch (error) {
       console.error("Error loading pazienti:", error);
+    }
+  };
+  
+  const handlePazienteChange = (pazienteId: string) => {
+    setFormData({ ...formData, paziente_id: pazienteId });
+    const paziente = pazienti.find(p => p.id === pazienteId);
+    setPazienteSelezionato(paziente);
+    
+    // Set default document type based on patient type
+    if (paziente) {
+      if (paziente.tipo_paziente === "persona_fisica") {
+        setFormData(prev => ({ ...prev, tipo_documento: "fattura_sanitaria", paziente_id: pazienteId }));
+      } else {
+        const length = paziente.codice_destinatario_length;
+        if (length === 6) {
+          setFormData(prev => ({ ...prev, tipo_documento: "fattura_elettronica_pa", paziente_id: pazienteId }));
+        } else if (length === 7) {
+          setFormData(prev => ({ ...prev, tipo_documento: "fattura_elettronica_pg", paziente_id: pazienteId }));
+        }
+      }
+    }
+  };
+  
+  const getTipiDocumentoDisponibili = () => {
+    if (!pazienteSelezionato) return [];
+    
+    const comuni = ["preventivo", "nota_credito"];
+    
+    if (pazienteSelezionato.tipo_paziente === "persona_fisica") {
+      return ["fattura_sanitaria", ...comuni];
+    } else {
+      return ["fattura_elettronica_pg", "fattura_elettronica_pa", "fattura_proforma", ...comuni];
     }
   };
 
@@ -255,6 +291,8 @@ export const NuovaFatturaDialog = ({
           totale: totali.totale,
           importo: totali.totale,
           note: formData.note,
+          pagata: formData.pagata,
+          data_pagamento: formData.data_pagamento || null,
         })
         .select()
         .single();
@@ -294,12 +332,15 @@ export const NuovaFatturaDialog = ({
         numero: "",
         data: new Date().toISOString().split('T')[0],
         paziente_id: "",
-        tipo_documento: "fattura",
+        tipo_documento: "fattura_sanitaria",
         metodo_pagamento: "Bonifico",
         stato: "Da Inviare",
         scadenza_pagamento: "",
         note: "",
+        pagata: false,
+        data_pagamento: "",
       });
+      setPazienteSelezionato(null);
       setDettagli([{
         descrizione: "",
         prestazione_id: "",
@@ -378,43 +419,53 @@ export const NuovaFatturaDialog = ({
                     />
                   </div>
 
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="paziente">Paziente *</Label>
+                    <Select
+                      value={formData.paziente_id}
+                      onValueChange={handlePazienteChange}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleziona paziente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {pazienti.map((paziente) => (
+                          <SelectItem key={paziente.id} value={paziente.id}>
+                            {getPazienteDisplayName(paziente)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="tipo_documento">Tipo Documento *</Label>
                     <Select
                       value={formData.tipo_documento}
                       onValueChange={(value) => setFormData({ ...formData, tipo_documento: value })}
+                      disabled={!pazienteSelezionato}
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="fattura">Fattura</SelectItem>
-                        <SelectItem value="fattura_proforma">Fattura Pro Forma</SelectItem>
-                        <SelectItem value="preventivo">Preventivo</SelectItem>
-                        <SelectItem value="nota_credito">Nota di Credito</SelectItem>
+                        {getTipiDocumentoDisponibili().map((tipo) => (
+                          <SelectItem key={tipo} value={tipo}>
+                            {tipo === "fattura_sanitaria" && "Fattura Sanitaria"}
+                            {tipo === "fattura_elettronica_pg" && "Fattura Elettronica B2B"}
+                            {tipo === "fattura_elettronica_pa" && "Fattura Elettronica PA"}
+                            {tipo === "fattura_proforma" && "Fattura Pro Forma"}
+                            {tipo === "preventivo" && "Preventivo"}
+                            {tipo === "nota_credito" && "Nota di Credito"}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="paziente">Paziente *</Label>
-                  <Select
-                    value={formData.paziente_id}
-                    onValueChange={(value) => setFormData({ ...formData, paziente_id: value })}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleziona paziente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {pazienti.map((paziente) => (
-                        <SelectItem key={paziente.id} value={paziente.id}>
-                          {getPazienteDisplayName(paziente)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
@@ -447,21 +498,28 @@ export const NuovaFatturaDialog = ({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="stato">Stato *</Label>
-                    <Select
-                      value={formData.stato}
-                      onValueChange={(value) => setFormData({ ...formData, stato: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Da Inviare">Da Inviare</SelectItem>
-                        <SelectItem value="Inviata TS">Inviata TS</SelectItem>
-                        <SelectItem value="Inviata SDI">Inviata SDI</SelectItem>
-                        <SelectItem value="Pagata">Pagata</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="pagata">Pagamento</Label>
+                    <div className="flex items-center gap-4 pt-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="pagata"
+                          checked={formData.pagata}
+                          onChange={(e) => setFormData({ ...formData, pagata: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                        <Label htmlFor="pagata" className="font-normal cursor-pointer">Pagata</Label>
+                      </div>
+                      {formData.pagata && (
+                        <Input
+                          type="date"
+                          value={formData.data_pagamento}
+                          onChange={(e) => setFormData({ ...formData, data_pagamento: e.target.value })}
+                          placeholder="Data pagamento"
+                          className="w-40"
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>

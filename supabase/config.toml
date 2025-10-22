@@ -1,1 +1,10 @@
 project_id = "ttotjxhylrjefecudygq"
+
+[functions.acube-send-ts]
+verify_jwt = false
+
+[functions.acube-send-sdi]
+verify_jwt = false
+
+[functions.fattura-convert]
+verify_jwt = true
