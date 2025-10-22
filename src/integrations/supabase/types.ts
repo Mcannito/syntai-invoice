@@ -103,6 +103,8 @@ export type Database = {
           pagata: boolean | null
           paziente_id: string | null
           pdf_path: string | null
+          percentuale_ritenuta: number | null
+          percentuale_rivalsa: number | null
           ritenuta_acconto: number | null
           scadenza_pagamento: string | null
           sdi_id: string | null
@@ -140,6 +142,8 @@ export type Database = {
           pagata?: boolean | null
           paziente_id?: string | null
           pdf_path?: string | null
+          percentuale_ritenuta?: number | null
+          percentuale_rivalsa?: number | null
           ritenuta_acconto?: number | null
           scadenza_pagamento?: string | null
           sdi_id?: string | null
@@ -177,6 +181,8 @@ export type Database = {
           pagata?: boolean | null
           paziente_id?: string | null
           pdf_path?: string | null
+          percentuale_ritenuta?: number | null
+          percentuale_rivalsa?: number | null
           ritenuta_acconto?: number | null
           scadenza_pagamento?: string | null
           sdi_id?: string | null

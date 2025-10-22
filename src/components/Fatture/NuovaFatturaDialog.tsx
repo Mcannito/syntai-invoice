@@ -529,6 +529,8 @@ export const NuovaFatturaDialog = ({
           note: formData.note,
           pagata: formData.pagata,
           data_pagamento: formData.data_pagamento || null,
+          percentuale_rivalsa: tassazioneAttiva.cassa_previdenziale ? percentualeRivalsa : null,
+          percentuale_ritenuta: tassazioneAttiva.ritenuta_acconto ? percentualeRitenuta : null,
         })
         .select()
         .single();
