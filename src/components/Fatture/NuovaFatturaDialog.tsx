@@ -202,8 +202,12 @@ export const NuovaFatturaDialog = ({
   // Ricalcola automaticamente la tassazione quando cambiano i dettagli o gli userSettings
   useEffect(() => {
     if (userSettings && dettagli.length > 0) {
-      const totali = calcolaTotali();
-      calcolaTassazioneDefault(totali.imponibile, userSettings);
+      // Controlla se c'è almeno un dettaglio con prezzo > 0
+      const hasValidDetails = dettagli.some(d => d.prezzo_unitario > 0);
+      if (hasValidDetails) {
+        const totali = calcolaTotali();
+        calcolaTassazioneDefault(totali.imponibile, userSettings);
+      }
     }
   }, [dettagli, userSettings]);
 
