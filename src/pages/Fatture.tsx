@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2, Heart, Zap, FileQuestion, FileClock, TrendingUp } from "lucide-react";
+import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2, Heart, Zap, FileQuestion, FileClock, TrendingUp, FileCode, PenTool } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -1258,14 +1258,17 @@ const Fatture = () => {
               onClick={() => setFiltroFattureEntrata(filtroFattureEntrata === 'xml' ? null : 'xml')}
             >
               <CardContent className="p-6">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Fatture XML</p>
-                  <p className="text-2xl font-bold">
-                    {fattureInEntrata.filter(f => f.xml_path).length}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    €{fattureInEntrata.filter(f => f.xml_path).reduce((sum, f) => sum + (f.importo || 0), 0).toFixed(2)}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Fatture XML</p>
+                    <p className="text-2xl font-bold">
+                      {fattureInEntrata.filter(f => f.xml_path).length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      €{fattureInEntrata.filter(f => f.xml_path).reduce((sum, f) => sum + (f.importo || 0), 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <FileCode className="h-8 w-8 text-blue-500" />
                 </div>
               </CardContent>
             </Card>
@@ -1278,14 +1281,17 @@ const Fatture = () => {
               onClick={() => setFiltroFattureEntrata(filtroFattureEntrata === 'manuale' ? null : 'manuale')}
             >
               <CardContent className="p-6">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Inserite Manualmente</p>
-                  <p className="text-2xl font-bold">
-                    {fattureInEntrata.filter(f => !f.xml_path).length}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    €{fattureInEntrata.filter(f => !f.xml_path).reduce((sum, f) => sum + (f.importo || 0), 0).toFixed(2)}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Inserite Manualmente</p>
+                    <p className="text-2xl font-bold">
+                      {fattureInEntrata.filter(f => !f.xml_path).length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      €{fattureInEntrata.filter(f => !f.xml_path).reduce((sum, f) => sum + (f.importo || 0), 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <PenTool className="h-8 w-8 text-purple-500" />
                 </div>
               </CardContent>
             </Card>
