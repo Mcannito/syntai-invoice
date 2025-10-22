@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { NuovaFatturaDialog } from "@/components/Fatture/NuovaFatturaDialog";
@@ -1084,11 +1085,76 @@ const Fatture = () => {
                   )}
                 </div>
                 
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="ritenuta">Ritenuta d'Acconto (%)</Label>
-                    <Input id="ritenuta" type="number" placeholder="20" defaultValue="20" />
+                {/* Ritenuta d'Acconto */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="ritenuta-switch" className="text-base">Ritenuta d'Acconto</Label>
+                      <p className="text-sm text-muted-foreground">Applica ritenuta d'acconto</p>
+                    </div>
+                    <Switch id="ritenuta-switch" />
                   </div>
+                  
+                  {/* Mostra questi campi solo se la ritenuta è attivata */}
+                  {true && (
+                    <div className="space-y-4 pl-6 border-l-2 border-muted">
+                      <div className="space-y-2">
+                        <Label htmlFor="aliquota-ritenuta">Aliquota (%)</Label>
+                        <Input id="aliquota-ritenuta" type="number" placeholder="20" defaultValue="20" step="0.01" />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="tipo-ritenuta">Tipo di Ritenuta</Label>
+                        <Select defaultValue="persone-fisiche">
+                          <SelectTrigger id="tipo-ritenuta">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="persone-fisiche">Ritenuta di acconto persone fisiche</SelectItem>
+                            <SelectItem value="persone-giuridiche">Ritenuta di acconto persone giuridiche</SelectItem>
+                            <SelectItem value="inps">Contributo INPS</SelectItem>
+                            <SelectItem value="enasarco">Contributo ENASARCO</SelectItem>
+                            <SelectItem value="enpam">Contributo ENPAM</SelectItem>
+                            <SelectItem value="altro">Altro contributo previdenziale</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="causale-pagamento">Causale di Pagamento</Label>
+                        <Select defaultValue="A">
+                          <SelectTrigger id="causale-pagamento">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[300px]">
+                            <SelectItem value="A">A - Prestazioni di lavoro autonomo</SelectItem>
+                            <SelectItem value="B">B - Utilizzazione economica opere dell'ingegno</SelectItem>
+                            <SelectItem value="C">C - Utili da contratti di associazione in partecipazione</SelectItem>
+                            <SelectItem value="D">D - Utili spettanti ai soci promotori e fondatori</SelectItem>
+                            <SelectItem value="E">E - Levata di protesti cambiari</SelectItem>
+                            <SelectItem value="G">G - Indennità cessazione attività sportiva professionale</SelectItem>
+                            <SelectItem value="H">H - Indennità cessazione rapporti di agenzia</SelectItem>
+                            <SelectItem value="I">I - Indennità cessazione da funzioni notarili</SelectItem>
+                            <SelectItem value="L">L - Utilizzazione economica opere (soggetto diverso)</SelectItem>
+                            <SelectItem value="M">M - Prestazioni di lavoro autonomo non abituali</SelectItem>
+                            <SelectItem value="N">N - Indennità trasferta e premi sportivi dilettantistici</SelectItem>
+                            <SelectItem value="O">O - Prestazioni autonome non abituali senza obbligo gestione separata</SelectItem>
+                            <SelectItem value="P">P - Compensi per uso attrezzature a non residenti</SelectItem>
+                            <SelectItem value="Q">Q - Provvigioni ad agente monomandatario</SelectItem>
+                            <SelectItem value="R">R - Provvigioni ad agente plurimandatario</SelectItem>
+                            <SelectItem value="S">S - Provvigioni a commissionario</SelectItem>
+                            <SelectItem value="T">T - Provvigioni a mediatore</SelectItem>
+                            <SelectItem value="U">U - Provvigioni a procacciatore d'affari</SelectItem>
+                            <SelectItem value="V">V - Provvigioni vendite a domicilio e ambulanti</SelectItem>
+                            <SelectItem value="W">W - Corrispettivi contratti d'appalto (2013)</SelectItem>
+                            <SelectItem value="X">X - Canoni corrisposti 2004</SelectItem>
+                            <SelectItem value="Y">Y - Canoni corrisposti 2005</SelectItem>
+                            <SelectItem value="Z">Z - Titolo diverso dai precedenti</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
