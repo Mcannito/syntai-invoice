@@ -1063,7 +1063,7 @@ const Fatture = () => {
                               className="h-4 w-4"
                             />
                             <Label htmlFor="rivalsa-separata" className="font-normal cursor-pointer">
-                              Separata dal prezzo prestazione
+                              Aggiunta al prezzo prestazione
                             </Label>
                           </div>
                           <div className="flex items-center space-x-2">
