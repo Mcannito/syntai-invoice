@@ -1185,6 +1185,21 @@ const Fatture = () => {
                               variant="outline"
                               size="sm"
                               className="h-8 w-8 p-0"
+                              onClick={async () => {
+                                if (fattura.pdf_path) {
+                                  const { data } = supabase.storage
+                                    .from('fatture-in-entrata')
+                                    .getPublicUrl(fattura.pdf_path);
+                                  window.open(data.publicUrl, '_blank');
+                                } else {
+                                  toast({
+                                    title: "Nessun PDF",
+                                    description: "Non è stato caricato alcun PDF per questa fattura",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                              title="Visualizza PDF"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>

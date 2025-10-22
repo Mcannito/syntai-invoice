@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, FileText } from "lucide-react";
 
 interface InserisciFatturaInEntrataDialogProps {
   open: boolean;
@@ -24,6 +24,8 @@ export function InserisciFatturaInEntrataDialog({
   fatturaToEdit
 }: InserisciFatturaInEntrataDialogProps) {
   const [loading, setLoading] = useState(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [existingPdfPath, setExistingPdfPath] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     numero: "",
     data: new Date().toISOString().split('T')[0],
@@ -57,6 +59,8 @@ export function InserisciFatturaInEntrataDialog({
         data_pagamento: fatturaToEdit.data_pagamento || "",
         note: fatturaToEdit.note || ""
       });
+      setExistingPdfPath(fatturaToEdit.pdf_path || null);
+      setPdfFile(null);
     } else if (!open) {
       resetForm();
     }
@@ -74,6 +78,21 @@ export function InserisciFatturaInEntrataDialog({
       const iva = parseFloat(formData.iva_importo) || 0;
       const totale = imponibile + iva;
 
+      let pdfPath = existingPdfPath;
+
+      // Upload PDF if new file selected
+      if (pdfFile) {
+        const fileExt = pdfFile.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('fatture-in-entrata')
+          .upload(fileName, pdfFile);
+
+        if (uploadError) throw uploadError;
+        pdfPath = fileName;
+      }
+
       const dataToSave = {
         numero: formData.numero,
         data: formData.data,
@@ -88,7 +107,8 @@ export function InserisciFatturaInEntrataDialog({
         metodo_pagamento: formData.metodo_pagamento || null,
         pagata: formData.pagata,
         data_pagamento: formData.pagata && formData.data_pagamento ? formData.data_pagamento : null,
-        note: formData.note || null
+        note: formData.note || null,
+        pdf_path: pdfPath
       };
 
       if (fatturaToEdit) {
@@ -138,6 +158,8 @@ export function InserisciFatturaInEntrataDialog({
       data_pagamento: "",
       note: ""
     });
+    setPdfFile(null);
+    setExistingPdfPath(null);
   };
 
   return (
@@ -320,6 +342,60 @@ export function InserisciFatturaInEntrataDialog({
               placeholder="Note aggiuntive"
               rows={2}
             />
+          </div>
+
+          {/* PDF Upload */}
+          <div className="space-y-2 p-4 border rounded-lg bg-muted/30">
+            <Label htmlFor="pdf">Fattura PDF</Label>
+            {existingPdfPath && !pdfFile && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <FileText className="h-4 w-4" />
+                <span>PDF già caricato</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <Input
+                id="pdf"
+                type="file"
+                accept=".pdf"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    if (file.type !== 'application/pdf') {
+                      toast.error('Puoi caricare solo file PDF');
+                      e.target.value = '';
+                      return;
+                    }
+                    if (file.size > 20 * 1024 * 1024) {
+                      toast.error('Il file non può superare i 20MB');
+                      e.target.value = '';
+                      return;
+                    }
+                    setPdfFile(file);
+                  }
+                }}
+                className="flex-1"
+              />
+              {pdfFile && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setPdfFile(null);
+                    const input = document.getElementById('pdf') as HTMLInputElement;
+                    if (input) input.value = '';
+                  }}
+                >
+                  Rimuovi
+                </Button>
+              )}
+            </div>
+            {pdfFile && (
+              <p className="text-xs text-muted-foreground">
+                File selezionato: {pdfFile.name} ({(pdfFile.size / 1024 / 1024).toFixed(2)} MB)
+              </p>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
