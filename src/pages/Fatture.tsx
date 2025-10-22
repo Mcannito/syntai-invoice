@@ -1009,10 +1009,15 @@ const Fatture = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="enpam">ENPAM</SelectItem>
-                        <SelectItem value="enpapi">ENPAPI</SelectItem>
-                        <SelectItem value="inps">INPS</SelectItem>
-                        <SelectItem value="cassa-forense">Cassa Forense</SelectItem>
+                        <SelectItem value="enpam">ENPAM - Ente Nazionale di Previdenza ed Assistenza dei Medici e degli Odontoiatri</SelectItem>
+                        <SelectItem value="enpap">ENPAP - Ente Nazionale di Previdenza e Assistenza per gli Psicologi</SelectItem>
+                        <SelectItem value="enpab">ENPAB - Ente Nazionale di Previdenza e Assistenza dei Biologi</SelectItem>
+                        <SelectItem value="enpav">ENPAV - Ente Nazionale di Previdenza ed Assistenza dei Veterinari</SelectItem>
+                        <SelectItem value="enpaf">ENPAF - Ente Nazionale di Previdenza e Assistenza dei Farmacisti</SelectItem>
+                        <SelectItem value="enpapi">ENPAPI - Ente Nazionale di Previdenza e Assistenza della Professione Infermieristica</SelectItem>
+                        <SelectItem value="epap">EPAP - Ente di Previdenza e Assistenza Pluricategoriale</SelectItem>
+                        <SelectItem value="inps_gestione_separata">Gestione Separata INPS</SelectItem>
+                        <SelectItem value="inps_commercianti">INPS COMMERCIANTI - INPS Artigiani/Commercianti</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
