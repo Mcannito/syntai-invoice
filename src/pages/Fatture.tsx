@@ -301,11 +301,7 @@ const Fatture = () => {
     
     let matchesTipo = true;
     if (filtroTipoDocumento) {
-      if (filtroTipoDocumento === 'preventivo_proforma') {
-        matchesTipo = f.tipo_documento === 'preventivo' || f.tipo_documento === 'fattura_proforma';
-      } else {
-        matchesTipo = f.tipo_documento === filtroTipoDocumento;
-      }
+      matchesTipo = f.tipo_documento === filtroTipoDocumento;
     }
     
     return matchesSearch && matchesTipo;
@@ -940,7 +936,7 @@ const Fatture = () => {
 
         <TabsContent value="uscita" className="space-y-4">
           {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-5">
             <Card 
               className={cn(
                 "border-primary/20 bg-primary-light cursor-pointer transition-all hover:shadow-md",
@@ -1027,18 +1023,38 @@ const Fatture = () => {
             <Card 
               className={cn(
                 "cursor-pointer transition-all hover:shadow-md",
-                filtroTipoDocumento === 'preventivo_proforma' && "ring-2 ring-primary"
+                filtroTipoDocumento === 'preventivo' && "ring-2 ring-primary"
               )}
-              onClick={() => setFiltroTipoDocumento(filtroTipoDocumento === 'preventivo_proforma' ? null : 'preventivo_proforma')}
+              onClick={() => setFiltroTipoDocumento(filtroTipoDocumento === 'preventivo' ? null : 'preventivo')}
             >
               <CardContent className="p-6">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Preventivi/Proforma</p>
+                  <p className="text-sm font-medium text-muted-foreground">Preventivi</p>
                   <p className="text-2xl font-bold">
-                    {fatture.filter(f => f.tipo_documento === 'preventivo' || f.tipo_documento === 'fattura_proforma').length}
+                    {fatture.filter(f => f.tipo_documento === 'preventivo').length}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    €{fatture.filter(f => f.tipo_documento === 'preventivo' || f.tipo_documento === 'fattura_proforma').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
+                    €{fatture.filter(f => f.tipo_documento === 'preventivo').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className={cn(
+                "cursor-pointer transition-all hover:shadow-md",
+                filtroTipoDocumento === 'fattura_proforma' && "ring-2 ring-primary"
+              )}
+              onClick={() => setFiltroTipoDocumento(filtroTipoDocumento === 'fattura_proforma' ? null : 'fattura_proforma')}
+            >
+              <CardContent className="p-6">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Fatture Proforma</p>
+                  <p className="text-2xl font-bold">
+                    {fatture.filter(f => f.tipo_documento === 'fattura_proforma').length}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    €{fatture.filter(f => f.tipo_documento === 'fattura_proforma').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
                   </p>
                 </div>
               </CardContent>
