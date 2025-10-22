@@ -1027,26 +1027,22 @@ const Fatture = () => {
                 </div>
                 
                 {/* Rivalsa/Contributo integrativo */}
+                {/* Rivalsa/Contributo integrativo */}
                 <div className="space-y-4 pt-4 border-t">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">Rivalsa/Contributo integrativo</h4>
+                    <div className="space-y-0.5">
+                      <Label htmlFor="rivalsa-switch" className="text-base">Rivalsa/Contributo integrativo</Label>
                       <p className="text-sm text-muted-foreground">Attiva e configura la rivalsa previdenziale</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="rivalsa-attiva" className="text-sm">Attiva</Label>
-                      <input 
-                        type="checkbox" 
-                        id="rivalsa-attiva" 
-                        className="h-4 w-4 rounded border-gray-300"
-                        checked={rivalsaAttiva}
-                        onChange={(e) => setRivalsaAttiva(e.target.checked)}
-                      />
-                    </div>
+                    <Switch 
+                      id="rivalsa-switch" 
+                      checked={rivalsaAttiva} 
+                      onCheckedChange={setRivalsaAttiva}
+                    />
                   </div>
                   
                   {rivalsaAttiva && (
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-4 pl-6 border-l-2 border-muted">
                       <div className="space-y-2">
                         <Label htmlFor="aliquota-rivalsa">Percentuale Rivalsa (%)</Label>
                         <Input id="aliquota-rivalsa" type="number" placeholder="4" defaultValue="4" step="0.01" />
