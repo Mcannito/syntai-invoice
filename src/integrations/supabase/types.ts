@@ -535,6 +535,7 @@ export type Database = {
           pdf_template_layout: string | null
           pdf_template_mostra_logo: boolean | null
           pdf_template_posizione_logo: string | null
+          pdf_template_testo_centrale: string | null
           pec: string | null
           qualifica: string | null
           regime_fiscale: string | null
@@ -586,6 +587,7 @@ export type Database = {
           pdf_template_layout?: string | null
           pdf_template_mostra_logo?: boolean | null
           pdf_template_posizione_logo?: string | null
+          pdf_template_testo_centrale?: string | null
           pec?: string | null
           qualifica?: string | null
           regime_fiscale?: string | null
@@ -637,6 +639,7 @@ export type Database = {
           pdf_template_layout?: string | null
           pdf_template_mostra_logo?: boolean | null
           pdf_template_posizione_logo?: string | null
+          pdf_template_testo_centrale?: string | null
           pec?: string | null
           qualifica?: string | null
           regime_fiscale?: string | null

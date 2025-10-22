@@ -585,6 +585,12 @@ function generateInvoiceHTML(
   </div>
   ` : ''}
 
+  ${settings.pdf_template_testo_centrale ? `
+  <div class="central-text" style="text-align: center; padding: 20px; margin: 20px 0; background: ${secondaryColor}08; border-left: 3px solid ${primaryColor}; color: ${secondaryColor};">
+    ${settings.pdf_template_testo_centrale}
+  </div>
+  ` : ''}
+
   ${settings.pdf_template_footer_text ? `
   <div class="footer">
     ${settings.pdf_template_footer_text}

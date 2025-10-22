@@ -9,6 +9,7 @@ interface TemplateSettings {
   pdf_template_posizione_logo: string;
   pdf_template_footer_text: string;
   pdf_template_layout: string;
+  pdf_template_testo_centrale: string;
 }
 
 interface TemplatePreviewProps {
@@ -307,6 +308,16 @@ export default function TemplatePreview({ settings, logoUrl }: TemplatePreviewPr
           </div>
           <p>Bonifico Bancario</p>
         </div>
+
+        {/* Central Text */}
+        {settings.pdf_template_testo_centrale && (
+          <div 
+            className="text-center text-xs py-3 px-4 bg-muted/30 rounded"
+            style={{ color: secondaryColor, borderLeft: `3px solid ${primaryColor}` }}
+          >
+            {settings.pdf_template_testo_centrale}
+          </div>
+        )}
 
         {/* Footer */}
         {settings.pdf_template_footer_text && (

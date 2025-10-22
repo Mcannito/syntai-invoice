@@ -13,6 +13,7 @@ interface TemplateSettings {
   pdf_template_posizione_logo: string;
   pdf_template_footer_text: string;
   pdf_template_layout: string;
+  pdf_template_testo_centrale: string;
 }
 
 interface TemplateEditorProps {
@@ -167,6 +168,20 @@ export default function TemplateEditor({ settings, onSettingsChange }: TemplateE
             <SelectItem value="bold">Audace</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="central">Testo Centrale Personalizzato</Label>
+        <Textarea
+          id="central"
+          value={settings.pdf_template_testo_centrale || ''}
+          onChange={(e) => updateSetting('pdf_template_testo_centrale', e.target.value)}
+          placeholder="Es: Informazioni aggiuntive sulla fattura"
+          rows={3}
+        />
+        <p className="text-sm text-muted-foreground">
+          Questo testo apparirà al centro della fattura
+        </p>
       </div>
 
       <div className="space-y-2">
