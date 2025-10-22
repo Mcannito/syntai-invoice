@@ -95,14 +95,43 @@ export const NuovaFatturaDialog = ({
       loadPazienti();
       loadPrestazioni();
       generateNumeroFattura();
-      
+    }
+  }, [open]);
+
+  // Gestisce la precompilazione separatamente dopo che pazienti sono caricati
+  useEffect(() => {
+    if (open && pazienti.length > 0) {
       // Precompila con dati da prestazioni selezionate
       if (prestazioniPrecompilate && prestazioniPrecompilate.length > 0) {
         const primaPrestazione = prestazioniPrecompilate[0];
-        setFormData(prev => ({
-          ...prev,
-          paziente_id: primaPrestazione.paziente_id || "",
-        }));
+        const pazienteId = primaPrestazione.paziente_id || "";
+        
+        // Trova e imposta il paziente completo
+        const paziente = pazienti.find(p => p.id === pazienteId);
+        if (paziente) {
+          setPazienteSelezionato(paziente);
+          
+          // Imposta tipo documento automaticamente
+          let tipoDoc = "fattura_sanitaria";
+          if (paziente.tipo_paziente === "persona_fisica") {
+            tipoDoc = "fattura_sanitaria";
+          } else {
+            const length = paziente.codice_destinatario_length;
+            if (length === 6) {
+              tipoDoc = "fattura_elettronica_pa";
+            } else if (length === 7) {
+              tipoDoc = "fattura_elettronica_pg";
+            } else {
+              tipoDoc = "fattura_proforma";
+            }
+          }
+          
+          setFormData(prev => ({
+            ...prev,
+            paziente_id: pazienteId,
+            tipo_documento: tipoDoc,
+          }));
+        }
         
         // Mappa tutte le prestazioni selezionate nei dettagli
         const dettagliPrecompilati = prestazioniPrecompilate.map(app => ({
@@ -117,9 +146,16 @@ export const NuovaFatturaDialog = ({
       }
       // Precompila con dati da appuntamento singolo se presente
       else if (appuntamento) {
+        const pazienteId = appuntamento.paziente_id || "";
+        const paziente = pazienti.find(p => p.id === pazienteId);
+        
+        if (paziente) {
+          setPazienteSelezionato(paziente);
+        }
+        
         setFormData(prev => ({
           ...prev,
-          paziente_id: appuntamento.paziente_id || "",
+          paziente_id: pazienteId,
           note: appuntamento.note || "",
         }));
         
@@ -135,31 +171,7 @@ export const NuovaFatturaDialog = ({
         }
       }
     }
-  }, [open, appuntamento, prestazioniPrecompilate]);
-
-  // Imposta automaticamente pazienteSelezionato e tipo documento quando pazienti è caricato
-  useEffect(() => {
-    if (pazienti.length > 0 && formData.paziente_id && !pazienteSelezionato) {
-      const paziente = pazienti.find(p => p.id === formData.paziente_id);
-      if (paziente) {
-        setPazienteSelezionato(paziente);
-        
-        // Imposta automaticamente il tipo documento in base al tipo paziente
-        if (paziente.tipo_paziente === "persona_fisica") {
-          setFormData(prev => ({ ...prev, tipo_documento: "fattura_sanitaria" }));
-        } else {
-          const length = paziente.codice_destinatario_length;
-          if (length === 6) {
-            setFormData(prev => ({ ...prev, tipo_documento: "fattura_elettronica_pa" }));
-          } else if (length === 7) {
-            setFormData(prev => ({ ...prev, tipo_documento: "fattura_elettronica_pg" }));
-          } else {
-            setFormData(prev => ({ ...prev, tipo_documento: "fattura_proforma" }));
-          }
-        }
-      }
-    }
-  }, [pazienti, formData.paziente_id, pazienteSelezionato]);
+  }, [open, appuntamento, prestazioniPrecompilate, pazienti]);
 
   const loadPazienti = async () => {
     try {
