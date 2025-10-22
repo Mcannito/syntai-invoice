@@ -309,7 +309,15 @@ const Fatture = () => {
       matchesTipo = f.tipo_documento === filtroTipoDocumento;
     }
     
-    return matchesSearch && matchesTipo;
+    // Filtro stato
+    const matchesStato = filtroStato === 'tutti' || f.stato === filtroStato;
+    
+    // Filtro pagamento
+    const matchesPagamento = filtroPaziente === 'tutti' ||
+      (filtroPaziente === 'pagata' && f.pagata) ||
+      (filtroPaziente === 'non_pagata' && !f.pagata);
+    
+    return matchesSearch && matchesTipo && matchesStato && matchesPagamento;
   });
 
   const getStatoBadge = (stato: string) => {
@@ -1081,16 +1089,43 @@ const Fatture = () => {
           {/* Table */}
           <Card className="shadow-medical-sm">
             <CardHeader className="border-b bg-muted/50">
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col gap-4">
                 <CardTitle>Documenti Emessi</CardTitle>
-                <div className="relative w-64">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Cerca documento..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9"
-                  />
+                
+                <div className="flex gap-2 items-center">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Cerca documento o paziente..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  
+                  <Select value={filtroStato} onValueChange={setFiltroStato}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Stato" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tutti">Tutti gli stati</SelectItem>
+                      <SelectItem value="Da Inviare">Da Inviare</SelectItem>
+                      <SelectItem value="Inviata TS">Inviata TS</SelectItem>
+                      <SelectItem value="Inviata SDI">Inviata SDI</SelectItem>
+                      <SelectItem value="Accettata">Accettata</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={filtroPaziente} onValueChange={setFiltroPaziente}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Pagamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tutti">Tutti i pagamenti</SelectItem>
+                      <SelectItem value="pagata">Pagate</SelectItem>
+                      <SelectItem value="non_pagata">Non Pagate</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </CardHeader>
