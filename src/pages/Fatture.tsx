@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { it } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 const Fatture = () => {
@@ -522,7 +523,7 @@ const Fatture = () => {
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {paymentDate ? format(paymentDate, "PPP") : <span>Seleziona data</span>}
+                  {paymentDate ? format(paymentDate, "PPP", { locale: it }) : <span>Seleziona data</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
