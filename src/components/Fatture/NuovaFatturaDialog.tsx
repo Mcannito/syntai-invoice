@@ -92,6 +92,30 @@ export const NuovaFatturaDialog = ({
     bollo_virtuale: 0,
   });
 
+  // Funzione per estrarre la percentuale IVA dalla descrizione
+  const getIvaPercentuale = (ivaDescrizione: string): number => {
+    if (!ivaDescrizione) return 0;
+    
+    const desc = ivaDescrizione.toLowerCase();
+    
+    // Se contiene "esente", ritorna 0
+    if (desc.includes('esente')) return 0;
+    
+    // Codici natura IVA
+    if (desc.includes('n2.1') || desc.includes('n2,1')) return 4;
+    if (desc.includes('n2.2') || desc.includes('n2,2')) return 10;
+    if (desc.includes('n2.3') || desc.includes('n2,3')) return 5;
+    
+    // Cerca un numero seguito da % o "iva" seguito da un numero
+    const match = desc.match(/(\d+(?:[.,]\d+)?)\s*%/) || desc.match(/iva\s*(\d+(?:[.,]\d+)?)/);
+    if (match) {
+      return parseFloat(match[1].replace(',', '.'));
+    }
+    
+    // Default 22% se non si trova nulla
+    return 22;
+  };
+
   useEffect(() => {
     if (open) {
       loadPazienti();
@@ -142,7 +166,8 @@ export const NuovaFatturaDialog = ({
           quantita: 1,
           prezzo_unitario: parseFloat(app.prestazioni?.prezzo || "0"),
           sconto: 0,
-          iva_percentuale: app.prestazioni?.iva === "Esente IVA Art.10" ? 0 : 22,
+          iva_percentuale: getIvaPercentuale(app.prestazioni?.iva || ""),
+          iva_descrizione: app.prestazioni?.iva,
         }));
         setDettagli(dettagliPrecompilati);
       }
@@ -168,7 +193,8 @@ export const NuovaFatturaDialog = ({
             quantita: 1,
             prezzo_unitario: parseFloat(appuntamento.prestazioni?.prezzo || "0"),
             sconto: 0,
-            iva_percentuale: appuntamento.prestazioni?.iva === "Esente IVA Art.10" ? 0 : 22,
+            iva_percentuale: getIvaPercentuale(appuntamento.prestazioni?.iva || ""),
+            iva_descrizione: appuntamento.prestazioni?.iva,
           }]);
         }
       }
@@ -319,8 +345,8 @@ export const NuovaFatturaDialog = ({
         prestazione_id: prestazioneId,
         descrizione: prestazione.nome,
         prezzo_unitario: parseFloat(prestazione.prezzo?.toString() || "0"),
-        iva_percentuale: prestazione.iva === "Esente IVA Art.10" ? 0 : 22,
-        iva_descrizione: prestazione.iva, // Salva la descrizione IVA dalla prestazione
+        iva_percentuale: getIvaPercentuale(prestazione.iva),
+        iva_descrizione: prestazione.iva,
       };
       setDettagli(nuoviDettagli);
     }
