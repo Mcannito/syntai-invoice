@@ -243,10 +243,8 @@ const Impostazioni = () => {
 
       const { error } = await supabase
         .from("user_settings")
-        .upsert({
-          user_id: user.id,
-          ...templateSettings,
-        });
+        .update(templateSettings)
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
@@ -254,6 +252,8 @@ const Impostazioni = () => {
         title: "Successo",
         description: "Template salvato con successo",
       });
+      
+      await loadSettings();
     } catch (error) {
       console.error("Error saving template:", error);
       toast({
