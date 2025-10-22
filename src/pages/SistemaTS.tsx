@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Send, CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react";
+import { Send, CheckCircle, Clock, XCircle, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Table,
   TableBody,
@@ -26,6 +27,9 @@ const SistemaTS = () => {
 
   const [fattureTS, setFattureTS] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCredentials, setShowCredentials] = useState(false);
+
+  const credentialsComplete = credentials.pincode && credentials.password && credentials.codiceFiscale;
 
   useEffect(() => {
     fetchFattureSanitarie();
@@ -180,12 +184,64 @@ const SistemaTS = () => {
         </Card>
       </div>
 
+      {/* Alert per credenziali */}
+      {!credentialsComplete && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Credenziali mancanti</AlertTitle>
+          <AlertDescription>
+            Configura le credenziali del Sistema TS per poter inviare le fatture sanitarie.
+            <Button
+              variant="link"
+              size="sm"
+              className="px-1 h-auto text-destructive underline"
+              onClick={() => setShowCredentials(true)}
+            >
+              Configura ora
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Configurazione credenziali */}
       <Card className="shadow-medical-sm">
         <CardHeader className="border-b bg-muted/50">
-          <CardTitle>Credenziali Sistema TS</CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CardTitle>Credenziali Sistema TS</CardTitle>
+              {credentialsComplete ? (
+                <Badge className="bg-green-500">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Configurate
+                </Badge>
+              ) : (
+                <Badge variant="destructive">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  Da Configurare
+                </Badge>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowCredentials(!showCredentials)}
+            >
+              {showCredentials ? (
+                <>
+                  <ChevronUp className="h-4 w-4 mr-2" />
+                  Nascondi
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4 mr-2" />
+                  Mostra
+                </>
+              )}
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent className="p-6">
+        {showCredentials && (
+          <CardContent className="p-6">
           <div className="space-y-4">
             <div className="flex items-start gap-2 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg">
               <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
@@ -255,8 +311,9 @@ const SistemaTS = () => {
               <Button variant="outline">Annulla</Button>
               <Button onClick={handleSave}>Salva Credenziali</Button>
             </div>
-          </div>
-        </CardContent>
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       {/* Tabella fatture */}
