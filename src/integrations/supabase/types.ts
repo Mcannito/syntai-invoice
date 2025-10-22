@@ -528,6 +528,13 @@ export type Database = {
           nome: string | null
           nome_banca: string | null
           partita_iva: string | null
+          pdf_template_colore_primario: string | null
+          pdf_template_colore_secondario: string | null
+          pdf_template_font_size: string | null
+          pdf_template_footer_text: string | null
+          pdf_template_layout: string | null
+          pdf_template_mostra_logo: boolean | null
+          pdf_template_posizione_logo: string | null
           pec: string | null
           qualifica: string | null
           regime_fiscale: string | null
@@ -572,6 +579,13 @@ export type Database = {
           nome?: string | null
           nome_banca?: string | null
           partita_iva?: string | null
+          pdf_template_colore_primario?: string | null
+          pdf_template_colore_secondario?: string | null
+          pdf_template_font_size?: string | null
+          pdf_template_footer_text?: string | null
+          pdf_template_layout?: string | null
+          pdf_template_mostra_logo?: boolean | null
+          pdf_template_posizione_logo?: string | null
           pec?: string | null
           qualifica?: string | null
           regime_fiscale?: string | null
@@ -616,6 +630,13 @@ export type Database = {
           nome?: string | null
           nome_banca?: string | null
           partita_iva?: string | null
+          pdf_template_colore_primario?: string | null
+          pdf_template_colore_secondario?: string | null
+          pdf_template_font_size?: string | null
+          pdf_template_footer_text?: string | null
+          pdf_template_layout?: string | null
+          pdf_template_mostra_logo?: boolean | null
+          pdf_template_posizione_logo?: string | null
           pec?: string | null
           qualifica?: string | null
           regime_fiscale?: string | null

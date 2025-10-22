@@ -107,6 +107,7 @@ const Fatture = () => {
   const [searchTermEntrata, setSearchTermEntrata] = useState("");
   const [filtroCategoriaEntrata, setFiltroCategoriaEntrata] = useState<string>("tutte");
   const [filtroStatoPagamento, setFiltroStatoPagamento] = useState<string>("tutti");
+  const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
   
   const { toast } = useToast();
 
@@ -612,6 +613,50 @@ const Fatture = () => {
         description: "Impossibile aggiornare lo stato del pagamento",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleViewPDF = async (fattura: any) => {
+    try {
+      if (fattura.pdf_path) {
+        const { data } = supabase.storage.from('fatture-pdf').getPublicUrl(fattura.pdf_path);
+        window.open(data.publicUrl, '_blank');
+        return;
+      }
+      
+      setGeneratingPdf(fattura.id);
+      const { data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
+        body: { fatturaId: fattura.id }
+      });
+      
+      if (error) throw error;
+      window.open(data.pdfUrl, '_blank');
+      await loadFatture();
+      
+      toast({ title: "PDF Generato", description: "Il PDF è stato generato con successo" });
+    } catch (error) {
+      toast({ title: "Errore", description: "Impossibile generare il PDF", variant: "destructive" });
+    } finally {
+      setGeneratingPdf(null);
+    }
+  };
+
+  const handleDownloadPDF = async (fattura: any) => {
+    try {
+      if (!fattura.pdf_path) {
+        await handleViewPDF(fattura);
+        return;
+      }
+      
+      const { data } = supabase.storage.from('fatture-pdf').getPublicUrl(fattura.pdf_path);
+      const link = document.createElement('a');
+      link.href = data.publicUrl;
+      link.download = `fattura_${fattura.numero}.html`;
+      link.click();
+      
+      toast({ title: "Download Avviato", description: "Il PDF verrà scaricato a breve" });
+    } catch (error) {
+      toast({ title: "Errore", description: "Impossibile scaricare il PDF", variant: "destructive" });
     }
   };
 
@@ -1181,10 +1226,28 @@ const Fatture = () => {
                     <TableCell>{getStatoBadge(fattura.stato)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Eye className="h-4 w-4" />
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => handleViewPDF(fattura)}
+                          disabled={generatingPdf === fattura.id}
+                          title="Visualizza PDF"
+                        >
+                          {generatingPdf === fattura.id ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => handleDownloadPDF(fattura)}
+                          disabled={generatingPdf === fattura.id}
+                          title="Scarica PDF"
+                        >
                           <Download className="h-4 w-4" />
                         </Button>
                         {!fattura.pagata && fattura.tipo_documento !== 'preventivo' && fattura.tipo_documento !== 'fattura_proforma' && (

@@ -3,7 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Settings, User, Upload, Trash2 } from "lucide-react";
+import { Settings, User, Upload, Trash2, FileText } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import TemplateEditor from "@/components/Impostazioni/TemplateEditor";
+import TemplatePreview from "@/components/Impostazioni/TemplatePreview";
 import {
   Select,
   SelectContent,
@@ -38,6 +41,15 @@ const Impostazioni = () => {
   const [specializzazione, setSpecializzazione] = useState<string>("");
   const [openSpecializzazione, setOpenSpecializzazione] = useState(false);
   const { toast } = useToast();
+  const [templateSettings, setTemplateSettings] = useState<any>({
+    pdf_template_colore_primario: '#2563eb',
+    pdf_template_colore_secondario: '#64748b',
+    pdf_template_font_size: 'medium',
+    pdf_template_mostra_logo: true,
+    pdf_template_posizione_logo: 'left',
+    pdf_template_footer_text: '',
+    pdf_template_layout: 'classic',
+  });
 
   useEffect(() => {
     loadSettings();
@@ -66,6 +78,15 @@ const Impostazioni = () => {
             .getPublicUrl(data.logo_path);
           setLogo(publicUrl.publicUrl);
         }
+        setTemplateSettings({
+          pdf_template_colore_primario: data.pdf_template_colore_primario || '#2563eb',
+          pdf_template_colore_secondario: data.pdf_template_colore_secondario || '#64748b',
+          pdf_template_font_size: data.pdf_template_font_size || 'medium',
+          pdf_template_mostra_logo: data.pdf_template_mostra_logo ?? true,
+          pdf_template_posizione_logo: data.pdf_template_posizione_logo || 'left',
+          pdf_template_footer_text: data.pdf_template_footer_text || '',
+          pdf_template_layout: data.pdf_template_layout || 'classic',
+        });
       }
     } catch (error) {
       console.error("Error loading settings:", error);
@@ -215,6 +236,34 @@ const Impostazioni = () => {
     }
   };
 
+  const handleSaveTemplate = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("user_settings")
+        .upsert({
+          user_id: user.id,
+          ...templateSettings,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Successo",
+        description: "Template salvato con successo",
+      });
+    } catch (error) {
+      console.error("Error saving template:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile salvare il template",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -225,8 +274,21 @@ const Impostazioni = () => {
         </p>
       </div>
 
-      {/* Anagrafica Professionista */}
-      <Card className="shadow-medical-sm">
+      <Tabs defaultValue="anagrafica" className="w-full">
+        <TabsList>
+          <TabsTrigger value="anagrafica">
+            <User className="h-4 w-4 mr-2" />
+            Anagrafica
+          </TabsTrigger>
+          <TabsTrigger value="template">
+            <FileText className="h-4 w-4 mr-2" />
+            Template Fatture
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="anagrafica" className="space-y-6">
+          {/* Anagrafica Professionista */}
+          <Card className="shadow-medical-sm">
         <CardHeader className="border-b bg-muted/50">
           <div className="flex items-center gap-2">
             <User className="h-5 w-5 text-primary" />
@@ -593,6 +655,55 @@ const Impostazioni = () => {
           </form>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="template" className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Editor */}
+            <Card className="shadow-medical-sm">
+              <CardHeader className="border-b bg-muted/50">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-primary" />
+                  <div>
+                    <CardTitle>Personalizza Template</CardTitle>
+                    <CardDescription>Modifica l'aspetto delle tue fatture</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <TemplateEditor
+                  settings={templateSettings}
+                  onSettingsChange={setTemplateSettings}
+                />
+                <div className="flex justify-end gap-4 pt-6 border-t mt-6">
+                  <Button variant="outline" onClick={loadSettings}>
+                    Annulla
+                  </Button>
+                  <Button onClick={handleSaveTemplate}>
+                    Salva Template
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Preview */}
+            <Card className="shadow-medical-sm">
+              <CardHeader className="border-b bg-muted/50">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <div>
+                    <CardTitle>Anteprima</CardTitle>
+                    <CardDescription>Come apparirà la tua fattura</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <TemplatePreview settings={templateSettings} logoUrl={logo || undefined} />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
