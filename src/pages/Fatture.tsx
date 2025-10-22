@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -55,6 +56,7 @@ import { it } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 const Fatture = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [fatture, setFatture] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1157,13 +1159,13 @@ const Fatture = () => {
                             <RefreshCw className="h-4 w-4" />
                           </Button>
                         )}
-                        {fattura.stato === "Da Inviare" && fattura.tipo_documento === "fattura_sanitaria" && (
+                        {fattura.pagata && fattura.tipo_documento === "fattura_sanitaria" && (
                           <Button 
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8 text-primary"
-                            onClick={() => handleSendTS(fattura.id)}
-                            disabled={sendingId === fattura.id}
+                            onClick={() => navigate('/sistema-ts')}
+                            title="Apri Sistema TS"
                           >
                             <Send className="h-4 w-4" />
                           </Button>
