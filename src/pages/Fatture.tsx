@@ -72,6 +72,8 @@ const Fatture = () => {
   const [impostazioniDialogOpen, setImpostazioniDialogOpen] = useState(false);
   const [rivalsaAttiva, setRivalsaAttiva] = useState(true);
   const [ritenutaAttiva, setRitenutaAttiva] = useState(false);
+  const [bolloAttivo, setBolloAttivo] = useState(false);
+  const [bolloVirtuale, setBolloVirtuale] = useState(false);
   const { toast } = useToast();
 
   const loadFatture = async () => {
@@ -1153,6 +1155,87 @@ const Fatture = () => {
                             <SelectItem value="Z">Z - Titolo diverso dai precedenti</SelectItem>
                           </SelectContent>
                         </Select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Bollo */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="bollo-switch" className="text-base">Marca da Bollo</Label>
+                      <p className="text-sm text-muted-foreground">Applica marca da bollo alle fatture</p>
+                    </div>
+                    <Switch 
+                      id="bollo-switch" 
+                      checked={bolloAttivo} 
+                      onCheckedChange={setBolloAttivo}
+                    />
+                  </div>
+                  
+                  {bolloAttivo && (
+                    <div className="space-y-4 pl-6 border-l-2 border-muted">
+                      <div className="space-y-2">
+                        <Label htmlFor="importo-bollo">Importo Marca da Bollo (€)</Label>
+                        <Input id="importo-bollo" type="number" placeholder="2.00" defaultValue="2.00" step="0.01" />
+                        <p className="text-xs text-muted-foreground">
+                          Il bollo verrà applicato automaticamente se la prestazione supera i 77,47 €
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Bollo a carico di</Label>
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <input 
+                              type="radio" 
+                              id="bollo-paziente" 
+                              name="bollo-carico" 
+                              value="paziente"
+                              defaultChecked
+                              className="h-4 w-4"
+                            />
+                            <Label htmlFor="bollo-paziente" className="font-normal cursor-pointer">
+                              Paziente
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input 
+                              type="radio" 
+                              id="bollo-professionista" 
+                              name="bollo-carico" 
+                              value="professionista"
+                              className="h-4 w-4"
+                            />
+                            <Label htmlFor="bollo-professionista" className="font-normal cursor-pointer">
+                              Professionista
+                            </Label>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <input 
+                            type="checkbox" 
+                            id="bollo-virtuale" 
+                            checked={bolloVirtuale}
+                            onChange={(e) => setBolloVirtuale(e.target.checked)}
+                            className="h-4 w-4 rounded border-input"
+                          />
+                          <Label htmlFor="bollo-virtuale" className="font-normal cursor-pointer">
+                            Bollo assolto in maniera virtuale
+                          </Label>
+                        </div>
+                        {bolloVirtuale && (
+                          <div className="bg-muted/50 p-3 rounded-md">
+                            <p className="text-xs text-muted-foreground">
+                              Attivando questa opzione comparirà nel PDF la dicitura 'marca da bollo assolta in maniera virtuale'. 
+                              Non serve acquistarla fisicamente, ma dovrai versarla trimestralmente con F24. Consulta il tuo commercialista.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
