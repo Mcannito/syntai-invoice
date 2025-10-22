@@ -103,6 +103,7 @@ export const NuovaFatturaDialog = ({
   });
 
   const [percentualeRivalsa, setPercentualeRivalsa] = useState(4);
+  const [percentualeRitenuta, setPercentualeRitenuta] = useState(20);
 
   // Funzione per estrarre la percentuale IVA dalla descrizione
   const getIvaPercentuale = (ivaDescrizione: string): number => {
@@ -151,9 +152,12 @@ export const NuovaFatturaDialog = ({
       
       if (data) {
         setUserSettings(data);
-        // Imposta la percentuale rivalsa dalle impostazioni
+        // Imposta le percentuali dalle impostazioni
         if (data.rivalsa_percentuale) {
           setPercentualeRivalsa(data.rivalsa_percentuale);
+        }
+        if (data.ritenuta_aliquota) {
+          setPercentualeRitenuta(data.ritenuta_aliquota);
         }
         // Non impostiamo i valori subito, aspettiamo che ci siano dettagli/imponibile
         // I valori saranno calcolati automaticamente nel useEffect di ricalcolo
@@ -179,7 +183,7 @@ export const NuovaFatturaDialog = ({
     // Ritenuta d'Acconto (calcolata solo su imponibile)
     if (settings.ritenuta_attiva && tassazioneAttiva.ritenuta_acconto) {
       nuovaTassazione.ritenuta_acconto = 
-        imponibile * ((settings.ritenuta_aliquota || 20) / 100);
+        imponibile * (percentualeRitenuta / 100);
     } else {
       nuovaTassazione.ritenuta_acconto = 0;
     }
@@ -225,7 +229,7 @@ export const NuovaFatturaDialog = ({
         calcolaTassazioneDefault(totali.imponibile, userSettings);
       }
     }
-  }, [dettagli, userSettings, tassazioneModificataManualmente, tassazioneAttiva, percentualeRivalsa]);
+  }, [dettagli, userSettings, tassazioneModificataManualmente, tassazioneAttiva, percentualeRivalsa, percentualeRitenuta]);
 
   // Gestisce la precompilazione separatamente dopo che pazienti sono caricati
   useEffect(() => {
@@ -607,6 +611,7 @@ export const NuovaFatturaDialog = ({
         bollo: true,
       });
       setPercentualeRivalsa(4);
+      setPercentualeRitenuta(20);
       setOpen(false);
       onFatturaAdded();
     } catch (error) {
@@ -965,7 +970,7 @@ export const NuovaFatturaDialog = ({
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between mb-2">
-                    <Label>Ritenuta d'Acconto (€)</Label>
+                    <Label>Ritenuta d'Acconto (%)</Label>
                     <div className="flex items-center gap-2">
                       <Switch
                         checked={tassazioneAttiva.ritenuta_acconto}
@@ -981,16 +986,21 @@ export const NuovaFatturaDialog = ({
                       </span>
                     </div>
                   </div>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={tassazione.ritenuta_acconto}
-                    onChange={(e) => {
-                      setTassazione({ ...tassazione, ritenuta_acconto: parseFloat(e.target.value) || 0 });
-                      setTassazioneModificataManualmente(true);
-                    }}
-                    disabled={!tassazioneAttiva.ritenuta_acconto}
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={percentualeRitenuta}
+                      onChange={(e) => {
+                        setPercentualeRitenuta(parseFloat(e.target.value) || 0);
+                      }}
+                      disabled={!tassazioneAttiva.ritenuta_acconto}
+                      className="flex-1"
+                    />
+                    <div className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                      = €{tassazione.ritenuta_acconto.toFixed(2)}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
