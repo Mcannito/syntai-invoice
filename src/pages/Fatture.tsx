@@ -981,7 +981,7 @@ const Fatture = () => {
             >
               <CardContent className="p-6">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Fatture PG</p>
+                  <p className="text-sm font-medium text-muted-foreground">Fatture Elettroniche</p>
                   <p className="text-2xl font-bold">
                     {fatture.filter(f => f.tipo_documento === 'fattura_elettronica_pg').length}
                   </p>
