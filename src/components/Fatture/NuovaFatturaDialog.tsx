@@ -870,6 +870,31 @@ export const NuovaFatturaDialog = ({
                 <p className="text-sm text-muted-foreground">
                   I valori sono calcolati automaticamente dalle impostazioni, ma puoi modificarli per questa fattura
                 </p>
+                {userSettings && (
+                  <div className="mt-3 p-3 bg-background rounded-md border space-y-1.5 text-sm">
+                    <div className="font-medium text-foreground mb-2">Impostazioni attive:</div>
+                    {userSettings.rivalsa_attiva && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Cassa Previdenziale ({userSettings.cassa_previdenziale?.toUpperCase()}):</span>
+                        <span className="font-medium text-foreground">{userSettings.aliquota_cassa}%</span>
+                      </div>
+                    )}
+                    {userSettings.ritenuta_attiva && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Ritenuta d'Acconto:</span>
+                        <span className="font-medium text-foreground">{userSettings.ritenuta_aliquota}%</span>
+                      </div>
+                    )}
+                    {userSettings.bollo_attivo && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Marca da Bollo:</span>
+                        <span className="font-medium text-foreground">
+                          €{userSettings.bollo_importo?.toFixed(2)} (a carico {userSettings.bollo_carico})
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
