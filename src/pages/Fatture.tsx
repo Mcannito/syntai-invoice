@@ -104,6 +104,9 @@ const Fatture = () => {
   const [fatturaToDelete, setFatturaToDelete] = useState<any>(null);
   const [filtroTipoDocumento, setFiltroTipoDocumento] = useState<string | null>(null);
   const [filtroFattureEntrata, setFiltroFattureEntrata] = useState<string | null>(null);
+  const [searchTermEntrata, setSearchTermEntrata] = useState("");
+  const [filtroCategoriaEntrata, setFiltroCategoriaEntrata] = useState<string>("tutte");
+  const [filtroStatoPagamento, setFiltroStatoPagamento] = useState<string>("tutti");
   
   const { toast } = useToast();
 
@@ -1298,25 +1301,66 @@ const Fatture = () => {
           </div>
 
           <Card className="shadow-medical-sm">
-            <CardHeader className="border-b bg-muted/50 flex flex-row items-center justify-between">
-              <CardTitle>Documenti Ricevuti</CardTitle>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCaricaXMLDialogOpen(true)}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Carica XML
-                </Button>
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setInserisciFatturaInEntrataOpen(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Inserisci Manualmente
-                </Button>
+            <CardHeader className="border-b bg-muted/50">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle>Documenti Ricevuti</CardTitle>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCaricaXMLDialogOpen(true)}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Carica XML
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setInserisciFatturaInEntrataOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Inserisci Manualmente
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 items-center">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Cerca fornitore o numero..."
+                      value={searchTermEntrata}
+                      onChange={(e) => setSearchTermEntrata(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  
+                  <Select value={filtroCategoriaEntrata} onValueChange={setFiltroCategoriaEntrata}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tutte">Tutte le categorie</SelectItem>
+                      <SelectItem value="materiali">Materiali</SelectItem>
+                      <SelectItem value="servizi">Servizi</SelectItem>
+                      <SelectItem value="affitto">Affitto</SelectItem>
+                      <SelectItem value="utilities">Utilities</SelectItem>
+                      <SelectItem value="altro">Altro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={filtroStatoPagamento} onValueChange={setFiltroStatoPagamento}>
+                    <SelectTrigger className="w-[160px]">
+                      <SelectValue placeholder="Stato" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tutti">Tutti</SelectItem>
+                      <SelectItem value="pagata">Pagata</SelectItem>
+                      <SelectItem value="da_pagare">Da Pagare</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-6">
@@ -1342,9 +1386,26 @@ const Fatture = () => {
                   <TableBody>
                     {fattureInEntrata
                       .filter(f => {
-                        if (filtroFattureEntrata === 'xml') return f.xml_path;
-                        if (filtroFattureEntrata === 'manuale') return !f.xml_path;
-                        return true;
+                        // Filtro tipo (xml/manuale)
+                        if (filtroFattureEntrata === 'xml' && !f.xml_path) return false;
+                        if (filtroFattureEntrata === 'manuale' && f.xml_path) return false;
+                        
+                        // Filtro ricerca
+                        const searchLower = searchTermEntrata.toLowerCase();
+                        const matchesSearch = !searchTermEntrata || 
+                          f.numero.toLowerCase().includes(searchLower) || 
+                          f.fornitore.toLowerCase().includes(searchLower);
+                        
+                        // Filtro categoria
+                        const matchesCategoria = filtroCategoriaEntrata === 'tutte' || 
+                          f.categoria === filtroCategoriaEntrata;
+                        
+                        // Filtro stato pagamento
+                        const matchesStato = filtroStatoPagamento === 'tutti' ||
+                          (filtroStatoPagamento === 'pagata' && f.pagata) ||
+                          (filtroStatoPagamento === 'da_pagare' && !f.pagata);
+                        
+                        return matchesSearch && matchesCategoria && matchesStato;
                       })
                       .map((fattura) => (
                       <TableRow key={fattura.id}>
