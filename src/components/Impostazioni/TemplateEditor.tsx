@@ -163,6 +163,8 @@ export default function TemplateEditor({ settings, onSettingsChange }: TemplateE
             <SelectItem value="classic">Classico</SelectItem>
             <SelectItem value="modern">Moderno</SelectItem>
             <SelectItem value="minimal">Minimale</SelectItem>
+            <SelectItem value="elegant">Elegante</SelectItem>
+            <SelectItem value="bold">Audace</SelectItem>
           </SelectContent>
         </Select>
       </div>

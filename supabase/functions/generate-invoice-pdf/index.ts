@@ -237,6 +237,76 @@ function generateInvoiceHTML(
             padding-left: 15px;
           }
         `;
+      case 'elegant':
+        return `
+          .header {
+            background: linear-gradient(to right, ${primaryColor}08, transparent);
+            border-radius: 8px;
+            padding: 30px;
+            border: 1px solid ${primaryColor}30;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+          }
+          .party {
+            background: ${secondaryColor}03;
+            border-radius: 6px;
+            padding: 20px;
+            border: 1px solid ${secondaryColor}15;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+          }
+          .items-table th {
+            background: ${primaryColor}12;
+            color: ${primaryColor};
+            border-radius: 4px 4px 0 0;
+            border-bottom: 2px solid ${primaryColor}40;
+          }
+          .payment-info {
+            background: ${primaryColor}05;
+            border-radius: 6px;
+            padding: 20px;
+            border: 1px solid ${primaryColor}20;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+          }
+        `;
+      case 'bold':
+        return `
+          .header {
+            background: ${primaryColor};
+            border-radius: 0;
+            padding: 32px;
+            border: 4px solid ${secondaryColor};
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            color: white;
+          }
+          .document-title, .document-number {
+            color: white !important;
+          }
+          .party {
+            background: ${secondaryColor};
+            border-radius: 0;
+            padding: 20px;
+            border: 3px solid ${primaryColor};
+            color: white;
+          }
+          .party-title {
+            color: white !important;
+          }
+          .items-table th {
+            background: ${secondaryColor};
+            color: white;
+            border-radius: 0;
+            border: 3px solid ${primaryColor};
+          }
+          .payment-info {
+            background: ${primaryColor};
+            border-radius: 0;
+            padding: 20px;
+            border: 4px solid ${secondaryColor};
+            color: white;
+          }
+          .payment-info h3 {
+            color: white !important;
+          }
+        `;
       default: // classic
         return `
           .header {

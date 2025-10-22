@@ -41,6 +41,23 @@ export default function TemplatePreview({ settings, logoUrl }: TemplatePreviewPr
           borderBottom: '1px solid #e0e0e0',
           paddingBottom: '1rem'
         };
+      case 'elegant':
+        return {
+          background: `linear-gradient(to right, ${primaryColor}08, transparent)`,
+          borderRadius: '6px',
+          padding: '1.5rem',
+          border: `1px solid ${primaryColor}30`,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        };
+      case 'bold':
+        return {
+          background: primaryColor,
+          borderRadius: '0',
+          padding: '2rem',
+          border: `4px solid ${secondaryColor}`,
+          boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+          color: 'white'
+        };
       default: // classic
         return {
           borderBottom: `3px solid ${primaryColor}`,
@@ -65,6 +82,22 @@ export default function TemplatePreview({ settings, logoUrl }: TemplatePreviewPr
           borderLeft: `2px solid ${primaryColor}`,
           paddingLeft: '1rem'
         };
+      case 'elegant':
+        return {
+          backgroundColor: `${secondaryColor}03`,
+          borderRadius: '6px',
+          padding: '1rem',
+          border: `1px solid ${secondaryColor}15`,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+        };
+      case 'bold':
+        return {
+          backgroundColor: secondaryColor,
+          borderRadius: '0',
+          padding: '1rem',
+          border: `3px solid ${primaryColor}`,
+          color: 'white'
+        };
       default: // classic
         return {
           backgroundColor: '#f8f9fa',
@@ -87,6 +120,20 @@ export default function TemplatePreview({ settings, logoUrl }: TemplatePreviewPr
           color: primaryColor,
           borderBottom: `2px solid ${primaryColor}`
         };
+      case 'elegant':
+        return {
+          backgroundColor: `${primaryColor}12`,
+          color: primaryColor,
+          borderRadius: '4px 4px 0 0',
+          borderBottom: `2px solid ${primaryColor}40`
+        };
+      case 'bold':
+        return {
+          backgroundColor: secondaryColor,
+          color: 'white',
+          borderRadius: '0',
+          border: `3px solid ${primaryColor}`
+        };
       default: // classic
         return {
           backgroundColor: primaryColor,
@@ -108,6 +155,22 @@ export default function TemplatePreview({ settings, logoUrl }: TemplatePreviewPr
           backgroundColor: 'transparent',
           borderLeft: `2px solid ${primaryColor}`,
           paddingLeft: '1rem'
+        };
+      case 'elegant':
+        return {
+          backgroundColor: `${primaryColor}05`,
+          borderRadius: '6px',
+          padding: '1rem',
+          border: `1px solid ${primaryColor}20`,
+          boxShadow: '0 1px 4px rgba(0,0,0,0.02)'
+        };
+      case 'bold':
+        return {
+          backgroundColor: primaryColor,
+          borderRadius: '0',
+          padding: '1rem',
+          border: `4px solid ${secondaryColor}`,
+          color: 'white'
         };
       default: // classic
         return {
