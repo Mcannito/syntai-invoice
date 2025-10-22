@@ -76,6 +76,23 @@ const Fatture = () => {
   const [bolloVirtuale, setBolloVirtuale] = useState(false);
   const [metodiPagamento, setMetodiPagamento] = useState<Set<string>>(new Set(['bonifico']));
   const [userSettingsId, setUserSettingsId] = useState<string | null>(null);
+  
+  // Nuovi stati per i campi controllati delle impostazioni
+  const [rivalsaPercentuale, setRivalsaPercentuale] = useState(4);
+  const [rivalsaApplicazione, setRivalsaApplicazione] = useState('separata');
+  const [ritenutaAliquota, setRitenutaAliquota] = useState(20);
+  const [ritenutaTipo, setRitenutaTipo] = useState('persone-fisiche');
+  const [ritenutaCausale, setRitenutaCausale] = useState('A');
+  const [bolloImporto, setBolloImporto] = useState(2.00);
+  const [bolloCarico, setBolloCarico] = useState('paziente');
+  const [regimeFiscale, setRegimeFiscale] = useState('forfettario');
+  const [cassaPrevidenziale, setCassaPrevidenziale] = useState('enpam');
+  const [nomeBanca, setNomeBanca] = useState('');
+  const [intestatarioCc, setIntestatarioCc] = useState('');
+  const [iban, setIban] = useState('');
+  const [bicSwift, setBicSwift] = useState('');
+  const [altroMetodo, setAltroMetodo] = useState('');
+  
   const { toast } = useToast();
 
   const loadUserSettings = async () => {
@@ -87,16 +104,30 @@ const Fatture = () => {
         .from('user_settings')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') throw error;
       
       if (data) {
         setUserSettingsId(data.id);
         setRivalsaAttiva(data.rivalsa_attiva ?? true);
+        setRivalsaPercentuale(data.rivalsa_percentuale ?? 4);
+        setRivalsaApplicazione(data.rivalsa_applicazione ?? 'separata');
         setRitenutaAttiva(data.ritenuta_attiva ?? false);
+        setRitenutaAliquota(data.ritenuta_aliquota ?? 20);
+        setRitenutaTipo(data.ritenuta_tipo ?? 'persone-fisiche');
+        setRitenutaCausale(data.ritenuta_causale ?? 'A');
         setBolloAttivo(data.bollo_attivo ?? false);
+        setBolloImporto(data.bollo_importo ?? 2.00);
+        setBolloCarico(data.bollo_carico ?? 'paziente');
         setBolloVirtuale(data.bollo_virtuale ?? false);
+        setRegimeFiscale(data.regime_fiscale ?? 'forfettario');
+        setCassaPrevidenziale(data.cassa_previdenziale ?? 'enpam');
+        setNomeBanca(data.nome_banca ?? '');
+        setIntestatarioCc(data.intestatario_cc ?? '');
+        setIban(data.iban ?? '');
+        setBicSwift(data.bic_swift ?? '');
+        setAltroMetodo(data.altro_metodo_pagamento ?? '');
         if (data.metodi_pagamento) {
           setMetodiPagamento(new Set(data.metodi_pagamento));
         }
@@ -112,29 +143,36 @@ const Fatture = () => {
       if (!user) return;
 
       const settings = {
+        regime_fiscale: regimeFiscale,
+        cassa_previdenziale: cassaPrevidenziale,
         metodi_pagamento: Array.from(metodiPagamento),
-        altro_metodo_pagamento: (document.getElementById('altro-metodo') as HTMLInputElement)?.value,
-        nome_banca: (document.getElementById('nome-banca') as HTMLInputElement)?.value,
-        intestatario_cc: (document.getElementById('intestatario') as HTMLInputElement)?.value,
-        iban: (document.getElementById('iban') as HTMLInputElement)?.value,
-        bic_swift: (document.getElementById('bic-swift') as HTMLInputElement)?.value,
+        altro_metodo_pagamento: altroMetodo,
+        nome_banca: nomeBanca,
+        intestatario_cc: intestatarioCc,
+        iban: iban,
+        bic_swift: bicSwift,
         rivalsa_attiva: rivalsaAttiva,
-        rivalsa_percentuale: parseFloat((document.getElementById('aliquota-rivalsa') as HTMLInputElement)?.value) || 4,
-        rivalsa_applicazione: (document.querySelector('input[name="rivalsa-applicazione"]:checked') as HTMLInputElement)?.value || 'separata',
+        rivalsa_percentuale: rivalsaPercentuale,
+        rivalsa_applicazione: rivalsaApplicazione,
         ritenuta_attiva: ritenutaAttiva,
-        ritenuta_aliquota: parseFloat((document.getElementById('aliquota-ritenuta') as HTMLInputElement)?.value) || 20,
-        ritenuta_tipo: (document.getElementById('tipo-ritenuta') as HTMLSelectElement)?.value || 'persone-fisiche',
-        ritenuta_causale: (document.getElementById('causale-pagamento') as HTMLSelectElement)?.value || 'A',
+        ritenuta_aliquota: ritenutaAliquota,
+        ritenuta_tipo: ritenutaTipo,
+        ritenuta_causale: ritenutaCausale,
         bollo_attivo: bolloAttivo,
-        bollo_importo: parseFloat((document.getElementById('importo-bollo') as HTMLInputElement)?.value) || 2.00,
-        bollo_carico: (document.querySelector('input[name="bollo-carico"]:checked') as HTMLInputElement)?.value || 'paziente',
+        bollo_importo: bolloImporto,
+        bollo_carico: bolloCarico,
         bollo_virtuale: bolloVirtuale,
       };
 
       const { error } = await supabase
         .from('user_settings')
-        .update(settings)
-        .eq('user_id', user.id);
+        .upsert({
+          ...settings,
+          user_id: user.id,
+          id: userSettingsId || undefined
+        }, {
+          onConflict: 'user_id'
+        });
 
       if (error) throw error;
 
@@ -143,6 +181,7 @@ const Fatture = () => {
         description: "Le modifiche sono state salvate con successo",
       });
       setImpostazioniDialogOpen(false);
+      loadUserSettings(); // Ricarica per aggiornare l'ID se era nuovo
     } catch (error) {
       console.error("Error saving settings:", error);
       toast({
@@ -1061,7 +1100,7 @@ const Fatture = () => {
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="regime">Regime Fiscale *</Label>
-                    <Select defaultValue="forfettario">
+                    <Select value={regimeFiscale} onValueChange={setRegimeFiscale}>
                       <SelectTrigger id="regime">
                         <SelectValue />
                       </SelectTrigger>
@@ -1088,7 +1127,7 @@ const Fatture = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="cassa">Cassa Previdenziale *</Label>
-                    <Select defaultValue="enpam">
+                    <Select value={cassaPrevidenziale} onValueChange={setCassaPrevidenziale}>
                       <SelectTrigger id="cassa">
                         <SelectValue />
                       </SelectTrigger>
@@ -1126,7 +1165,14 @@ const Fatture = () => {
                     <div className="space-y-4 pl-6 border-l-2 border-muted">
                       <div className="space-y-2">
                         <Label htmlFor="aliquota-rivalsa">Percentuale Rivalsa (%)</Label>
-                        <Input id="aliquota-rivalsa" type="number" placeholder="4" defaultValue="4" step="0.01" />
+                        <Input 
+                          id="aliquota-rivalsa" 
+                          type="number" 
+                          placeholder="4" 
+                          value={rivalsaPercentuale}
+                          onChange={(e) => setRivalsaPercentuale(parseFloat(e.target.value) || 4)}
+                          step="0.01" 
+                        />
                       </div>
                       
                       <div className="space-y-2">
@@ -1138,7 +1184,8 @@ const Fatture = () => {
                               id="rivalsa-separata" 
                               name="rivalsa-applicazione" 
                               value="separata"
-                              defaultChecked
+                              checked={rivalsaApplicazione === 'separata'}
+                              onChange={(e) => setRivalsaApplicazione(e.target.value)}
                               className="h-4 w-4"
                             />
                             <Label htmlFor="rivalsa-separata" className="font-normal cursor-pointer">
@@ -1151,6 +1198,8 @@ const Fatture = () => {
                               id="rivalsa-inclusa" 
                               name="rivalsa-applicazione" 
                               value="inclusa"
+                              checked={rivalsaApplicazione === 'inclusa'}
+                              onChange={(e) => setRivalsaApplicazione(e.target.value)}
                               className="h-4 w-4"
                             />
                             <Label htmlFor="rivalsa-inclusa" className="font-normal cursor-pointer">
@@ -1182,12 +1231,19 @@ const Fatture = () => {
                     <div className="space-y-4 pl-6 border-l-2 border-muted">
                       <div className="space-y-2">
                         <Label htmlFor="aliquota-ritenuta">Aliquota (%)</Label>
-                        <Input id="aliquota-ritenuta" type="number" placeholder="20" defaultValue="20" step="0.01" />
+                        <Input 
+                          id="aliquota-ritenuta" 
+                          type="number" 
+                          placeholder="20" 
+                          value={ritenutaAliquota}
+                          onChange={(e) => setRitenutaAliquota(parseFloat(e.target.value) || 20)}
+                          step="0.01" 
+                        />
                       </div>
                       
                       <div className="space-y-2">
                         <Label htmlFor="tipo-ritenuta">Tipo di Ritenuta</Label>
-                        <Select defaultValue="persone-fisiche">
+                        <Select value={ritenutaTipo} onValueChange={setRitenutaTipo}>
                           <SelectTrigger id="tipo-ritenuta">
                             <SelectValue />
                           </SelectTrigger>
@@ -1204,7 +1260,7 @@ const Fatture = () => {
                       
                       <div className="space-y-2">
                         <Label htmlFor="causale-pagamento">Causale di Pagamento</Label>
-                        <Select defaultValue="A">
+                        <Select value={ritenutaCausale} onValueChange={setRitenutaCausale}>
                           <SelectTrigger id="causale-pagamento">
                             <SelectValue />
                           </SelectTrigger>
@@ -1257,7 +1313,14 @@ const Fatture = () => {
                     <div className="space-y-4 pl-6 border-l-2 border-muted">
                       <div className="space-y-2">
                         <Label htmlFor="importo-bollo">Importo Marca da Bollo (€)</Label>
-                        <Input id="importo-bollo" type="number" placeholder="2.00" defaultValue="2.00" step="0.01" />
+                        <Input 
+                          id="importo-bollo" 
+                          type="number" 
+                          placeholder="2.00" 
+                          value={bolloImporto}
+                          onChange={(e) => setBolloImporto(parseFloat(e.target.value) || 2.00)}
+                          step="0.01" 
+                        />
                         <p className="text-xs text-muted-foreground">
                           Il bollo verrà applicato automaticamente se la prestazione supera i 77,47 €
                         </p>
@@ -1272,7 +1335,8 @@ const Fatture = () => {
                               id="bollo-paziente" 
                               name="bollo-carico" 
                               value="paziente"
-                              defaultChecked
+                              checked={bolloCarico === 'paziente'}
+                              onChange={(e) => setBolloCarico(e.target.value)}
                               className="h-4 w-4"
                             />
                             <Label htmlFor="bollo-paziente" className="font-normal cursor-pointer">
@@ -1285,6 +1349,8 @@ const Fatture = () => {
                               id="bollo-professionista" 
                               name="bollo-carico" 
                               value="professionista"
+                              checked={bolloCarico === 'professionista'}
+                              onChange={(e) => setBolloCarico(e.target.value)}
                               className="h-4 w-4"
                             />
                             <Label htmlFor="bollo-professionista" className="font-normal cursor-pointer">
@@ -1376,6 +1442,8 @@ const Fatture = () => {
                     <Input 
                       id="altro-metodo" 
                       placeholder="Es: Satispay, Revolut, ecc." 
+                      value={altroMetodo}
+                      onChange={(e) => setAltroMetodo(e.target.value)}
                     />
                   </div>
                 )}
@@ -1386,19 +1454,39 @@ const Fatture = () => {
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="nome-banca">Nome Banca</Label>
-                        <Input id="nome-banca" placeholder="Es: Banca Intesa" />
+                        <Input 
+                          id="nome-banca" 
+                          placeholder="Es: Banca Intesa" 
+                          value={nomeBanca}
+                          onChange={(e) => setNomeBanca(e.target.value)}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="intestatario">Intestatario Conto Corrente</Label>
-                        <Input id="intestatario" placeholder="Nome e Cognome" />
+                        <Input 
+                          id="intestatario" 
+                          placeholder="Nome e Cognome" 
+                          value={intestatarioCc}
+                          onChange={(e) => setIntestatarioCc(e.target.value)}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="iban">IBAN</Label>
-                        <Input id="iban" placeholder="IT00X0000000000000000000000" />
+                        <Input 
+                          id="iban" 
+                          placeholder="IT00X0000000000000000000000" 
+                          value={iban}
+                          onChange={(e) => setIban(e.target.value)}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="bic-swift">BIC/SWIFT</Label>
-                        <Input id="bic-swift" placeholder="BCITITMM" />
+                        <Input 
+                          id="bic-swift" 
+                          placeholder="BCITITMM" 
+                          value={bicSwift}
+                          onChange={(e) => setBicSwift(e.target.value)}
+                        />
                       </div>
                     </div>
                   </div>

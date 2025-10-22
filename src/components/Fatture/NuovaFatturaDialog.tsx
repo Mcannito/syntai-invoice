@@ -140,30 +140,48 @@ export const NuovaFatturaDialog = ({
       
       if (data) {
         setUserSettings(data);
-        
-        // Imposta i valori di default per la tassazione
-        const cassaPrevidenziale = data.rivalsa_attiva 
-          ? (data.rivalsa_percentuale || 4) 
-          : 0;
-        
-        const ritenutaAcconto = data.ritenuta_attiva 
-          ? (data.ritenuta_aliquota || 20) 
-          : 0;
-        
-        const bolloVirtuale = (data.bollo_attivo && data.bollo_virtuale) 
-          ? (data.bollo_importo || 2.00) 
-          : 0;
-        
-        setTassazione({
-          cassa_previdenziale: cassaPrevidenziale,
-          ritenuta_acconto: ritenutaAcconto,
-          contributo_integrativo: 0,
-          bollo_virtuale: bolloVirtuale,
-        });
+        // Non impostiamo i valori subito, aspettiamo che ci siano dettagli/imponibile
+        // I valori saranno calcolati automaticamente nel useEffect di ricalcolo
       }
     } catch (error) {
       console.error("Error loading user settings:", error);
     }
+  };
+
+  const calcolaTassazioneDefault = (imponibile: number, settings: any) => {
+    if (!settings) return;
+    
+    const nuovaTassazione = { ...tassazione };
+    
+    // Rivalsa/Contributo Integrativo (Cassa Previdenziale)
+    if (settings.rivalsa_attiva) {
+      nuovaTassazione.cassa_previdenziale = 
+        imponibile * ((settings.rivalsa_percentuale || 4) / 100);
+    } else {
+      nuovaTassazione.cassa_previdenziale = 0;
+    }
+    
+    // Ritenuta d'Acconto (calcolata su imponibile + cassa)
+    if (settings.ritenuta_attiva) {
+      const base = imponibile + nuovaTassazione.cassa_previdenziale;
+      nuovaTassazione.ritenuta_acconto = 
+        base * ((settings.ritenuta_aliquota || 20) / 100);
+    } else {
+      nuovaTassazione.ritenuta_acconto = 0;
+    }
+    
+    // Marca da Bollo (applica solo se imponibile > 77.47€)
+    if (settings.bollo_attivo && settings.bollo_virtuale) {
+      nuovaTassazione.bollo_virtuale = 
+        imponibile > 77.47 ? (settings.bollo_importo || 2.00) : 0;
+    } else {
+      nuovaTassazione.bollo_virtuale = 0;
+    }
+    
+    // Contributo integrativo sempre 0 di default (campo nascosto)
+    nuovaTassazione.contributo_integrativo = 0;
+    
+    setTassazione(nuovaTassazione);
   };
 
   useEffect(() => {
@@ -175,29 +193,13 @@ export const NuovaFatturaDialog = ({
     }
   }, [open]);
 
-  // Reset tassazione ai valori di default quando si chiude il dialog
+  // Ricalcola automaticamente la tassazione quando cambiano i dettagli o gli userSettings
   useEffect(() => {
-    if (!open && userSettings) {
-      const cassaPrevidenziale = userSettings.rivalsa_attiva 
-        ? (userSettings.rivalsa_percentuale || 4) 
-        : 0;
-      
-      const ritenutaAcconto = userSettings.ritenuta_attiva 
-        ? (userSettings.ritenuta_aliquota || 20) 
-        : 0;
-      
-      const bolloVirtuale = (userSettings.bollo_attivo && userSettings.bollo_virtuale) 
-        ? (userSettings.bollo_importo || 2.00) 
-        : 0;
-      
-      setTassazione({
-        cassa_previdenziale: cassaPrevidenziale,
-        ritenuta_acconto: ritenutaAcconto,
-        contributo_integrativo: 0,
-        bollo_virtuale: bolloVirtuale,
-      });
+    if (userSettings && dettagli.length > 0) {
+      const totali = calcolaTotali();
+      calcolaTassazioneDefault(totali.imponibile, userSettings);
     }
-  }, [open, userSettings]);
+  }, [dettagli, userSettings]);
 
   // Gestisce la precompilazione separatamente dopo che pazienti sono caricati
   useEffect(() => {
@@ -834,10 +836,13 @@ export const NuovaFatturaDialog = ({
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Tassazione e Oneri</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  I valori sono calcolati automaticamente dalle impostazioni, ma puoi modificarli per questa fattura
+                </p>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4">
+              <CardContent className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label>Cassa Previdenziale (€)</Label>
+                  <Label>Rivalsa/Contributo Integrativo (€)</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -857,17 +862,7 @@ export const NuovaFatturaDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Contributo Integrativo (€)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={tassazione.contributo_integrativo}
-                    onChange={(e) => setTassazione({ ...tassazione, contributo_integrativo: parseFloat(e.target.value) || 0 })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Bollo Virtuale (€)</Label>
+                  <Label>Marca da Bollo (€)</Label>
                   <Input
                     type="number"
                     step="0.01"
