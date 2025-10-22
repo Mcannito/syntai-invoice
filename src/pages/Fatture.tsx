@@ -1292,6 +1292,16 @@ const Fatture = () => {
                   </div>
                 </div>
                 
+                {metodiPagamento.has('altro') && (
+                  <div className="space-y-2">
+                    <Label htmlFor="altro-metodo">Specifica altro metodo di pagamento</Label>
+                    <Input 
+                      id="altro-metodo" 
+                      placeholder="Es: Satispay, Revolut, ecc." 
+                    />
+                  </div>
+                )}
+                
                 {metodiPagamento.has('bonifico') && (
                   <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
                     <h4 className="font-medium text-sm">Informazioni Bonifico Bancario</h4>
