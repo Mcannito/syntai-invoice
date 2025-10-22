@@ -163,11 +163,10 @@ export const NuovaFatturaDialog = ({
       nuovaTassazione.cassa_previdenziale = 0;
     }
     
-    // Ritenuta d'Acconto (calcolata su imponibile + cassa)
+    // Ritenuta d'Acconto (calcolata solo su imponibile)
     if (settings.ritenuta_attiva) {
-      const base = imponibile + nuovaTassazione.cassa_previdenziale;
       nuovaTassazione.ritenuta_acconto = 
-        base * ((settings.ritenuta_aliquota || 20) / 100);
+        imponibile * ((settings.ritenuta_aliquota || 20) / 100);
     } else {
       nuovaTassazione.ritenuta_acconto = 0;
     }
