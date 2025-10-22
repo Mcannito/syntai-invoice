@@ -93,6 +93,8 @@ export const NuovaFatturaDialog = ({
     bollo_virtuale: 0,
   });
 
+  const [tassazioneModificataManualmente, setTassazioneModificataManualmente] = useState(false);
+
   // Funzione per estrarre la percentuale IVA dalla descrizione
   const getIvaPercentuale = (ivaDescrizione: string): number => {
     if (!ivaDescrizione) return 0;
@@ -170,12 +172,11 @@ export const NuovaFatturaDialog = ({
       nuovaTassazione.ritenuta_acconto = 0;
     }
     
-    // Marca da Bollo (applica solo se imponibile > 77.47€ E a carico del paziente)
-    if (settings.bollo_attivo && settings.bollo_virtuale) {
+    // Marca da Bollo (applica solo se bollo_attivo E imponibile > 77.47€)
+    if (settings.bollo_attivo && imponibile > 77.47) {
       // Il bollo viene conteggiato in fattura SOLO se a carico del paziente
       if (settings.bollo_carico === 'paziente') {
-        nuovaTassazione.bollo_virtuale = 
-          imponibile > 77.47 ? (settings.bollo_importo || 2.00) : 0;
+        nuovaTassazione.bollo_virtuale = settings.bollo_importo || 2.00;
       } else {
         // Se a carico del professionista, non viene addebitato al paziente
         nuovaTassazione.bollo_virtuale = 0;
@@ -201,6 +202,9 @@ export const NuovaFatturaDialog = ({
 
   // Ricalcola automaticamente la tassazione quando cambiano i dettagli o gli userSettings
   useEffect(() => {
+    // Non ricalcolare se l'utente ha modificato manualmente i valori
+    if (tassazioneModificataManualmente) return;
+    
     if (userSettings && dettagli.length > 0) {
       // Controlla se c'è almeno un dettaglio con prezzo > 0
       const hasValidDetails = dettagli.some(d => d.prezzo_unitario > 0);
@@ -209,7 +213,7 @@ export const NuovaFatturaDialog = ({
         calcolaTassazioneDefault(totali.imponibile, userSettings);
       }
     }
-  }, [dettagli, userSettings]);
+  }, [dettagli, userSettings, tassazioneModificataManualmente]);
 
   // Gestisce la precompilazione separatamente dopo che pazienti sono caricati
   useEffect(() => {
@@ -257,6 +261,14 @@ export const NuovaFatturaDialog = ({
           iva_descrizione: app.prestazioni?.iva,
         }));
         setDettagli(dettagliPrecompilati);
+        
+        // Forza il ricalcolo della tassazione dopo un breve delay
+        setTimeout(() => {
+          if (userSettings) {
+            const totali = calcolaTotali();
+            calcolaTassazioneDefault(totali.imponibile, userSettings);
+          }
+        }, 100);
       }
       // Precompila con dati da appuntamento singolo se presente
       else if (appuntamento) {
@@ -283,6 +295,14 @@ export const NuovaFatturaDialog = ({
             iva_percentuale: getIvaPercentuale(appuntamento.prestazioni?.iva || ""),
             iva_descrizione: appuntamento.prestazioni?.iva,
           }]);
+          
+          // Forza il ricalcolo della tassazione
+          setTimeout(() => {
+            if (userSettings) {
+              const totali = calcolaTotali();
+              calcolaTassazioneDefault(totali.imponibile, userSettings);
+            }
+          }, 100);
         }
       }
     }
@@ -555,6 +575,7 @@ export const NuovaFatturaDialog = ({
         contributo_integrativo: 0,
         bollo_virtuale: 0,
       });
+      setTassazioneModificataManualmente(false);
       setOpen(false);
       onFatturaAdded();
     } catch (error) {
@@ -857,7 +878,10 @@ export const NuovaFatturaDialog = ({
                     type="number"
                     step="0.01"
                     value={tassazione.cassa_previdenziale}
-                    onChange={(e) => setTassazione({ ...tassazione, cassa_previdenziale: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      setTassazione({ ...tassazione, cassa_previdenziale: parseFloat(e.target.value) || 0 });
+                      setTassazioneModificataManualmente(true);
+                    }}
                   />
                 </div>
 
@@ -867,7 +891,10 @@ export const NuovaFatturaDialog = ({
                     type="number"
                     step="0.01"
                     value={tassazione.ritenuta_acconto}
-                    onChange={(e) => setTassazione({ ...tassazione, ritenuta_acconto: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      setTassazione({ ...tassazione, ritenuta_acconto: parseFloat(e.target.value) || 0 });
+                      setTassazioneModificataManualmente(true);
+                    }}
                   />
                 </div>
 
@@ -877,7 +904,10 @@ export const NuovaFatturaDialog = ({
                     type="number"
                     step="0.01"
                     value={tassazione.bollo_virtuale}
-                    onChange={(e) => setTassazione({ ...tassazione, bollo_virtuale: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      setTassazione({ ...tassazione, bollo_virtuale: parseFloat(e.target.value) || 0 });
+                      setTassazioneModificataManualmente(true);
+                    }}
                   />
                 </div>
               </CardContent>
