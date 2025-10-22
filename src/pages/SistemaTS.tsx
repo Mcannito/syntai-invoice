@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Send, CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -22,49 +24,43 @@ const SistemaTS = () => {
     codiceProprietario: "",
   });
 
-  // Mock data per le fatture inviate al TS
-  const fattureTS = [
-    {
-      id: 1,
-      numero: "2024/001",
-      data: "2024-01-15",
-      paziente: "Mario Rossi",
-      importo: 150.00,
-      stato: "inviata",
-      dataInvio: "2024-01-16",
-      protocollo: "TS2024001234"
-    },
-    {
-      id: 2,
-      numero: "2024/002",
-      data: "2024-01-18",
-      paziente: "Laura Bianchi",
-      importo: 200.00,
-      stato: "accettata",
-      dataInvio: "2024-01-19",
-      protocollo: "TS2024001235"
-    },
-    {
-      id: 3,
-      numero: "2024/003",
-      data: "2024-01-20",
-      paziente: "Giuseppe Verdi",
-      importo: 120.00,
-      stato: "da_inviare",
-      dataInvio: null,
-      protocollo: null
-    },
-    {
-      id: 4,
-      numero: "2024/004",
-      data: "2024-01-22",
-      paziente: "Anna Neri",
-      importo: 180.00,
-      stato: "errore",
-      dataInvio: "2024-01-23",
-      protocollo: null
-    },
-  ];
+  const [fattureTS, setFattureTS] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFattureSanitarie();
+  }, []);
+
+  const fetchFattureSanitarie = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('fatture')
+        .select(`
+          *,
+          pazienti:paziente_id (
+            nome,
+            cognome,
+            tipo_paziente
+          )
+        `)
+        .eq('pagata', true)
+        .order('data', { ascending: false });
+
+      if (error) throw error;
+
+      // Filtra solo fatture verso persone fisiche
+      const fattureFiltrate = data?.filter(
+        (fattura: any) => fattura.pazienti?.tipo_paziente === 'persona_fisica'
+      ) || [];
+
+      setFattureTS(fattureFiltrate);
+    } catch (error) {
+      console.error('Errore nel caricamento delle fatture:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatoBadge = (stato: string) => {
     switch (stato) {
@@ -269,57 +265,78 @@ const SistemaTS = () => {
           <CardTitle>Stato Invii Fatture Sanitarie</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Numero</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Paziente</TableHead>
-                <TableHead className="text-right">Importo</TableHead>
-                <TableHead>Stato</TableHead>
-                <TableHead>Data Invio</TableHead>
-                <TableHead>Protocollo TS</TableHead>
-                <TableHead className="text-right">Azioni</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {fattureTS.map((fattura) => (
-                <TableRow key={fattura.id} className="hover:bg-muted/30">
-                  <TableCell className="font-mono font-medium">{fattura.numero}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {new Date(fattura.data).toLocaleDateString('it-IT')}
-                  </TableCell>
-                  <TableCell className="font-medium">{fattura.paziente}</TableCell>
-                  <TableCell className="text-right font-semibold text-primary">
-                    €{fattura.importo.toFixed(2)}
-                  </TableCell>
-                  <TableCell>{getStatoBadge(fattura.stato)}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {fattura.dataInvio ? new Date(fattura.dataInvio).toLocaleDateString('it-IT') : '-'}
-                  </TableCell>
-                  <TableCell className="text-sm font-mono">
-                    {fattura.protocollo || '-'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      {fattura.stato === "da_inviare" && (
-                        <Button variant="ghost" size="sm" className="text-primary">
-                          <Send className="h-4 w-4 mr-1" />
-                          Invia
-                        </Button>
-                      )}
-                      {fattura.stato === "errore" && (
-                        <Button variant="ghost" size="sm" className="text-destructive">
-                          <AlertCircle className="h-4 w-4 mr-1" />
-                          Dettagli
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
+          {loading ? (
+            <div className="p-6 space-y-4">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : fattureTS.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">
+              <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Nessuna fattura sanitaria pagata trovata</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Numero</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Paziente</TableHead>
+                  <TableHead className="text-right">Importo</TableHead>
+                  <TableHead>Stato TS</TableHead>
+                  <TableHead>Data Invio</TableHead>
+                  <TableHead>Protocollo TS</TableHead>
+                  <TableHead className="text-right">Azioni</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {fattureTS.map((fattura) => {
+                  const statoTS = fattura.ts_inviata 
+                    ? (fattura.acube_status === 'accepted' ? 'accettata' : 'inviata')
+                    : 'da_inviare';
+                  
+                  return (
+                    <TableRow key={fattura.id} className="hover:bg-muted/30">
+                      <TableCell className="font-mono font-medium">{fattura.numero}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(fattura.data).toLocaleDateString('it-IT')}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {fattura.pazienti?.nome} {fattura.pazienti?.cognome}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold text-primary">
+                        €{fattura.totale?.toFixed(2) || '0.00'}
+                      </TableCell>
+                      <TableCell>{getStatoBadge(statoTS)}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {fattura.invio_data ? new Date(fattura.invio_data).toLocaleDateString('it-IT') : '-'}
+                      </TableCell>
+                      <TableCell className="text-sm font-mono">
+                        {fattura.acube_id || '-'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          {!fattura.ts_inviata && (
+                            <Button variant="ghost" size="sm" className="text-primary">
+                              <Send className="h-4 w-4 mr-1" />
+                              Invia
+                            </Button>
+                          )}
+                          {fattura.acube_error && (
+                            <Button variant="ghost" size="sm" className="text-destructive">
+                              <AlertCircle className="h-4 w-4 mr-1" />
+                              Dettagli
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
