@@ -961,7 +961,7 @@ export const NuovaFatturaDialog = ({
                   <span className="font-semibold">€{tassazione.contributo_integrativo.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Bollo Virtuale:</span>
+                  <span>Bollo:</span>
                   <span className="font-semibold">€{tassazione.bollo_virtuale.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-destructive">
