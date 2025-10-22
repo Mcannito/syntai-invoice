@@ -28,18 +28,34 @@ interface NuovaFatturaDialogProps {
   onFatturaAdded: () => void;
   appuntamento?: any;
   trigger?: React.ReactNode;
+  prestazioniPrecompilate?: any[]; // Array di appuntamenti da fatturare
+  open?: boolean; // Controllo esterno del dialog
+  onOpenChange?: (open: boolean) => void; // Callback per cambiamenti di stato
 }
 
 export const NuovaFatturaDialog = ({ 
   onFatturaAdded, 
   appuntamento,
-  trigger 
+  trigger,
+  prestazioniPrecompilate,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange
 }: NuovaFatturaDialogProps) => {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pazienti, setPazienti] = useState<any[]>([]);
   const [prestazioni, setPrestazioni] = useState<any[]>([]);
   const { toast } = useToast();
+
+  // Usa lo stato controllato se fornito, altrimenti usa lo stato interno
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = (value: boolean) => {
+    if (controlledOnOpenChange) {
+      controlledOnOpenChange(value);
+    } else {
+      setInternalOpen(value);
+    }
+  };
 
   const [formData, setFormData] = useState({
     numero: "",
@@ -80,8 +96,27 @@ export const NuovaFatturaDialog = ({
       loadPrestazioni();
       generateNumeroFattura();
       
-      // Precompila con dati da appuntamento se presente
-      if (appuntamento) {
+      // Precompila con dati da prestazioni selezionate
+      if (prestazioniPrecompilate && prestazioniPrecompilate.length > 0) {
+        const primaPrestazione = prestazioniPrecompilate[0];
+        setFormData(prev => ({
+          ...prev,
+          paziente_id: primaPrestazione.paziente_id || "",
+        }));
+        
+        // Mappa tutte le prestazioni selezionate nei dettagli
+        const dettagliPrecompilati = prestazioniPrecompilate.map(app => ({
+          descrizione: app.prestazioni?.nome || app.titolo,
+          prestazione_id: app.prestazione_id || "",
+          quantita: 1,
+          prezzo_unitario: parseFloat(app.prestazioni?.prezzo || "0"),
+          sconto: 0,
+          iva_percentuale: app.prestazioni?.iva === "Esente IVA Art.10" ? 0 : 22,
+        }));
+        setDettagli(dettagliPrecompilati);
+      }
+      // Precompila con dati da appuntamento singolo se presente
+      else if (appuntamento) {
         setFormData(prev => ({
           ...prev,
           paziente_id: appuntamento.paziente_id || "",
@@ -100,7 +135,7 @@ export const NuovaFatturaDialog = ({
         }
       }
     }
-  }, [open, appuntamento]);
+  }, [open, appuntamento, prestazioniPrecompilate]);
 
   const loadPazienti = async () => {
     try {
@@ -323,6 +358,19 @@ export const NuovaFatturaDialog = ({
 
       if (dettagliError) throw dettagliError;
 
+      // Se ci sono prestazioni precompilate, marca gli appuntamenti come fatturati
+      if (prestazioniPrecompilate && prestazioniPrecompilate.length > 0) {
+        const appuntamentiIds = prestazioniPrecompilate.map(app => app.id);
+        const { error: updateError } = await supabase
+          .from("appuntamenti")
+          .update({ fatturato: true })
+          .in("id", appuntamentiIds);
+
+        if (updateError) {
+          console.error("Error updating appuntamenti fatturato status:", updateError);
+        }
+      }
+
       toast({
         title: "Successo",
         description: "Fattura creata con successo",
@@ -428,6 +476,7 @@ export const NuovaFatturaDialog = ({
                       value={formData.paziente_id}
                       onValueChange={handlePazienteChange}
                       required
+                      disabled={prestazioniPrecompilate && prestazioniPrecompilate.length > 0}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleziona paziente" />

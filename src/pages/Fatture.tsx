@@ -50,6 +50,8 @@ const Fatture = () => {
   const [prestazioniDaFatturare, setPrestazioniDaFatturare] = useState<any[]>([]);
   const [selectedPrestazioni, setSelectedPrestazioni] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"list" | "grouped">("grouped");
+  const [prestazioniPerFattura, setPrestazioniPerFattura] = useState<any[]>([]);
+  const [showNuovaFatturaDialog, setShowNuovaFatturaDialog] = useState(false);
   const { toast } = useToast();
 
   const loadFatture = async () => {
@@ -79,7 +81,6 @@ const Fatture = () => {
 
   const loadPrestazioniDaFatturare = async () => {
     try {
-      // Carica appuntamenti completati non ancora fatturati
       const { data, error } = await supabase
         .from("appuntamenti")
         .select(`
@@ -94,36 +95,18 @@ const Fatture = () => {
           prestazioni (id, nome, prezzo, iva)
         `)
         .eq("stato", "completato")
-        .is("fatturato", null)
+        .eq("fatturato", false)
         .order("data", { ascending: false });
 
       if (error) throw error;
       setPrestazioniDaFatturare(data || []);
     } catch (error) {
-      console.error("Error loading prestazioni:", error);
-      // Fallback: se non esiste il campo fatturato, mostra tutti gli appuntamenti completati
-      try {
-        const { data, error } = await supabase
-          .from("appuntamenti")
-          .select(`
-            id,
-            data,
-            ora_inizio,
-            ora_fine,
-            note,
-            paziente_id,
-            prestazione_id,
-            pazienti (id, nome, cognome, ragione_sociale, tipo_paziente),
-            prestazioni (id, nome, prezzo, iva)
-          `)
-          .eq("stato", "completato")
-          .order("data", { ascending: false });
-
-        if (error) throw error;
-        setPrestazioniDaFatturare(data || []);
-      } catch (fallbackError) {
-        console.error("Fallback error:", fallbackError);
-      }
+      console.error("Error loading prestazioni da fatturare:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile caricare le prestazioni da fatturare",
+        variant: "destructive",
+      });
     }
   };
 
@@ -333,18 +316,20 @@ const Fatture = () => {
     if (selectedPrestazioni.size === 0) {
       toast({
         title: "Attenzione",
-        description: "Seleziona almeno una prestazione",
+        description: "Seleziona almeno una prestazione da fatturare",
         variant: "destructive",
       });
       return;
     }
     
-    // Qui apriremo il dialog di creazione fattura con le prestazioni pre-compilate
-    // Per ora mostriamo solo un toast
-    toast({
-      title: "Funzionalità in sviluppo",
-      description: `Stai per creare una fattura con ${selectedPrestazioni.size} prestazioni`,
-    });
+    // Recupera i dettagli completi delle prestazioni selezionate
+    const prestazioniSelezionate = prestazioniDaFatturare.filter(p => 
+      selectedPrestazioni.has(p.id)
+    );
+    
+    // Imposta le prestazioni e apri il dialog
+    setPrestazioniPerFattura(prestazioniSelezionate);
+    setShowNuovaFatturaDialog(true);
   };
 
   const getPrestazioniGroupedByPaziente = () => {
@@ -408,7 +393,12 @@ const Fatture = () => {
             Documenti in uscita e in entrata
           </p>
         </div>
-        <NuovaFatturaDialog onFatturaAdded={loadFatture} />
+        <NuovaFatturaDialog 
+          onFatturaAdded={() => {
+            loadFatture();
+            loadPrestazioniDaFatturare();
+          }} 
+        />
       </div>
 
       {/* Tabs */}
@@ -881,6 +871,26 @@ const Fatture = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog Fattura da Prestazioni */}
+      <NuovaFatturaDialog
+        open={showNuovaFatturaDialog}
+        onOpenChange={(open) => {
+          setShowNuovaFatturaDialog(open);
+          if (!open) {
+            setPrestazioniPerFattura([]);
+          }
+        }}
+        onFatturaAdded={() => {
+          loadFatture();
+          loadPrestazioniDaFatturare();
+          setSelectedPrestazioni(new Set());
+          setPrestazioniPerFattura([]);
+          setShowNuovaFatturaDialog(false);
+        }}
+        prestazioniPrecompilate={prestazioniPerFattura}
+        trigger={<span style={{ display: 'none' }} />}
+      />
     </div>
   );
 };

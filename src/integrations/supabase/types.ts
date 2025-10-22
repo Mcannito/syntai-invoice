@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           created_at: string
           data: string
+          fatturato: boolean
           id: string
           note: string | null
           ora_fine: string
@@ -32,6 +33,7 @@ export type Database = {
         Insert: {
           created_at?: string
           data: string
+          fatturato?: boolean
           id?: string
           note?: string | null
           ora_fine: string
@@ -46,6 +48,7 @@ export type Database = {
         Update: {
           created_at?: string
           data?: string
+          fatturato?: boolean
           id?: string
           note?: string | null
           ora_fine?: string
