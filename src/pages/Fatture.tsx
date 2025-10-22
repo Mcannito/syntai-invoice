@@ -1065,17 +1065,7 @@ const Fatture = () => {
         <TabsContent value="entrata" className="space-y-4">
           <Card className="shadow-medical-sm">
             <CardHeader className="border-b bg-muted/50">
-              <div className="flex items-center justify-between gap-4">
-                <CardTitle>Documenti Ricevuti</CardTitle>
-                <Button 
-                  variant="outline" 
-                  className="gap-2"
-                  onClick={() => setCaricaXMLDialogOpen(true)}
-                >
-                  <Upload className="h-4 w-4" />
-                  Carica Fattura
-                </Button>
-              </div>
+              <CardTitle>Documenti Ricevuti</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               {fattureInEntrata.length === 0 ? (
@@ -1084,7 +1074,10 @@ const Fatture = () => {
                   <p className="text-lg font-medium mb-2">Nessun documento ricevuto</p>
                   <p className="text-sm">Carica le fatture elettroniche ricevute o inserisci manualmente le spese</p>
                   <div className="flex gap-2 justify-center mt-6">
-                    <Button variant="outline">
+                    <Button 
+                      variant="outline"
+                      onClick={() => setCaricaXMLDialogOpen(true)}
+                    >
                       <Upload className="h-4 w-4 mr-2" />
                       Carica XML
                     </Button>
