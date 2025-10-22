@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { NuovaFatturaDialog } from "@/components/Fatture/NuovaFatturaDialog";
@@ -26,6 +27,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const Fatture = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -34,6 +43,9 @@ const Fatture = () => {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
   const [fatturaToConvert, setFatturaToConvert] = useState<any>(null);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [fatturaToMarkPaid, setFatturaToMarkPaid] = useState<any>(null);
+  const [paymentDate, setPaymentDate] = useState<Date | undefined>(new Date());
   const { toast } = useToast();
 
   const loadFatture = async () => {
@@ -209,15 +221,23 @@ const Fatture = () => {
     }
   };
 
-  const handleMarkAsPaid = async (fatturaId: string) => {
+  const openPaymentDialog = (fattura: any) => {
+    setFatturaToMarkPaid(fattura);
+    setPaymentDate(new Date());
+    setPaymentDialogOpen(true);
+  };
+
+  const confirmMarkAsPaid = async () => {
+    if (!fatturaToMarkPaid || !paymentDate) return;
+
     try {
       const { error } = await supabase
         .from('fatture')
         .update({ 
           pagata: true, 
-          data_pagamento: new Date().toISOString().split('T')[0] 
+          data_pagamento: format(paymentDate, 'yyyy-MM-dd')
         })
-        .eq('id', fatturaId);
+        .eq('id', fatturaToMarkPaid.id);
 
       if (error) throw error;
 
@@ -226,6 +246,8 @@ const Fatture = () => {
         description: "Fattura segnata come pagata",
       });
       loadFatture();
+      setPaymentDialogOpen(false);
+      setFatturaToMarkPaid(null);
     } catch (error) {
       console.error('Error marking as paid:', error);
       toast({
@@ -379,7 +401,7 @@ const Fatture = () => {
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8"
-                            onClick={() => handleMarkAsPaid(fattura.id)}
+                            onClick={() => openPaymentDialog(fattura)}
                             title="Segna come pagata"
                           >
                             <CheckCircle className="h-4 w-4" />
@@ -475,6 +497,50 @@ const Fatture = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Annulla</AlertDialogCancel>
             <AlertDialogAction onClick={confirmConvert}>Converti</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Payment Dialog */}
+      <AlertDialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Segna come Pagata</AlertDialogTitle>
+            <AlertDialogDescription>
+              Inserisci la data di pagamento per la fattura {fatturaToMarkPaid?.numero}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Label htmlFor="payment-date" className="mb-2 block">Data Pagamento</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !paymentDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {paymentDate ? format(paymentDate, "PPP") : <span>Seleziona data</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={paymentDate}
+                  onSelect={setPaymentDate}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmMarkAsPaid} disabled={!paymentDate}>
+              Conferma Pagamento
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
