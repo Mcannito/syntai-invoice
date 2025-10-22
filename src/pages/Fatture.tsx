@@ -977,7 +977,7 @@ const Fatture = () => {
                       }).length === 1 ? 'documento' : 'documenti'}
                     </p>
                   </div>
-                  <TrendingUp className="h-8 w-8 text-primary" />
+                  <FileText className="h-8 w-8 text-green-500" />
                 </div>
               </CardContent>
             </Card>
