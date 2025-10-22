@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -14,12 +14,14 @@ interface InserisciFatturaInEntrataDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  fatturaToEdit?: any;
 }
 
 export function InserisciFatturaInEntrataDialog({ 
   open, 
   onOpenChange, 
-  onSuccess 
+  onSuccess,
+  fatturaToEdit
 }: InserisciFatturaInEntrataDialogProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -38,6 +40,28 @@ export function InserisciFatturaInEntrataDialog({
     note: ""
   });
 
+  useEffect(() => {
+    if (fatturaToEdit && open) {
+      setFormData({
+        numero: fatturaToEdit.numero || "",
+        data: fatturaToEdit.data || new Date().toISOString().split('T')[0],
+        fornitore: fatturaToEdit.fornitore || "",
+        partita_iva: fatturaToEdit.partita_iva || "",
+        codice_fiscale: fatturaToEdit.codice_fiscale || "",
+        imponibile: fatturaToEdit.imponibile?.toString() || "",
+        iva_importo: fatturaToEdit.iva_importo?.toString() || "",
+        descrizione: fatturaToEdit.descrizione || "",
+        categoria: fatturaToEdit.categoria || "",
+        metodo_pagamento: fatturaToEdit.metodo_pagamento || "bonifico",
+        pagata: fatturaToEdit.pagata || false,
+        data_pagamento: fatturaToEdit.data_pagamento || "",
+        note: fatturaToEdit.note || ""
+      });
+    } else if (!open) {
+      resetForm();
+    }
+  }, [fatturaToEdit, open]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -50,35 +74,49 @@ export function InserisciFatturaInEntrataDialog({
       const iva = parseFloat(formData.iva_importo) || 0;
       const totale = imponibile + iva;
 
-      const { error } = await supabase
-        .from('fatture_in_entrata')
-        .insert({
-          user_id: user.id,
-          numero: formData.numero,
-          data: formData.data,
-          fornitore: formData.fornitore,
-          partita_iva: formData.partita_iva || null,
-          codice_fiscale: formData.codice_fiscale || null,
-          imponibile,
-          iva_importo: iva,
-          importo: totale,
-          descrizione: formData.descrizione || null,
-          categoria: formData.categoria || null,
-          metodo_pagamento: formData.metodo_pagamento || null,
-          pagata: formData.pagata,
-          data_pagamento: formData.pagata && formData.data_pagamento ? formData.data_pagamento : null,
-          note: formData.note || null
-        });
+      const dataToSave = {
+        numero: formData.numero,
+        data: formData.data,
+        fornitore: formData.fornitore,
+        partita_iva: formData.partita_iva || null,
+        codice_fiscale: formData.codice_fiscale || null,
+        imponibile,
+        iva_importo: iva,
+        importo: totale,
+        descrizione: formData.descrizione || null,
+        categoria: formData.categoria || null,
+        metodo_pagamento: formData.metodo_pagamento || null,
+        pagata: formData.pagata,
+        data_pagamento: formData.pagata && formData.data_pagamento ? formData.data_pagamento : null,
+        note: formData.note || null
+      };
 
-      if (error) throw error;
+      if (fatturaToEdit) {
+        const { error } = await supabase
+          .from('fatture_in_entrata')
+          .update(dataToSave)
+          .eq('id', fatturaToEdit.id);
 
-      toast.success("Fattura in entrata inserita con successo");
+        if (error) throw error;
+        toast.success("Fattura modificata con successo");
+      } else {
+        const { error } = await supabase
+          .from('fatture_in_entrata')
+          .insert({
+            ...dataToSave,
+            user_id: user.id
+          });
+
+        if (error) throw error;
+        toast.success("Fattura in entrata inserita con successo");
+      }
+
       onSuccess();
       onOpenChange(false);
       resetForm();
     } catch (error: any) {
-      console.error("Errore inserimento fattura in entrata:", error);
-      toast.error("Errore durante l'inserimento della fattura");
+      console.error("Errore salvataggio fattura in entrata:", error);
+      toast.error("Errore durante il salvataggio della fattura");
     } finally {
       setLoading(false);
     }
@@ -106,9 +144,9 @@ export function InserisciFatturaInEntrataDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Inserisci Fattura Ricevuta</DialogTitle>
+          <DialogTitle>{fatturaToEdit ? "Modifica Fattura" : "Inserisci Fattura Ricevuta"}</DialogTitle>
           <DialogDescription>
-            Inserisci manualmente i dati di una fattura ricevuta da un fornitore
+            {fatturaToEdit ? "Modifica i dati della fattura ricevuta" : "Inserisci manualmente i dati di una fattura ricevuta da un fornitore"}
           </DialogDescription>
         </DialogHeader>
 
@@ -295,7 +333,7 @@ export function InserisciFatturaInEntrataDialog({
             </Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Salva Fattura
+              {fatturaToEdit ? "Salva Modifiche" : "Salva Fattura"}
             </Button>
           </div>
         </form>

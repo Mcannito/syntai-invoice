@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings } from "lucide-react";
+import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -97,6 +97,7 @@ const Fatture = () => {
   const [fattureInEntrata, setFattureInEntrata] = useState<any[]>([]);
   const [inserisciFatturaInEntrataOpen, setInserisciFatturaInEntrataOpen] = useState(false);
   const [caricaXMLDialogOpen, setCaricaXMLDialogOpen] = useState(false);
+  const [fatturaInEntrataToEdit, setFatturaInEntrataToEdit] = useState<any>(null);
   
   const { toast } = useToast();
 
@@ -1137,6 +1138,18 @@ const Fatture = () => {
                               variant="outline"
                               size="sm"
                               className="h-8 w-8 p-0"
+                              onClick={() => {
+                                setFatturaInEntrataToEdit(fattura);
+                                setInserisciFatturaInEntrataOpen(true);
+                              }}
+                              title="Modifica fattura"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-8 p-0"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -1679,10 +1692,17 @@ const Fatture = () => {
 
       <InserisciFatturaInEntrataDialog
         open={inserisciFatturaInEntrataOpen}
-        onOpenChange={setInserisciFatturaInEntrataOpen}
+        onOpenChange={(open) => {
+          setInserisciFatturaInEntrataOpen(open);
+          if (!open) {
+            setFatturaInEntrataToEdit(null);
+          }
+        }}
         onSuccess={() => {
           loadFattureInEntrata();
+          setFatturaInEntrataToEdit(null);
         }}
+        fatturaToEdit={fatturaInEntrataToEdit}
       />
 
       <CaricaFatturaXMLDialog
