@@ -323,12 +323,40 @@ const Impostazioni = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="qualifica">Qualifica</Label>
-                  <Input 
-                    name="qualifica" 
-                    placeholder="Medico Chirurgo" 
-                    defaultValue={settings?.qualifica || ""} 
-                  />
+                  <Label htmlFor="qualifica">Qualifica *</Label>
+                  <Select name="qualifica" defaultValue={settings?.qualifica || ""}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleziona qualifica" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Medico Chirurgo">Medico Chirurgo</SelectItem>
+                      <SelectItem value="Odontoiatra">Odontoiatra</SelectItem>
+                      <SelectItem value="Veterinario">Veterinario</SelectItem>
+                      <SelectItem value="Farmacista">Farmacista</SelectItem>
+                      <SelectItem value="Biologo">Biologo</SelectItem>
+                      <SelectItem value="Psicologo">Psicologo</SelectItem>
+                      <SelectItem value="Infermiere">Infermiere</SelectItem>
+                      <SelectItem value="Ostetrica/o">Ostetrica/o</SelectItem>
+                      <SelectItem value="Fisioterapista">Fisioterapista</SelectItem>
+                      <SelectItem value="Logopedista">Logopedista</SelectItem>
+                      <SelectItem value="Podologo">Podologo</SelectItem>
+                      <SelectItem value="Ortottista - Assistente di Oftalmologia">Ortottista - Assistente di Oftalmologia</SelectItem>
+                      <SelectItem value="Tecnico Sanitario di Radiologia Medica">Tecnico Sanitario di Radiologia Medica</SelectItem>
+                      <SelectItem value="Tecnico di Laboratorio Biomedico">Tecnico di Laboratorio Biomedico</SelectItem>
+                      <SelectItem value="Dietista">Dietista</SelectItem>
+                      <SelectItem value="Igienista Dentale">Igienista Dentale</SelectItem>
+                      <SelectItem value="Tecnico Ortopedico">Tecnico Ortopedico</SelectItem>
+                      <SelectItem value="Tecnico Audioprotesista">Tecnico Audioprotesista</SelectItem>
+                      <SelectItem value="Tecnico della Fisiopatologia Cardiocircolatoria e Perfusione Cardiovascolare">Tecnico della Fisiopatologia Cardiocircolatoria</SelectItem>
+                      <SelectItem value="Terapista Occupazionale">Terapista Occupazionale</SelectItem>
+                      <SelectItem value="Educatore Professionale">Educatore Professionale</SelectItem>
+                      <SelectItem value="Tecnico della Prevenzione nell'Ambiente e nei Luoghi di Lavoro">Tecnico della Prevenzione</SelectItem>
+                      <SelectItem value="Assistente Sanitario">Assistente Sanitario</SelectItem>
+                      <SelectItem value="Tecnico della Riabilitazione Psichiatrica">Tecnico della Riabilitazione Psichiatrica</SelectItem>
+                      <SelectItem value="Terapista della Neuro e Psicomotricità dell'Età Evolutiva">Terapista della Neuro e Psicomotricità</SelectItem>
+                      <SelectItem value="Tecnico di Neurofisiopatologia">Tecnico di Neurofisiopatologia</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
