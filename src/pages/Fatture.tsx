@@ -977,7 +977,7 @@ const Fatture = () => {
                       }).length === 1 ? 'documento' : 'documenti'}
                     </p>
                   </div>
-                  <FileText className="h-8 w-8 text-green-500" />
+                  <FileText className="h-10 w-10 text-primary" />
                 </div>
               </CardContent>
             </Card>
