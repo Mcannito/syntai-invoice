@@ -426,6 +426,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          aliquota_cassa: number | null
+          cassa_previdenziale: string | null
+          created_at: string
+          iban: string | null
+          id: string
+          logo_path: string | null
+          metodo_pagamento_default: string | null
+          regime_fiscale: string | null
+          ritenuta_acconto: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          aliquota_cassa?: number | null
+          cassa_previdenziale?: string | null
+          created_at?: string
+          iban?: string | null
+          id?: string
+          logo_path?: string | null
+          metodo_pagamento_default?: string | null
+          regime_fiscale?: string | null
+          ritenuta_acconto?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          aliquota_cassa?: number | null
+          cassa_previdenziale?: string | null
+          created_at?: string
+          iban?: string | null
+          id?: string
+          logo_path?: string | null
+          metodo_pagamento_default?: string | null
+          regime_fiscale?: string | null
+          ritenuta_acconto?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
