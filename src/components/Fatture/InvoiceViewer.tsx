@@ -15,14 +15,28 @@ interface InvoiceViewerProps {
 export function InvoiceViewer({ open, onClose, htmlUrl, invoice, autoPrint = false }: InvoiceViewerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [loading, setLoading] = useState(true);
+  const [htmlContent, setHtmlContent] = useState<string>('');
 
   useEffect(() => {
-    if (open && htmlUrl && autoPrint) {
-      // Auto-print dopo il caricamento
-      const timer = setTimeout(() => {
-        handlePrint();
-      }, 1500);
-      return () => clearTimeout(timer);
+    if (open && htmlUrl) {
+      setLoading(true);
+      fetch(htmlUrl)
+        .then(response => response.text())
+        .then(html => {
+          setHtmlContent(html);
+          setLoading(false);
+          
+          // Auto-print dopo il caricamento se richiesto
+          if (autoPrint) {
+            setTimeout(() => {
+              handlePrint();
+            }, 1000);
+          }
+        })
+        .catch(error => {
+          console.error('Error loading invoice HTML:', error);
+          setLoading(false);
+        });
     }
   }, [open, htmlUrl, autoPrint]);
 
@@ -88,7 +102,7 @@ export function InvoiceViewer({ open, onClose, htmlUrl, invoice, autoPrint = fal
           )}
           <iframe
             ref={iframeRef}
-            src={htmlUrl}
+            srcDoc={htmlContent}
             className="w-full h-full border-0"
             title="Invoice Preview"
             onLoad={handleIframeLoad}
