@@ -592,10 +592,10 @@ function generateInvoiceHTML(
     </div>
 
     <div class="party">
-      <div class="party-title">Cliente</div>
+      <div class="party-title">${paziente?.tipo_paziente === 'persona_fisica' ? 'Paziente' : 'Cliente'}</div>
       <div class="party-info">
         ${paziente ? `
-          <p><strong>${paziente.tipo_paziente === 'persona_fisica' ? [paziente.nome, paziente.cognome].filter(Boolean).join(' ').trim() || 'Cliente' : (paziente.ragione_sociale || 'Cliente')}</strong></p>
+          <p><strong>${paziente.tipo_paziente === 'persona_fisica' ? [paziente.nome, paziente.cognome].filter(Boolean).join(' ').trim() || 'Paziente' : (paziente.ragione_sociale || 'Cliente')}</strong></p>
           ${paziente.codice_fiscale ? `<p>C.F.: ${paziente.codice_fiscale}</p>` : ''}
           ${paziente.partita_iva ? `<p>P.IVA: ${paziente.partita_iva}</p>` : ''}
           ${paziente.indirizzo ? `<p>${paziente.indirizzo}</p>` : ''}

@@ -246,7 +246,7 @@ export default function TemplatePreview({ settings, logoUrl }: TemplatePreviewPr
               className="font-bold mb-2"
               style={{ color: primaryColor }}
             >
-              Cliente
+              Paziente / Cliente
             </div>
             <div className="text-xs space-y-1">
               <p className="font-semibold">Cliente Esempio</p>
