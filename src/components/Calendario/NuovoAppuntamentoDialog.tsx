@@ -172,6 +172,7 @@ export const NuovoAppuntamentoDialog = ({ onAppuntamentoAdded }: NuovoAppuntamen
         note: formData.note,
         stato: formData.stato,
         pacchetto_id: formData.utilizza_pacchetto && formData.pacchetto_id ? formData.pacchetto_id : null,
+        fatturato: formData.utilizza_pacchetto && formData.pacchetto_id ? true : false,
       });
 
       if (error) throw error;
