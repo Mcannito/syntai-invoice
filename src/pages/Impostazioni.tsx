@@ -95,7 +95,6 @@ const Impostazioni = () => {
       const formData = new FormData(e.currentTarget);
       
       const settingsData = {
-        user_id: user.id,
         tipo_persona: tipoPersona || null,
         sesso: sesso || null,
         nome: (formData.get("nome") as string) || null,
@@ -115,13 +114,30 @@ const Impostazioni = () => {
 
       console.log("Saving settings:", settingsData);
 
-      const { data, error } = await supabase
+      // Prima verifica se esiste già un record
+      const { data: existingSettings } = await supabase
         .from("user_settings")
-        .upsert(settingsData, {
-          onConflict: 'user_id',
-          ignoreDuplicates: false
-        })
-        .select();
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      let result;
+      if (existingSettings) {
+        // Record esiste, usa update
+        result = await supabase
+          .from("user_settings")
+          .update(settingsData)
+          .eq("user_id", user.id)
+          .select();
+      } else {
+        // Record non esiste, usa insert
+        result = await supabase
+          .from("user_settings")
+          .insert({ ...settingsData, user_id: user.id })
+          .select();
+      }
+
+      const { data, error } = result;
 
       if (error) {
         console.error("Supabase error:", error);
