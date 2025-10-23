@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2, Heart, Zap, FileQuestion, FileClock, TrendingUp, FileCode, PenTool, MoreVertical, Printer, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2, Heart, Zap, FileQuestion, FileClock, TrendingUp, FileCode, PenTool, MoreVertical, Printer, ArrowUpDown, ArrowUp, ArrowDown, FileX } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -1567,7 +1567,7 @@ const Fatture = () => {
 
         <TabsContent value="uscita" className="space-y-4">
           {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-6">
             <Card 
               className={cn(
                 "border-primary/20 bg-primary-light cursor-pointer transition-all hover:shadow-md",
@@ -1699,6 +1699,29 @@ const Fatture = () => {
                     </p>
                   </div>
                   <FileClock className="h-8 w-8 text-orange-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className={cn(
+                "cursor-pointer transition-all hover:shadow-md",
+                filtroTipoDocumento === 'nota_credito' && "ring-2 ring-primary"
+              )}
+              onClick={() => setFiltroTipoDocumento(filtroTipoDocumento === 'nota_credito' ? null : 'nota_credito')}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Note di Credito</p>
+                    <p className="text-2xl font-bold">
+                      {fatture.filter(f => f.tipo_documento === 'nota_credito').length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      €{fatture.filter(f => f.tipo_documento === 'nota_credito').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <FileX className="h-8 w-8 text-red-500" />
                 </div>
               </CardContent>
             </Card>
