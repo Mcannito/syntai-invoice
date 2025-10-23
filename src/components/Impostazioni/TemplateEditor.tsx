@@ -17,6 +17,7 @@ interface TemplateSettings {
 }
 
 interface TemplateEditorProps {
+  documentType?: string;
   settings: TemplateSettings;
   onSettingsChange: (settings: TemplateSettings) => void;
 }

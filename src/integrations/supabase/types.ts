@@ -87,6 +87,54 @@ export type Database = {
           },
         ]
       }
+      document_templates: {
+        Row: {
+          colore_primario: string
+          colore_secondario: string
+          created_at: string
+          document_type: string
+          font_size: string
+          footer_text: string | null
+          id: string
+          layout: string
+          mostra_logo: boolean
+          posizione_logo: string
+          testo_centrale: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          colore_primario?: string
+          colore_secondario?: string
+          created_at?: string
+          document_type: string
+          font_size?: string
+          footer_text?: string | null
+          id?: string
+          layout?: string
+          mostra_logo?: boolean
+          posizione_logo?: string
+          testo_centrale?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          colore_primario?: string
+          colore_secondario?: string
+          created_at?: string
+          document_type?: string
+          font_size?: string
+          footer_text?: string | null
+          id?: string
+          layout?: string
+          mostra_logo?: boolean
+          posizione_logo?: string
+          testo_centrale?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fatture: {
         Row: {
           acube_error: string | null

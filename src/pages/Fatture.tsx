@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2, Heart, Zap, FileQuestion, FileClock, TrendingUp, FileCode, PenTool, MoreVertical, Printer, ArrowUpDown, ArrowUp, ArrowDown, FileX } from "lucide-react";
+import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2, Heart, Zap, FileQuestion, FileClock, TrendingUp, FileCode, PenTool, MoreVertical, Printer, ArrowUpDown, ArrowUp, ArrowDown, FileX, Copy, RotateCcw } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -28,6 +28,8 @@ import { CaricaFatturaXMLDialog } from "@/components/Fatture/CaricaFatturaXMLDia
 import { InvoiceViewer } from "@/components/Fatture/InvoiceViewer";
 import TemplateEditor from "@/components/Impostazioni/TemplateEditor";
 import TemplatePreview from "@/components/Impostazioni/TemplatePreview";
+import DocumentTemplateSelector, { DOCUMENT_TYPES, type DocumentType } from "@/components/Impostazioni/DocumentTemplateSelector";
+import { useDocumentTemplate } from "@/hooks/useDocumentTemplate";
 import {
   Table,
   TableBody,
@@ -143,17 +145,43 @@ const Fatture = () => {
   const [notaCreditoFattura, setNotaCreditoFattura] = useState<any>(null);
   const [showNotaCreditoDialog, setShowNotaCreditoDialog] = useState(false);
   
-  // Stati per template
-  const [templateSettings, setTemplateSettings] = useState({
-    pdf_template_colore_primario: '#2563eb',
-    pdf_template_colore_secondario: '#64748b',
-    pdf_template_font_size: 'medium',
-    pdf_template_mostra_logo: true,
-    pdf_template_posizione_logo: 'left',
-    pdf_template_footer_text: '',
-    pdf_template_layout: 'classic',
-    pdf_template_testo_centrale: '',
-  });
+  // Stati per template multipli
+  const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType>('fattura_sanitaria');
+  const {
+    settings: documentTemplateSettings,
+    setSettings: setDocumentTemplateSettings,
+    loading: templateLoading,
+    saveTemplate: saveDocumentTemplate,
+    duplicateTemplate,
+    applyToAll,
+    resetTemplate
+  } = useDocumentTemplate(selectedDocumentType);
+  
+  // Converti settings per compatibilità con TemplateEditor
+  const templateSettings = {
+    pdf_template_colore_primario: documentTemplateSettings.colore_primario,
+    pdf_template_colore_secondario: documentTemplateSettings.colore_secondario,
+    pdf_template_font_size: documentTemplateSettings.font_size,
+    pdf_template_mostra_logo: documentTemplateSettings.mostra_logo,
+    pdf_template_posizione_logo: documentTemplateSettings.posizione_logo,
+    pdf_template_footer_text: documentTemplateSettings.footer_text,
+    pdf_template_layout: documentTemplateSettings.layout,
+    pdf_template_testo_centrale: documentTemplateSettings.testo_centrale,
+  };
+  
+  const setTemplateSettings = (newSettings: typeof templateSettings) => {
+    setDocumentTemplateSettings({
+      colore_primario: newSettings.pdf_template_colore_primario,
+      colore_secondario: newSettings.pdf_template_colore_secondario,
+      font_size: newSettings.pdf_template_font_size,
+      mostra_logo: newSettings.pdf_template_mostra_logo,
+      posizione_logo: newSettings.pdf_template_posizione_logo,
+      footer_text: newSettings.pdf_template_footer_text,
+      layout: newSettings.pdf_template_layout,
+      testo_centrale: newSettings.pdf_template_testo_centrale,
+    });
+  };
+  
   const [logo, setLogo] = useState<string | null>(null);
   
   const { toast } = useToast();
@@ -1283,31 +1311,8 @@ const Fatture = () => {
   };
 
   const handleSaveTemplate = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from("user_settings")
-        .update(templateSettings)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Successo",
-        description: "Template salvato con successo",
-      });
-      
-      await loadUserSettings();
-    } catch (error) {
-      console.error("Error saving template:", error);
-      toast({
-        title: "Errore",
-        description: "Impossibile salvare il template",
-        variant: "destructive",
-      });
-    }
+    const success = await saveDocumentTemplate(documentTemplateSettings);
+    if (!success) return;
   };
 
   return (
@@ -2734,31 +2739,112 @@ const Fatture = () => {
         </TabsContent>
 
         <TabsContent value="template" className="space-y-6">
+          <Card className="shadow-medical-sm">
+            <CardHeader className="border-b bg-muted/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-primary" />
+                  <div>
+                    <CardTitle>Template Documenti</CardTitle>
+                    <CardDescription>Personalizza l'aspetto dei tuoi documenti</CardDescription>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              <DocumentTemplateSelector
+                selectedType={selectedDocumentType}
+                onTypeChange={setSelectedDocumentType}
+              />
+            </CardContent>
+          </Card>
+
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Editor */}
             <Card className="shadow-medical-sm">
               <CardHeader className="border-b bg-muted/50">
                 <div className="flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-primary" />
+                  <PenTool className="h-5 w-5 text-primary" />
                   <div>
                     <CardTitle>Personalizza Template</CardTitle>
-                    <CardDescription>Modifica l'aspetto delle tue fatture</CardDescription>
+                    <CardDescription>
+                      {DOCUMENT_TYPES[selectedDocumentType]?.label}
+                    </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="p-6">
-                <TemplateEditor
-                  settings={templateSettings}
-                  onSettingsChange={setTemplateSettings}
-                />
-                <div className="flex justify-end gap-4 pt-6 border-t mt-6">
-                  <Button variant="outline" onClick={loadUserSettings}>
-                    Annulla
-                  </Button>
-                  <Button onClick={handleSaveTemplate}>
-                    Salva Template
-                  </Button>
-                </div>
+                {templateLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <>
+                    <TemplateEditor
+                      documentType={selectedDocumentType}
+                      settings={templateSettings}
+                      onSettingsChange={setTemplateSettings}
+                    />
+                    
+                    <div className="space-y-4 pt-6 border-t mt-6">
+                      {/* Azioni Rapide */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Azioni Rapide</Label>
+                        <div className="flex flex-wrap gap-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <Copy className="h-4 w-4 mr-2" />
+                                Duplica da...
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              {Object.entries(DOCUMENT_TYPES)
+                                .filter(([type]) => type !== selectedDocumentType)
+                                .map(([type, config]) => {
+                                  const Icon = config.icon;
+                                  return (
+                                    <DropdownMenuItem
+                                      key={type}
+                                      onClick={() => duplicateTemplate(type as DocumentType)}
+                                    >
+                                      <Icon className={`h-4 w-4 mr-2 ${config.color}`} />
+                                      {config.label}
+                                    </DropdownMenuItem>
+                                  );
+                                })}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={applyToAll}
+                          >
+                            <Zap className="h-4 w-4 mr-2" />
+                            Applica a tutti
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={resetTemplate}
+                          >
+                            <RotateCcw className="h-4 w-4 mr-2" />
+                            Reset
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Salva */}
+                      <div className="flex justify-end gap-2">
+                        <Button onClick={handleSaveTemplate}>
+                          Salva Template
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -2766,15 +2852,25 @@ const Fatture = () => {
             <Card className="shadow-medical-sm">
               <CardHeader className="border-b bg-muted/50">
                 <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
+                  <Eye className="h-5 w-5 text-primary" />
                   <div>
                     <CardTitle>Anteprima</CardTitle>
-                    <CardDescription>Come apparirà la tua fattura</CardDescription>
+                    <CardDescription>Come apparirà il documento</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="p-6">
-                <TemplatePreview settings={templateSettings} logoUrl={logo || undefined} />
+                {templateLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <TemplatePreview 
+                    documentType={selectedDocumentType}
+                    settings={templateSettings} 
+                    logoUrl={logo || undefined} 
+                  />
+                )}
               </CardContent>
             </Card>
           </div>

@@ -13,11 +13,12 @@ interface TemplateSettings {
 }
 
 interface TemplatePreviewProps {
+  documentType?: string;
   settings: TemplateSettings;
   logoUrl?: string;
 }
 
-export default function TemplatePreview({ settings, logoUrl }: TemplatePreviewProps) {
+export default function TemplatePreview({ documentType, settings, logoUrl }: TemplatePreviewProps) {
   const primaryColor = settings.pdf_template_colore_primario || '#2563eb';
   const secondaryColor = settings.pdf_template_colore_secondario || '#64748b';
   const fontSize = settings.pdf_template_font_size === 'small' ? '0.75rem' : 
@@ -208,10 +209,13 @@ export default function TemplatePreview({ settings, logoUrl }: TemplatePreviewPr
           )}
           <div className="text-right">
             <div 
-              className="text-lg font-bold"
+              className="text-lg font-bold uppercase"
               style={{ color: primaryColor }}
             >
-              FATTURA
+              {documentType === 'preventivo' ? 'PREVENTIVO' :
+               documentType === 'fattura_proforma' ? 'FATTURA PRO FORMA' :
+               documentType === 'nota_credito' ? 'NOTA DI CREDITO' :
+               'FATTURA'}
             </div>
             <div style={{ color: secondaryColor }}>N. 2024/001</div>
             <div className="text-xs">Data: 01/01/2024</div>

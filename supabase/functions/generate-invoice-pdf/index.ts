@@ -91,13 +91,53 @@ Deno.serve(async (req) => {
 
     if (settingsError) throw settingsError;
 
+    // Try to load template from document_templates first
+    let templateSettings = {
+      pdf_template_colore_primario: settings.pdf_template_colore_primario,
+      pdf_template_colore_secondario: settings.pdf_template_colore_secondario,
+      pdf_template_font_size: settings.pdf_template_font_size,
+      pdf_template_mostra_logo: settings.pdf_template_mostra_logo,
+      pdf_template_posizione_logo: settings.pdf_template_posizione_logo,
+      pdf_template_footer_text: settings.pdf_template_footer_text,
+      pdf_template_layout: settings.pdf_template_layout,
+      pdf_template_testo_centrale: settings.pdf_template_testo_centrale,
+    };
+
+    // Check if custom template exists for this document type
+    const { data: docTemplate, error: docTemplateError } = await supabase
+      .from('document_templates')
+      .select('*')
+      .eq('user_id', fattura.user_id)
+      .eq('document_type', fattura.tipo_documento)
+      .maybeSingle();
+
+    if (!docTemplateError && docTemplate) {
+      // Use custom template for this document type
+      templateSettings = {
+        pdf_template_colore_primario: docTemplate.colore_primario,
+        pdf_template_colore_secondario: docTemplate.colore_secondario,
+        pdf_template_font_size: docTemplate.font_size,
+        pdf_template_mostra_logo: docTemplate.mostra_logo,
+        pdf_template_posizione_logo: docTemplate.posizione_logo,
+        pdf_template_footer_text: docTemplate.footer_text || '',
+        pdf_template_layout: docTemplate.layout,
+        pdf_template_testo_centrale: docTemplate.testo_centrale || '',
+      };
+      console.log('Using custom template for document type:', fattura.tipo_documento);
+    } else {
+      console.log('Using fallback template from user_settings');
+    }
+
+    // Merge template settings with user settings
+    const finalSettings = { ...settings, ...templateSettings };
+
     // Fetch logo if exists
     let logoBase64 = null;
-    if (settings.logo_path && settings.pdf_template_mostra_logo) {
+    if (finalSettings.logo_path && finalSettings.pdf_template_mostra_logo) {
       try {
-        const { data: logoData } = await supabase.storage
-          .from('logos')
-          .download(settings.logo_path);
+          const { data: logoData } = await supabase.storage
+            .from('logos')
+            .download(finalSettings.logo_path);
         
         if (logoData) {
           const arrayBuffer = await logoData.arrayBuffer();
@@ -121,7 +161,7 @@ Deno.serve(async (req) => {
     }
 
     // Generate HTML for PDF
-    const html = generateInvoiceHTML(fattura, dettagli, paziente, settings, logoBase64);
+    const html = generateInvoiceHTML(fattura, dettagli, paziente, finalSettings, logoBase64);
 
     // Convert HTML to PDF using a simple approach
     const encoder = new TextEncoder();
