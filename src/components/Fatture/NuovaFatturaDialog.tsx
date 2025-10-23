@@ -110,6 +110,7 @@ export const NuovaFatturaDialog = ({
 
   const [percentualeRivalsa, setPercentualeRivalsa] = useState(4);
   const [percentualeRitenuta, setPercentualeRitenuta] = useState(20);
+  const [bolloVirtualeAttivo, setBolloVirtualeAttivo] = useState(false);
 
   // Funzione per estrarre la percentuale IVA dalla descrizione
   const getIvaPercentuale = (ivaDescrizione: string): number => {
@@ -170,6 +171,9 @@ export const NuovaFatturaDialog = ({
           ritenuta_acconto: data.ritenuta_attiva || false,
           bollo: data.bollo_attivo || false,
         });
+        
+        // Inizializza bollo virtuale dalle impostazioni
+        setBolloVirtualeAttivo(data.bollo_virtuale || false);
       }
     } catch (error) {
       console.error("Error loading user settings:", error);
@@ -243,17 +247,14 @@ export const NuovaFatturaDialog = ({
       formData.tipo_documento === 'fattura_elettronica_pg' || 
       formData.tipo_documento === 'fattura_elettronica_pa';
     
-    if (isFatturaElettronica && userSettings) {
-      // Per le fatture elettroniche, il bollo è obbligatorio se attivo
-      if (tassazioneAttiva.bollo) {
-        // Verifica che il bollo virtuale sia attivo nelle impostazioni
-        if (!userSettings.bollo_virtuale) {
-          toast({
-            title: "Attenzione",
-            description: "Per le fatture elettroniche il bollo deve essere assolto in maniera virtuale. Attiva questa opzione nelle impostazioni.",
-            variant: "destructive",
-          });
-        }
+    if (isFatturaElettronica && tassazioneAttiva.bollo && !bolloVirtualeAttivo) {
+      // Suggerisci di attivare il bollo virtuale per fatture elettroniche
+      if (userSettings && !userSettings.bollo_virtuale) {
+        // Non blocchiamo, ma diamo un toast informativo
+        toast({
+          title: "Bollo Virtuale Consigliato",
+          description: "Per le fatture elettroniche è obbligatorio assolvere il bollo in maniera virtuale. Puoi attivarlo qui sotto.",
+        });
       }
     }
   }, [formData.tipo_documento, tassazioneAttiva.bollo, userSettings]);
@@ -695,16 +696,14 @@ export const NuovaFatturaDialog = ({
         formData.tipo_documento === 'fattura_elettronica_pg' || 
         formData.tipo_documento === 'fattura_elettronica_pa';
       
-      if (isFatturaElettronica && tassazioneAttiva.bollo && userSettings) {
-        if (!userSettings.bollo_virtuale) {
-          toast({
-            title: "Bollo Virtuale Obbligatorio",
-            description: "Per le fatture elettroniche il bollo deve essere assolto in maniera virtuale. Attiva questa opzione nelle impostazioni prima di procedere.",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
+      if (isFatturaElettronica && tassazioneAttiva.bollo && !bolloVirtualeAttivo) {
+        toast({
+          title: "Bollo Virtuale Obbligatorio",
+          description: "Per le fatture elettroniche il bollo deve essere assolto in maniera virtuale. Attiva l'opzione nella sezione Marca da Bollo.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
       }
 
       // Validazione nota di credito
@@ -922,6 +921,7 @@ export const NuovaFatturaDialog = ({
       });
       setPercentualeRivalsa(4);
       setPercentualeRitenuta(20);
+      setBolloVirtualeAttivo(false);
       setOpen(false);
       onFatturaAdded();
     } catch (error) {
@@ -1489,6 +1489,35 @@ export const NuovaFatturaDialog = ({
                     }}
                     disabled={!tassazioneAttiva.bollo}
                   />
+                  
+                  {/* Bollo Virtuale - Solo per fatture elettroniche */}
+                  {tassazioneAttiva.bollo && (
+                    formData.tipo_documento === 'fattura_elettronica_pg' || 
+                    formData.tipo_documento === 'fattura_elettronica_pa'
+                  ) && (
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="checkbox" 
+                          id="bollo-virtuale-dialog" 
+                          checked={bolloVirtualeAttivo}
+                          onChange={(e) => setBolloVirtualeAttivo(e.target.checked)}
+                          className="h-4 w-4 rounded border-input"
+                        />
+                        <Label htmlFor="bollo-virtuale-dialog" className="font-normal cursor-pointer text-sm">
+                          Bollo assolto in maniera virtuale
+                        </Label>
+                      </div>
+                      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-3 rounded-md">
+                        <p className="text-xs text-yellow-800 dark:text-yellow-200 font-medium">
+                          ⚠️ OBBLIGATORIO per fatture elettroniche
+                        </p>
+                        <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                          Attivando questa opzione la dicitura 'marca da bollo assolta in maniera virtuale' apparirà nel PDF. Dovrai versarla trimestralmente con F24.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
