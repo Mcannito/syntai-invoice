@@ -312,7 +312,7 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
           }
 
           let bolloVirtualeImporto = 0;
-          if (settings?.bollo_attivo && settings?.bollo_virtuale) {
+          if (settings?.bollo_attivo && settings?.bollo_carico === 'paziente') {
             bolloVirtualeImporto = Number(settings.bollo_importo || 2);
           }
 
@@ -332,7 +332,10 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
             cassa_previdenziale: cassaPrevidenzialeImporto.toFixed(2),
             contributo_integrativo: contributoIntegrativo.toFixed(2),
             ritenuta_acconto: ritenutaAccontoImporto.toFixed(2),
-            bollo_virtuale: bolloVirtualeImporto.toFixed(2),
+            bollo_attivo: settings?.bollo_attivo,
+            bollo_virtuale: settings?.bollo_virtuale,
+            bollo_carico: settings?.bollo_carico,
+            bollo_importo: bolloVirtualeImporto.toFixed(2),
             totale: totale.toFixed(2),
             tipo_documento: tipoDocumento
           });
@@ -360,7 +363,7 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
         cassa_previdenziale: Number(cassaPrevidenzialeImporto.toFixed(2)),
         contributo_integrativo: Number(contributoIntegrativo.toFixed(2)),
         ritenuta_acconto: Number(ritenutaAccontoImporto.toFixed(2)),
-        bollo_virtuale: Number(bolloVirtualeImporto.toFixed(2)),
+        bollo_virtuale: settings?.bollo_attivo ? Number(settings.bollo_importo || 2) : 0,
         percentuale_ritenuta: percentualeRitenuta,
         percentuale_rivalsa: percentualeRivalsa,
         totale: Number(totale.toFixed(2)),
