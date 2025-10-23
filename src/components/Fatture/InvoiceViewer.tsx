@@ -54,7 +54,7 @@ export function InvoiceViewer({ open, onClose, htmlUrl, invoice, autoPrint = fal
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] h-[95vh] p-0 gap-0">
+      <DialogContent className="max-w-[95vw] h-[95vh] p-0 gap-0" hideCloseButton>
         <DialogHeader className="px-6 py-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
