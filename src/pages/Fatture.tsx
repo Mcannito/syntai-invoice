@@ -1879,7 +1879,7 @@ const Fatture = () => {
                                 ? "bg-orange-100 text-orange-700 border-orange-300"
                                 : "bg-blue-100 text-blue-700 border-blue-300"
                             )}>
-                              {isNotaCredito ? 'NC' : 'A'} {documentoGenerato?.numero}
+                              {isNotaCredito ? 'NC' : ''} {documentoGenerato?.numero}
                             </Badge>
                           );
                         }
