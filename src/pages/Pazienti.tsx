@@ -299,11 +299,16 @@ const Pazienti = () => {
                 </TableRow>
               ) : (
                 filteredPazienti.map((paziente) => {
-                  const nomeCompleto = paziente.ragione_sociale || `${paziente.nome} ${paziente.cognome || ""}`;
-                  const cfPiva = paziente.codice_fiscale || paziente.partita_iva || paziente.cf || paziente.piva;
                   const tipo = paziente.tipo_paziente === "persona_fisica" || paziente.tipo === "Persona Fisica" 
                     ? "Persona Fisica" 
                     : "Persona Giuridica";
+                  
+                  const nomeCompleto = paziente.ragione_sociale || 
+                    (tipo === "Persona Fisica" 
+                      ? `${paziente.cognome || ""} ${paziente.nome || ""}`.trim()
+                      : `${paziente.nome} ${paziente.cognome || ""}`.trim());
+                  
+                  const cfPiva = paziente.codice_fiscale || paziente.partita_iva || paziente.cf || paziente.piva;
                   const ultimaVisita = paziente.ultimaVisita || new Date(paziente.created_at).toLocaleDateString('it-IT');
 
                   return (
