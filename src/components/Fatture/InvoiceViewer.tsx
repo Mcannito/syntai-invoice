@@ -74,6 +74,12 @@ export function InvoiceViewer({ open, onClose, htmlUrl, invoice, autoPrint = fal
               </DialogTitle>
               {invoice && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  {isPdf && invoice.fornitore && (
+                    <>
+                      <span className="font-medium">{invoice.fornitore}</span>
+                      <span>•</span>
+                    </>
+                  )}
                   <span>{new Date(invoice.data).toLocaleDateString('it-IT')}</span>
                   <Badge variant="outline">
                     € {(isPdf ? invoice.importo : invoice.totale)?.toFixed(2) || '0.00'}
