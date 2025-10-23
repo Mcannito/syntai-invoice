@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -67,7 +67,10 @@ import { cn } from "@/lib/utils";
 
 const Fatture = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const highlightedRowRef = useRef<HTMLTableRowElement>(null);
   const [fatture, setFatture] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sendingId, setSendingId] = useState<string | null>(null);
@@ -352,6 +355,29 @@ const Fatture = () => {
     loadUserSettings();
     loadFattureInEntrata();
   }, []);
+
+  // Gestione parametro highlight dall'URL
+  useEffect(() => {
+    const highlightParam = searchParams.get('highlight');
+    if (highlightParam) {
+      setHighlightedId(highlightParam);
+      
+      // Scroll alla fattura evidenziata dopo un breve delay per permettere il rendering
+      setTimeout(() => {
+        highlightedRowRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+      }, 300);
+
+      // Rimuovi highlight e parametro dopo 3 secondi
+      setTimeout(() => {
+        setHighlightedId(null);
+        searchParams.delete('highlight');
+        setSearchParams(searchParams);
+      }, 3000);
+    }
+  }, [searchParams, setSearchParams]);
 
   const getPazienteDisplayName = (fattura: any) => {
     if (!fattura.pazienti) return "N/A";
@@ -784,6 +810,32 @@ const Fatture = () => {
     } catch (error) {
       console.error('Error viewing PDF:', error);
       toast({ title: "Errore", description: "Impossibile visualizzare il PDF", variant: "destructive" });
+    } finally {
+      setGeneratingPdf(null);
+    }
+  };
+
+  const handleRegeneratePDF = async (fattura: any) => {
+    try {
+      setGeneratingPdf(fattura.id);
+      const { data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
+        body: { fatturaId: fattura.id }
+      });
+      
+      if (error) throw error;
+      
+      await loadFatture();
+      toast({
+        title: "PDF Rigenerato",
+        description: "Il PDF è stato rigenerato con successo",
+      });
+    } catch (error) {
+      console.error('Error regenerating PDF:', error);
+      toast({
+        title: "Errore",
+        description: "Impossibile rigenerare il PDF",
+        variant: "destructive",
+      });
     } finally {
       setGeneratingPdf(null);
     }
@@ -1442,7 +1494,14 @@ const Fatture = () => {
                 </TableRow>
               ) : (
                 filteredFatture.map((fattura) => (
-                  <TableRow key={fattura.id} className="hover:bg-muted/30">
+                  <TableRow 
+                    key={fattura.id} 
+                    ref={highlightedId === fattura.id ? highlightedRowRef : null}
+                    className={cn(
+                      "hover:bg-muted/30 transition-colors",
+                      highlightedId === fattura.id && "bg-primary/10 animate-pulse"
+                    )}
+                  >
                     <TableCell className="font-mono font-medium">{fattura.numero}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(fattura.data).toLocaleDateString('it-IT')}
@@ -1493,6 +1552,18 @@ const Fatture = () => {
                           >
                             <Printer className="h-4 w-4 mr-2" />
                             Stampa
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem 
+                            onClick={() => handleRegeneratePDF(fattura)}
+                            disabled={generatingPdf === fattura.id}
+                          >
+                            {generatingPdf === fattura.id ? (
+                              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                            )}
+                            Rigenera PDF
                           </DropdownMenuItem>
 
                           {!fattura.pagata && fattura.tipo_documento !== 'preventivo' && fattura.tipo_documento !== 'fattura_proforma' && (
