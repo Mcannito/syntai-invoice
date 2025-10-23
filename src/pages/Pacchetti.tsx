@@ -343,7 +343,7 @@ export default function Pacchetti() {
                       variant="default"
                       size="sm"
                       className="flex-1"
-                      onClick={() => navigate(`/contabilita/fatture?highlight=${pacchetto.fattura_id}`)}
+                      onClick={() => navigate(`/contabilita/fatture?view=${pacchetto.fattura_id}`)}
                     >
                       <FileText className="h-4 w-4 mr-1" />
                       Vedi Fattura

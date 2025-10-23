@@ -379,6 +379,20 @@ const Fatture = () => {
     }
   }, [searchParams, setSearchParams]);
 
+  // Gestione parametro view dall'URL per aprire direttamente il viewer della fattura
+  useEffect(() => {
+    const viewParam = searchParams.get('view');
+    if (viewParam && fatture.length > 0) {
+      const fatturaToView = fatture.find(f => f.id === viewParam);
+      if (fatturaToView) {
+        handleViewPDF(fatturaToView);
+        // Rimuovi il parametro dalla URL
+        searchParams.delete('view');
+        setSearchParams(searchParams);
+      }
+    }
+  }, [searchParams, setSearchParams, fatture]);
+
   const getPazienteDisplayName = (fattura: any) => {
     if (!fattura.pazienti) return "N/A";
     if (fattura.pazienti.tipo_paziente === "persona_fisica") {
