@@ -947,9 +947,25 @@ export const NuovaFatturaDialog = ({
                       <Switch
                         checked={tassazioneAttiva.cassa_previdenziale}
                         onCheckedChange={(checked) => {
-                          setTassazioneAttiva({ ...tassazioneAttiva, cassa_previdenziale: checked });
-                          if (!checked) {
-                            setTassazione({ ...tassazione, cassa_previdenziale: 0 });
+                          const nuovoStato = { ...tassazioneAttiva, cassa_previdenziale: checked };
+                          setTassazioneAttiva(nuovoStato);
+                          
+                          // Calcola immediatamente il nuovo valore
+                          if (userSettings) {
+                            const totali = calcolaTotali();
+                            const imponibile = totali.imponibile;
+                            
+                            if (checked && userSettings.rivalsa_attiva) {
+                              setTassazione(prev => ({
+                                ...prev,
+                                cassa_previdenziale: imponibile * (percentualeRivalsa / 100)
+                              }));
+                            } else {
+                              setTassazione(prev => ({
+                                ...prev,
+                                cassa_previdenziale: 0
+                              }));
+                            }
                           }
                         }}
                       />
@@ -964,7 +980,17 @@ export const NuovaFatturaDialog = ({
                       step="0.01"
                       value={percentualeRivalsa}
                       onChange={(e) => {
-                        setPercentualeRivalsa(parseFloat(e.target.value) || 0);
+                        const nuovaPercentuale = parseFloat(e.target.value) || 0;
+                        setPercentualeRivalsa(nuovaPercentuale);
+                        // Ricalcola immediatamente con la nuova percentuale
+                        if (userSettings && tassazioneAttiva.cassa_previdenziale) {
+                          const totali = calcolaTotali();
+                          const imponibile = totali.imponibile;
+                          setTassazione(prev => ({
+                            ...prev,
+                            cassa_previdenziale: imponibile * (nuovaPercentuale / 100)
+                          }));
+                        }
                       }}
                       disabled={!tassazioneAttiva.cassa_previdenziale}
                       className="flex-1"
@@ -982,9 +1008,25 @@ export const NuovaFatturaDialog = ({
                       <Switch
                         checked={tassazioneAttiva.ritenuta_acconto}
                         onCheckedChange={(checked) => {
-                          setTassazioneAttiva({ ...tassazioneAttiva, ritenuta_acconto: checked });
-                          if (!checked) {
-                            setTassazione({ ...tassazione, ritenuta_acconto: 0 });
+                          const nuovoStato = { ...tassazioneAttiva, ritenuta_acconto: checked };
+                          setTassazioneAttiva(nuovoStato);
+                          
+                          // Calcola immediatamente il nuovo valore
+                          if (userSettings) {
+                            const totali = calcolaTotali();
+                            const imponibile = totali.imponibile;
+                            
+                            if (checked && userSettings.ritenuta_attiva) {
+                              setTassazione(prev => ({
+                                ...prev,
+                                ritenuta_acconto: imponibile * (percentualeRitenuta / 100)
+                              }));
+                            } else {
+                              setTassazione(prev => ({
+                                ...prev,
+                                ritenuta_acconto: 0
+                              }));
+                            }
                           }
                         }}
                       />
@@ -999,7 +1041,17 @@ export const NuovaFatturaDialog = ({
                       step="0.01"
                       value={percentualeRitenuta}
                       onChange={(e) => {
-                        setPercentualeRitenuta(parseFloat(e.target.value) || 0);
+                        const nuovaPercentuale = parseFloat(e.target.value) || 0;
+                        setPercentualeRitenuta(nuovaPercentuale);
+                        // Ricalcola immediatamente con la nuova percentuale
+                        if (userSettings && tassazioneAttiva.ritenuta_acconto) {
+                          const totali = calcolaTotali();
+                          const imponibile = totali.imponibile;
+                          setTassazione(prev => ({
+                            ...prev,
+                            ritenuta_acconto: imponibile * (nuovaPercentuale / 100)
+                          }));
+                        }
                       }}
                       disabled={!tassazioneAttiva.ritenuta_acconto}
                       className="flex-1"
@@ -1017,9 +1069,32 @@ export const NuovaFatturaDialog = ({
                       <Switch
                         checked={tassazioneAttiva.bollo}
                         onCheckedChange={(checked) => {
-                          setTassazioneAttiva({ ...tassazioneAttiva, bollo: checked });
-                          if (!checked) {
-                            setTassazione({ ...tassazione, bollo_virtuale: 0 });
+                          const nuovoStato = { ...tassazioneAttiva, bollo: checked };
+                          setTassazioneAttiva(nuovoStato);
+                          
+                          // Calcola immediatamente il nuovo valore
+                          if (userSettings) {
+                            const totali = calcolaTotali();
+                            const imponibile = totali.imponibile;
+                            
+                            if (checked && userSettings.bollo_attivo && imponibile > 77.47) {
+                              if (userSettings.bollo_carico === 'paziente') {
+                                setTassazione(prev => ({
+                                  ...prev,
+                                  bollo_virtuale: userSettings.bollo_importo || 2.00
+                                }));
+                              } else {
+                                setTassazione(prev => ({
+                                  ...prev,
+                                  bollo_virtuale: 0
+                                }));
+                              }
+                            } else {
+                              setTassazione(prev => ({
+                                ...prev,
+                                bollo_virtuale: 0
+                              }));
+                            }
                           }
                         }}
                       />
