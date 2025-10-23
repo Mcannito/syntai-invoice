@@ -905,36 +905,6 @@ export const NuovaFatturaDialog = ({
                 <CardTitle className="text-lg">Dati Principali</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="numero">Numero *</Label>
-                    <Input
-                      id="numero"
-                      value={formData.numero}
-                      onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
-                      placeholder={
-                        formData.tipo_documento === 'preventivo' ? 'PR 1/2025' :
-                        formData.tipo_documento === 'nota_credito' ? 'NC 1/2025' :
-                        formData.tipo_documento === 'fattura_proforma' ? 'PF 1/2025' :
-                        'FT 1/2025'
-                      }
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="data">Data *</Label>
-                    <Input
-                      id="data"
-                      type="date"
-                      value={formData.data}
-                      onChange={(e) => setFormData({ ...formData, data: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="paziente">Paziente *</Label>
@@ -981,6 +951,36 @@ export const NuovaFatturaDialog = ({
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="numero">Numero *</Label>
+                    <Input
+                      id="numero"
+                      value={formData.numero}
+                      onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
+                      placeholder={
+                        formData.tipo_documento === 'preventivo' ? 'PR 1/2025' :
+                        formData.tipo_documento === 'nota_credito' ? 'NC 1/2025' :
+                        formData.tipo_documento === 'fattura_proforma' ? 'PF 1/2025' :
+                        'FT 1/2025'
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="data">Data *</Label>
+                    <Input
+                      id="data"
+                      type="date"
+                      value={formData.data}
+                      onChange={(e) => setFormData({ ...formData, data: e.target.value })}
+                      required
+                    />
+                  </div>
+
                 </div>
 
                 {/* Sezione Riferimenti Fattura Originale - Solo per Note di Credito */}
