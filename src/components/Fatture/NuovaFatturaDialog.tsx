@@ -159,8 +159,13 @@ export const NuovaFatturaDialog = ({
         if (data.ritenuta_aliquota) {
           setPercentualeRitenuta(data.ritenuta_aliquota);
         }
-        // Non impostiamo i valori subito, aspettiamo che ci siano dettagli/imponibile
-        // I valori saranno calcolati automaticamente nel useEffect di ricalcolo
+        
+        // Inizializza gli switch in base alle impostazioni attive
+        setTassazioneAttiva({
+          cassa_previdenziale: data.rivalsa_attiva || false,
+          ritenuta_acconto: data.ritenuta_attiva || false,
+          bollo: data.bollo_attivo || false,
+        });
       }
     } catch (error) {
       console.error("Error loading user settings:", error);
