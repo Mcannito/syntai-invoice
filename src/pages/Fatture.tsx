@@ -420,9 +420,10 @@ const Fatture = () => {
 
       if (dettagliError) throw dettagliError;
 
-      // Crea l'oggetto fattura completo con i dettagli
+      // Crea l'oggetto fattura senza l'id (per evitare che venga considerata una modifica)
+      const { id, ...fatturaDataSenzaId } = fattura;
       const fatturaCompleta = {
-        ...fattura,
+        ...fatturaDataSenzaId,
         fatture_dettagli: dettagliData || []
       };
 
