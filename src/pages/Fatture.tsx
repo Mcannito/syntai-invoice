@@ -1670,11 +1670,14 @@ const Fatture = () => {
                   >
                     <TableCell className="font-mono font-medium">
                       {fattura.numero}
-                      {fattura.convertita_da_id && (
-                        <Badge variant="outline" className="ml-2 text-xs">
-                          Da preventivo
-                        </Badge>
-                      )}
+                      {fattura.convertita_da_id && (() => {
+                        const preventivo = fatture.find(f => f.id === fattura.convertita_da_id);
+                        return (
+                          <Badge variant="outline" className="ml-2 text-xs">
+                            Da {preventivo?.numero || 'preventivo'}
+                          </Badge>
+                        );
+                      })()}
                       {fattura.convertita_in_id && (
                         <Badge variant="outline" className="ml-2 text-xs">
                           Convertito
