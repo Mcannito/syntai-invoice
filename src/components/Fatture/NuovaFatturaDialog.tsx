@@ -178,7 +178,8 @@ export const NuovaFatturaDialog = ({
     const nuovaTassazione = { ...tassazione };
     
     // Rivalsa/Contributo Integrativo (Cassa Previdenziale)
-    if (settings.rivalsa_attiva && tassazioneAttiva.cassa_previdenziale) {
+    // L'attivazione dipende SOLO dallo switch nella dialog, non dalle impostazioni globali
+    if (tassazioneAttiva.cassa_previdenziale) {
       nuovaTassazione.cassa_previdenziale = 
         imponibile * (percentualeRivalsa / 100);
     } else {
@@ -186,18 +187,21 @@ export const NuovaFatturaDialog = ({
     }
     
     // Ritenuta d'Acconto (calcolata solo su imponibile)
-    if (settings.ritenuta_attiva && tassazioneAttiva.ritenuta_acconto) {
+    // L'attivazione dipende SOLO dallo switch nella dialog, non dalle impostazioni globali
+    if (tassazioneAttiva.ritenuta_acconto) {
       nuovaTassazione.ritenuta_acconto = 
         imponibile * (percentualeRitenuta / 100);
     } else {
       nuovaTassazione.ritenuta_acconto = 0;
     }
     
-    // Marca da Bollo (applica solo se bollo_attivo E imponibile > 77.47€)
-    if (settings.bollo_attivo && tassazioneAttiva.bollo && imponibile > 77.47) {
-      // Il bollo viene conteggiato in fattura SOLO se a carico del paziente
-      if (settings.bollo_carico === 'paziente') {
-        nuovaTassazione.bollo_virtuale = settings.bollo_importo || 2.00;
+    // Marca da Bollo (applica solo se switch attivo E imponibile > 77.47€)
+    // L'attivazione dipende SOLO dallo switch nella dialog, non dalle impostazioni globali
+    if (tassazioneAttiva.bollo && imponibile > 77.47) {
+      const importoBollo = settings.bollo_importo || 2.00;
+      // Il bollo viene conteggiato in fattura SOLO se a carico del paziente (default: paziente)
+      if (!settings.bollo_carico || settings.bollo_carico === 'paziente') {
+        nuovaTassazione.bollo_virtuale = importoBollo;
       } else {
         // Se a carico del professionista, non viene addebitato al paziente
         nuovaTassazione.bollo_virtuale = 0;
