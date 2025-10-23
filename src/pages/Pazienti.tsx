@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, Edit, Users, Building2, UserCheck, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NuovoPazienteDialog } from "@/components/Pazienti/NuovoPazienteDialog";
+import { PacchettiDrawer } from "@/components/Pazienti/PacchettiDrawer";
 import {
   Table,
   TableBody,
