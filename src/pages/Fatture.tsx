@@ -448,7 +448,11 @@ const Fatture = () => {
       
       let matchesTipo = true;
       if (filtroTipoDocumento) {
-        matchesTipo = f.tipo_documento === filtroTipoDocumento;
+        if (filtroTipoDocumento === 'fattura_elettronica') {
+          matchesTipo = f.tipo_documento === 'fattura_elettronica_pg' || f.tipo_documento === 'fattura_elettronica_pa';
+        } else {
+          matchesTipo = f.tipo_documento === filtroTipoDocumento;
+        }
       }
       
       // Filtro stato
@@ -1638,19 +1642,19 @@ const Fatture = () => {
             <Card 
               className={cn(
                 "cursor-pointer transition-all hover:shadow-md",
-                filtroTipoDocumento === 'fattura_elettronica_pg' && "ring-2 ring-primary"
+                filtroTipoDocumento === 'fattura_elettronica' && "ring-2 ring-primary"
               )}
-              onClick={() => setFiltroTipoDocumento(filtroTipoDocumento === 'fattura_elettronica_pg' ? null : 'fattura_elettronica_pg')}
+              onClick={() => setFiltroTipoDocumento(filtroTipoDocumento === 'fattura_elettronica' ? null : 'fattura_elettronica')}
             >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Fatture Elettroniche</p>
                     <p className="text-2xl font-bold">
-                      {fatture.filter(f => f.tipo_documento === 'fattura_elettronica_pg').length}
+                      {fatture.filter(f => f.tipo_documento === 'fattura_elettronica_pg' || f.tipo_documento === 'fattura_elettronica_pa').length}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      €{fatture.filter(f => f.tipo_documento === 'fattura_elettronica_pg').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
+                      €{fatture.filter(f => f.tipo_documento === 'fattura_elettronica_pg' || f.tipo_documento === 'fattura_elettronica_pa').reduce((sum, f) => sum + (f.totale || f.importo), 0).toFixed(2)}
                     </p>
                   </div>
                   <Zap className="h-8 w-8 text-yellow-500" />
