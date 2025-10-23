@@ -355,7 +355,7 @@ const Fatture = () => {
   const getPazienteDisplayName = (fattura: any) => {
     if (!fattura.pazienti) return "N/A";
     if (fattura.pazienti.tipo_paziente === "persona_fisica") {
-      return `${fattura.pazienti.nome} ${fattura.pazienti.cognome || ""}`.trim();
+      return `${fattura.pazienti.cognome || ""} ${fattura.pazienti.nome}`.trim();
     }
     return fattura.pazienti.ragione_sociale || fattura.pazienti.nome;
   };
