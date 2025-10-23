@@ -1788,6 +1788,22 @@ const Fatture = () => {
                             </>
                           )}
 
+                          {fattura.tipo_documento === 'preventivo' && fattura.convertita_in_id && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  setHighlightedId(fattura.convertita_in_id);
+                                  setSearchParams({ highlight: fattura.convertita_in_id });
+                                }}
+                                className="text-primary"
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Vai alla fattura
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
                           {fattura.tipo_documento === 'fattura_proforma' && !fattura.convertita_in_id && (
                             <>
                               <DropdownMenuSeparator />
