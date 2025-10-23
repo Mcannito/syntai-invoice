@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { InvoiceViewer } from "@/components/Fatture/InvoiceViewer";
 
 interface Fattura {
   id: string;
@@ -35,7 +35,9 @@ export function FattureDrawer({
 }: FattureDrawerProps) {
   const [fatture, setFatture] = useState<Fattura[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [currentInvoiceUrl, setCurrentInvoiceUrl] = useState<string | null>(null);
+  const [currentInvoice, setCurrentInvoice] = useState<any>(null);
 
   useEffect(() => {
     if (open && pazienteId) {
@@ -106,8 +108,10 @@ export function FattureDrawer({
       .getPublicUrl(fattura.pdf_path);
 
     if (data?.publicUrl) {
-      // Apri il PDF in una nuova finestra
-      window.open(data.publicUrl, '_blank');
+      // Imposta gli stati per aprire il viewer
+      setCurrentInvoiceUrl(data.publicUrl);
+      setCurrentInvoice(fattura);
+      setViewerOpen(true);
     } else {
       toast({
         title: "Errore",
@@ -197,6 +201,19 @@ export function FattureDrawer({
           )}
         </div>
       </DrawerContent>
+
+      <InvoiceViewer
+        open={viewerOpen}
+        onClose={() => {
+          setViewerOpen(false);
+          setCurrentInvoiceUrl(null);
+          setCurrentInvoice(null);
+        }}
+        htmlUrl={currentInvoiceUrl}
+        invoice={currentInvoice}
+        autoPrint={false}
+        isPdf={true}
+      />
     </Drawer>
   );
 }
