@@ -721,7 +721,12 @@ const Fatture = () => {
   };
 
   const handleDeleteFatturaInEntrata = (fattura: any) => {
-    setFatturaToDelete(fattura);
+    setFatturaToDelete({ ...fattura, isFatturaInEntrata: true });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteFattura = (fattura: any) => {
+    setFatturaToDelete({ ...fattura, isFatturaInEntrata: false });
     setDeleteDialogOpen(true);
   };
 
@@ -729,8 +734,10 @@ const Fatture = () => {
     if (!fatturaToDelete) return;
 
     try {
+      const tableName = fatturaToDelete.isFatturaInEntrata ? 'fatture_in_entrata' : 'fatture';
+      
       const { error } = await supabase
-        .from('fatture_in_entrata')
+        .from(tableName)
         .delete()
         .eq('id', fatturaToDelete.id);
 
@@ -740,7 +747,13 @@ const Fatture = () => {
         title: "Successo",
         description: "Fattura eliminata correttamente",
       });
-      loadFattureInEntrata();
+      
+      if (fatturaToDelete.isFatturaInEntrata) {
+        loadFattureInEntrata();
+      } else {
+        loadFatture();
+      }
+      
       setDeleteDialogOpen(false);
       setFatturaToDelete(null);
     } catch (error) {
@@ -1362,15 +1375,28 @@ const Fatture = () => {
                           </Button>
                         )}
                         {fattura.tipo_documento === "fattura_sanitaria" && (
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8"
-                            onClick={() => handleEditClick(fattura)}
-                            title="Modifica fattura"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                          <>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8"
+                              onClick={() => handleEditClick(fattura)}
+                              title="Modifica fattura"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            {!fattura.pagata && (
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-destructive"
+                                onClick={() => handleDeleteFattura(fattura)}
+                                title="Elimina fattura"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </>
                         )}
                         {fattura.pagata && fattura.tipo_documento === "fattura_sanitaria" && (
                           <Button 
