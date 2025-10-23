@@ -947,13 +947,15 @@ export const NuovaFatturaDialog = ({
                       <Switch
                         checked={tassazioneAttiva.cassa_previdenziale}
                         onCheckedChange={(checked) => {
-                          const nuovoStato = { ...tassazioneAttiva, cassa_previdenziale: checked };
-                          setTassazioneAttiva(nuovoStato);
+                          setTassazioneAttiva(prev => ({ ...prev, cassa_previdenziale: checked }));
                           
-                          // Calcola immediatamente il nuovo valore
+                          // Calcola l'imponibile direttamente (senza leggere da tassazione)
                           if (userSettings) {
-                            const totali = calcolaTotali();
-                            const imponibile = totali.imponibile;
+                            let imponibile = 0;
+                            dettagli.forEach(d => {
+                              const imp = d.quantita * d.prezzo_unitario * (1 - d.sconto / 100);
+                              imponibile += imp;
+                            });
                             
                             if (checked && userSettings.rivalsa_attiva) {
                               setTassazione(prev => ({
@@ -982,10 +984,13 @@ export const NuovaFatturaDialog = ({
                       onChange={(e) => {
                         const nuovaPercentuale = parseFloat(e.target.value) || 0;
                         setPercentualeRivalsa(nuovaPercentuale);
-                        // Ricalcola immediatamente con la nuova percentuale
+                        // Calcola l'imponibile direttamente (senza leggere da tassazione)
                         if (userSettings && tassazioneAttiva.cassa_previdenziale) {
-                          const totali = calcolaTotali();
-                          const imponibile = totali.imponibile;
+                          let imponibile = 0;
+                          dettagli.forEach(d => {
+                            const imp = d.quantita * d.prezzo_unitario * (1 - d.sconto / 100);
+                            imponibile += imp;
+                          });
                           setTassazione(prev => ({
                             ...prev,
                             cassa_previdenziale: imponibile * (nuovaPercentuale / 100)
@@ -1008,13 +1013,15 @@ export const NuovaFatturaDialog = ({
                       <Switch
                         checked={tassazioneAttiva.ritenuta_acconto}
                         onCheckedChange={(checked) => {
-                          const nuovoStato = { ...tassazioneAttiva, ritenuta_acconto: checked };
-                          setTassazioneAttiva(nuovoStato);
+                          setTassazioneAttiva(prev => ({ ...prev, ritenuta_acconto: checked }));
                           
-                          // Calcola immediatamente il nuovo valore
+                          // Calcola l'imponibile direttamente (senza leggere da tassazione)
                           if (userSettings) {
-                            const totali = calcolaTotali();
-                            const imponibile = totali.imponibile;
+                            let imponibile = 0;
+                            dettagli.forEach(d => {
+                              const imp = d.quantita * d.prezzo_unitario * (1 - d.sconto / 100);
+                              imponibile += imp;
+                            });
                             
                             if (checked && userSettings.ritenuta_attiva) {
                               setTassazione(prev => ({
@@ -1043,10 +1050,13 @@ export const NuovaFatturaDialog = ({
                       onChange={(e) => {
                         const nuovaPercentuale = parseFloat(e.target.value) || 0;
                         setPercentualeRitenuta(nuovaPercentuale);
-                        // Ricalcola immediatamente con la nuova percentuale
+                        // Calcola l'imponibile direttamente (senza leggere da tassazione)
                         if (userSettings && tassazioneAttiva.ritenuta_acconto) {
-                          const totali = calcolaTotali();
-                          const imponibile = totali.imponibile;
+                          let imponibile = 0;
+                          dettagli.forEach(d => {
+                            const imp = d.quantita * d.prezzo_unitario * (1 - d.sconto / 100);
+                            imponibile += imp;
+                          });
                           setTassazione(prev => ({
                             ...prev,
                             ritenuta_acconto: imponibile * (nuovaPercentuale / 100)
