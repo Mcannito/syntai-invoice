@@ -83,32 +83,52 @@ const Impostazioni = () => {
     e.preventDefault();
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        toast({
+          title: "Errore",
+          description: "Utente non autenticato",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const formData = new FormData(e.currentTarget);
       
-      const { error } = await supabase
-        .from("user_settings")
-        .update({
-          tipo_persona: tipoPersona,
-          sesso: sesso,
-          nome: formData.get("nome") as string,
-          cognome: formData.get("cognome") as string,
-          qualifica: qualificaSelezionata,
-          specializzazione: specializzazione,
-          codice_fiscale: formData.get("codice_fiscale") as string,
-          partita_iva: formData.get("partita_iva") as string,
-          albo_nome: formData.get("albo_nome") as string,
-          albo_numero: formData.get("albo_numero") as string,
-          indirizzo: formData.get("indirizzo") as string,
-          citta: formData.get("citta") as string,
-          telefono: formData.get("telefono") as string,
-          email: formData.get("email") as string,
-          pec: formData.get("pec") as string,
-        })
-        .eq("user_id", user.id);
+      const settingsData = {
+        user_id: user.id,
+        tipo_persona: tipoPersona || null,
+        sesso: sesso || null,
+        nome: (formData.get("nome") as string) || null,
+        cognome: (formData.get("cognome") as string) || null,
+        qualifica: qualificaSelezionata || null,
+        specializzazione: specializzazione || null,
+        codice_fiscale: (formData.get("codice_fiscale") as string) || null,
+        partita_iva: (formData.get("partita_iva") as string) || null,
+        albo_nome: (formData.get("albo_nome") as string) || null,
+        albo_numero: (formData.get("albo_numero") as string) || null,
+        indirizzo: (formData.get("indirizzo") as string) || null,
+        citta: (formData.get("citta") as string) || null,
+        telefono: (formData.get("telefono") as string) || null,
+        email: (formData.get("email") as string) || null,
+        pec: (formData.get("pec") as string) || null,
+      };
 
-      if (error) throw error;
+      console.log("Saving settings:", settingsData);
+
+      const { data, error } = await supabase
+        .from("user_settings")
+        .upsert(settingsData, {
+          onConflict: 'user_id',
+          ignoreDuplicates: false
+        })
+        .select();
+
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+
+      console.log("Settings saved successfully:", data);
 
       toast({
         title: "Successo",
@@ -120,7 +140,7 @@ const Impostazioni = () => {
       console.error("Error saving settings:", error);
       toast({
         title: "Errore",
-        description: "Impossibile salvare le impostazioni",
+        description: error instanceof Error ? error.message : "Impossibile salvare le impostazioni",
         variant: "destructive",
       });
     }
