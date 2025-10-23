@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Search, Plus, Package, Edit, Trash2 } from "lucide-react";
+import { Search, Plus, Package, Edit, Trash2, LayoutGrid, List } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { NuovoPacchettoDialog } from "@/components/Pacchetti/NuovoPacchettoDialog";
@@ -36,6 +37,7 @@ export default function Pacchetti() {
   const [pacchetti, setPacchetti] = useState<Pacchetto[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { toast } = useToast();
 
   const loadPacchetti = async () => {
@@ -196,7 +198,7 @@ export default function Pacchetti() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4">
+      <div className="flex gap-4 items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -218,9 +220,25 @@ export default function Pacchetti() {
             <SelectItem value="annullato">Annullati</SelectItem>
           </SelectContent>
         </Select>
+        <div className="flex gap-1 border rounded-lg p-1">
+          <Button
+            variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+            size="icon"
+            onClick={() => setViewMode('grid')}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+            size="icon"
+            onClick={() => setViewMode('list')}
+          >
+            <List className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      {/* Pacchetti Grid */}
+      {/* Pacchetti Grid/List */}
       {loading ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">Caricamento...</p>
@@ -236,7 +254,7 @@ export default function Pacchetti() {
             </p>
           </CardContent>
         </Card>
-      ) : (
+      ) : viewMode === 'grid' ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredPacchetti.map((pacchetto) => (
             <Card key={pacchetto.id} className="hover:shadow-lg transition-shadow">
@@ -339,6 +357,70 @@ export default function Pacchetti() {
             </Card>
           ))}
         </div>
+      ) : (
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome Pacchetto</TableHead>
+                <TableHead>Paziente</TableHead>
+                <TableHead>Prestazione</TableHead>
+                <TableHead>Progresso</TableHead>
+                <TableHead>Stato</TableHead>
+                <TableHead>Prezzo</TableHead>
+                <TableHead className="text-right">Azioni</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredPacchetti.map((pacchetto) => {
+                const progresso = (pacchetto.quantita_utilizzata / pacchetto.quantita_totale) * 100;
+                const rimanenti = pacchetto.quantita_totale - pacchetto.quantita_utilizzata;
+
+                return (
+                  <TableRow key={pacchetto.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{pacchetto.nome}</p>
+                        {pacchetto.sconto_percentuale > 0 && (
+                          <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 mt-1">
+                            -{pacchetto.sconto_percentuale}%
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>{getPazienteNome(pacchetto.paziente)}</TableCell>
+                    <TableCell>{pacchetto.prestazione?.nome}</TableCell>
+                    <TableCell>
+                      <div className="space-y-1 min-w-[150px]">
+                        <div className="flex justify-between text-sm">
+                          <span>{pacchetto.quantita_utilizzata}/{pacchetto.quantita_totale}</span>
+                          <span className="text-muted-foreground">{rimanenti} rim.</span>
+                        </div>
+                        <Progress value={progresso} className="h-2" />
+                      </div>
+                    </TableCell>
+                    <TableCell>{getStatoBadge(pacchetto.stato)}</TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-semibold">€ {Number(pacchetto.prezzo_totale).toFixed(2)}</p>
+                        <p className="text-xs text-muted-foreground">€ {Number(pacchetto.prezzo_per_seduta).toFixed(2)}/sed.</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDeletingId(pacchetto.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </Card>
       )}
 
       {/* Delete Confirmation Dialog */}

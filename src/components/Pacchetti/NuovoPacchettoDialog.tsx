@@ -179,6 +179,8 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Non autenticato");
 
+      console.log("📦 Creazione pacchetto con dati:", formData);
+
       // Crea il pacchetto
       const { data: pacchetto, error: pacchettoError } = await supabase
         .from("pacchetti")
@@ -202,7 +204,7 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
         .single();
 
       if (pacchettoError) {
-        console.error("Errore DB pacchetto:", pacchettoError);
+        console.error("❌ Errore DB pacchetto:", pacchettoError);
         
         let errorMessage = "Impossibile creare il pacchetto";
         if (pacchettoError.message.includes('foreign key')) {
@@ -219,72 +221,118 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
         throw pacchettoError;
       }
 
+      console.log("✅ Pacchetto creato:", pacchetto.id);
+
       // Crea fattura se richiesto
       if (formData.crea_fattura && pacchetto) {
-        const { data: settings } = await supabase
-          .from("user_settings")
-          .select("metodo_pagamento_default")
-          .eq("user_id", user.id)
-          .single();
+        try {
+          console.log("💰 Inizio creazione fattura...");
+          
+          const { data: settings } = await supabase
+            .from("user_settings")
+            .select("metodo_pagamento_default")
+            .eq("user_id", user.id)
+            .single();
 
-        // Genera numero fattura
-        const year = new Date().getFullYear();
-        const { count } = await supabase
-          .from("fatture")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .like("numero", `${year}/%`);
+          // Genera numero fattura
+          const year = new Date(formData.data_acquisto).getFullYear();
+          const { count } = await supabase
+            .from("fatture")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .like("numero", `${year}/%`);
 
-        const numeroFattura = `${year}/${(count || 0) + 1}`;
+          const numeroFattura = `${year}/${(count || 0) + 1}`;
+          console.log("📄 Numero fattura:", numeroFattura);
 
-        // Crea fattura
-        const { data: fattura, error: fatturaError } = await supabase
-          .from("fatture")
-          .insert({
+          // Crea fattura
+          const fatturaData = {
             user_id: user.id,
             paziente_id: formData.paziente_id,
             numero: numeroFattura,
             data: formData.data_acquisto,
-            importo: formData.prezzo_totale,
-            imponibile: formData.prezzo_totale,
-            totale: formData.prezzo_totale,
+            importo: Number(formData.prezzo_totale),
+            imponibile: Number(formData.prezzo_totale),
+            totale: Number(formData.prezzo_totale),
+            iva_importo: 0,
             metodo_pagamento: settings?.metodo_pagamento_default || "bonifico",
             stato: "Da Inviare",
-            tipo_documento: "fattura"
-          })
-          .select()
-          .single();
+            tipo_documento: "fattura",
+            pagata: false
+          };
 
-        if (fatturaError) throw fatturaError;
+          console.log("📄 Dati fattura:", fatturaData);
 
-        // Crea dettaglio fattura
-        await supabase
-          .from("fatture_dettagli")
-          .insert({
+          const { data: fattura, error: fatturaError } = await supabase
+            .from("fatture")
+            .insert(fatturaData)
+            .select()
+            .single();
+
+          if (fatturaError) {
+            console.error("❌ Errore creazione fattura:", fatturaError);
+            throw new Error(`Errore creazione fattura: ${fatturaError.message}`);
+          }
+
+          console.log("✅ Fattura creata:", fattura.id);
+
+          // Crea dettaglio fattura
+          const dettaglioData = {
             fattura_id: fattura.id,
             prestazione_id: formData.prestazione_id,
             descrizione: formData.nome,
-            quantita: formData.quantita_totale,
-            prezzo_unitario: formData.prezzo_per_seduta,
-            imponibile: formData.prezzo_totale,
+            quantita: Number(formData.quantita_totale),
+            prezzo_unitario: Number(formData.prezzo_per_seduta),
+            imponibile: Number(formData.prezzo_totale),
             iva_percentuale: 0,
             iva_importo: 0,
-            totale: formData.prezzo_totale
+            totale: Number(formData.prezzo_totale)
+          };
+
+          console.log("📋 Dati dettaglio:", dettaglioData);
+
+          const { error: dettaglioError } = await supabase
+            .from("fatture_dettagli")
+            .insert(dettaglioData);
+
+          if (dettaglioError) {
+            console.error("❌ Errore dettaglio fattura:", dettaglioError);
+            throw new Error(`Errore creazione dettaglio: ${dettaglioError.message}`);
+          }
+
+          console.log("✅ Dettaglio fattura creato");
+
+          // Collega fattura al pacchetto
+          const { error: updateError } = await supabase
+            .from("pacchetti")
+            .update({ fattura_id: fattura.id })
+            .eq("id", pacchetto.id);
+
+          if (updateError) {
+            console.error("❌ Errore collegamento:", updateError);
+            throw new Error(`Errore collegamento: ${updateError.message}`);
+          }
+
+          console.log("✅ Fattura collegata al pacchetto");
+
+          toast({
+            title: "Successo",
+            description: `Pacchetto e fattura n. ${numeroFattura} creati`,
           });
-
-        // Collega fattura al pacchetto
-        await supabase
-          .from("pacchetti")
-          .update({ fattura_id: fattura.id })
-          .eq("id", pacchetto.id);
+        } catch (fatturaError: any) {
+          console.error("❌ Errore nella fatturazione:", fatturaError);
+          toast({
+            title: "Pacchetto creato, errore fattura",
+            description: `Il pacchetto è stato creato ma: ${fatturaError.message}`,
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Pacchetto creato",
+          description: "Il pacchetto è stato creato con successo",
+        });
       }
-
-      toast({
-        title: "Pacchetto creato",
-        description: formData.crea_fattura 
-          ? "Il pacchetto e la fattura sono stati creati con successo"
-          : "Il pacchetto è stato creato con successo",
-      });
 
       setOpen(false);
       onPacchettoAdded();
@@ -305,11 +353,11 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
         note: "",
         crea_fattura: true,
       });
-    } catch (error) {
-      console.error("Errore creazione pacchetto:", error);
+    } catch (error: any) {
+      console.error("❌ Errore creazione pacchetto:", error);
       toast({
         title: "Errore",
-        description: "Impossibile creare il pacchetto",
+        description: error.message || "Impossibile creare il pacchetto",
         variant: "destructive",
       });
     } finally {

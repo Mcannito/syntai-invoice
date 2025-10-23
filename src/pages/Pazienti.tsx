@@ -36,12 +36,17 @@ const Pazienti = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pazienteToDelete, setPazienteToDelete] = useState<any>(null);
   const [deleteWarning, setDeleteWarning] = useState<string>("");
+  const [pacchettiDrawerOpen, setPacchettiDrawerOpen] = useState(false);
+  const [selectedPaziente, setSelectedPaziente] = useState<{ id: string; nome: string } | null>(null);
 
   const fetchPazienti = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("pazienti")
-      .select("*")
+      .select(`
+        *,
+        pacchetti_count:pacchetti(count)
+      `)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -341,6 +346,21 @@ const Pazienti = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          {paziente.pacchetti_count?.[0]?.count > 0 && (
+                            <Badge 
+                              variant="outline" 
+                              className="cursor-pointer hover:bg-accent mr-2"
+                              onClick={() => {
+                                setSelectedPaziente({
+                                  id: paziente.id,
+                                  nome: paziente.ragione_sociale || `${paziente.nome} ${paziente.cognome || ''}`
+                                });
+                                setPacchettiDrawerOpen(true);
+                              }}
+                            >
+                              📦 {paziente.pacchetti_count[0].count}
+                            </Badge>
+                          )}
                           <Button 
                             variant="ghost" 
                             size="icon" 
@@ -435,6 +455,15 @@ const Pazienti = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Drawer Pacchetti */}
+      <PacchettiDrawer
+        pazienteId={selectedPaziente?.id || null}
+        pazienteNome={selectedPaziente?.nome || ""}
+        open={pacchettiDrawerOpen}
+        onOpenChange={setPacchettiDrawerOpen}
+        onPacchettoAdded={fetchPazienti}
+      />
     </div>
   );
 };
