@@ -681,7 +681,10 @@ export const NuovaFatturaDialog = ({
 
       const totali = calcolaTotali();
 
-      if (fatturaToEdit) {
+      // Determina se è una modifica verificando la presenza dell'id
+      const isModifica = fatturaToEdit && fatturaToEdit.id;
+
+      if (isModifica) {
         // MODIFICA FATTURA ESISTENTE
         const { error: fatturaError } = await supabase
           .from("fatture")
