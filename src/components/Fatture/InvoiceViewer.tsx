@@ -55,37 +55,39 @@ export function InvoiceViewer({ open, onClose, htmlUrl, invoice, autoPrint = fal
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] h-[95vh] p-0 gap-0">
-        <DialogHeader className="px-6 py-2 border-b">
+        <DialogHeader className="px-4 py-1.5 border-b">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <DialogTitle className="text-xl">
+            <div className="flex items-center gap-3">
+              <DialogTitle className="text-base">
                 {invoice?.tipo_documento === 'preventivo' ? 'Preventivo' : 'Fattura'} N. {invoice?.numero}
               </DialogTitle>
               {invoice && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span>{new Date(invoice.data).toLocaleDateString('it-IT')}</span>
-                  <Badge variant="outline">
+                  <Badge variant="outline" className="text-xs py-0">
                     € {invoice.totale?.toFixed(2) || '0.00'}
                   </Badge>
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handlePrint}
                 disabled={loading}
+                className="h-7"
               >
-                <Printer className="h-4 w-4 mr-2" />
+                <Printer className="h-3.5 w-3.5 mr-1.5" />
                 Stampa
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onClose}
+                className="h-7 w-7"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
