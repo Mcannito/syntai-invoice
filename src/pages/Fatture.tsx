@@ -269,7 +269,7 @@ const Fatture = () => {
           pazienti (nome, cognome, ragione_sociale, tipo_paziente),
           fatture_dettagli (*)
         `)
-        .order("data", { ascending: false });
+        .order("numero", { ascending: false });
 
       if (error) throw error;
       setFatture(data || []);
