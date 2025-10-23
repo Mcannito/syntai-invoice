@@ -1793,8 +1793,16 @@ const Fatture = () => {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
                                 onClick={() => {
-                                  setHighlightedId(fattura.convertita_in_id);
-                                  setSearchParams({ highlight: fattura.convertita_in_id });
+                                  // Reset filtri per assicurarsi che la fattura sia visibile
+                                  setFiltroTipoDocumento("");
+                                  setFiltroStato("tutti");
+                                  setFiltroPaziente("tutti");
+                                  setSearchTerm("");
+                                  
+                                  // Aggiorna URL con parametro highlight
+                                  const newSearchParams = new URLSearchParams(searchParams);
+                                  newSearchParams.set('highlight', fattura.convertita_in_id);
+                                  setSearchParams(newSearchParams);
                                 }}
                                 className="text-primary"
                               >
