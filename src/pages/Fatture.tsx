@@ -1880,10 +1880,10 @@ const Fatture = () => {
                             <Badge variant="outline" className={cn(
                               "ml-2 text-xs",
                               isNotaCredito 
-                                ? "bg-orange-100 text-orange-700 border-orange-300"
+                                ? "bg-red-100 text-red-700 border-red-300"
                                 : "bg-blue-100 text-blue-700 border-blue-300"
                             )}>
-                              {isNotaCredito ? 'NC' : ''} {documentoGenerato?.numero}
+                              {documentoGenerato?.numero}
                             </Badge>
                           );
                         }
