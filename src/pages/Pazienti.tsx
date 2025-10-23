@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Edit, Users, Building2, UserCheck } from "lucide-react";
+import { Plus, Search, Edit, Users, Building2, UserCheck, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NuovoPazienteDialog } from "@/components/Pazienti/NuovoPazienteDialog";
 import {
@@ -14,6 +14,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 const Pazienti = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -22,6 +33,9 @@ const Pazienti = () => {
   const [tipoFilter, setTipoFilter] = useState<"all" | "fisica" | "giuridica">("all");
   const [editingPaziente, setEditingPaziente] = useState<any>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [pazienteToDelete, setPazienteToDelete] = useState<any>(null);
+  const [deleteWarning, setDeleteWarning] = useState<string>("");
 
   const fetchPazienti = async () => {
     setLoading(true);
@@ -41,6 +55,60 @@ const Pazienti = () => {
   useEffect(() => {
     fetchPazienti();
   }, []);
+
+  const handleDeleteClick = async (paziente: any) => {
+    // Controlla se ci sono fatture o appuntamenti collegati
+    const { data: fatture, error: fattureError } = await supabase
+      .from("fatture")
+      .select("id")
+      .eq("paziente_id", paziente.id);
+
+    const { data: appuntamenti, error: appuntamentiError } = await supabase
+      .from("appuntamenti")
+      .select("id")
+      .eq("paziente_id", paziente.id);
+
+    if (fattureError || appuntamentiError) {
+      toast.error("Errore durante il controllo dei dati collegati");
+      return;
+    }
+
+    const fattureCount = fatture?.length || 0;
+    const appuntamentiCount = appuntamenti?.length || 0;
+
+    let warning = "";
+    if (fattureCount > 0 || appuntamentiCount > 0) {
+      warning = `Attenzione! Questo paziente ha:\n`;
+      if (fattureCount > 0) warning += `• ${fattureCount} fattura/e collegata/e\n`;
+      if (appuntamentiCount > 0) warning += `• ${appuntamentiCount} appuntamento/i collegato/i\n`;
+      warning += `\nEliminando il paziente, questi dati rimarranno nel sistema ma perderanno il collegamento al paziente.`;
+    }
+
+    setPazienteToDelete(paziente);
+    setDeleteWarning(warning);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!pazienteToDelete) return;
+
+    const { error } = await supabase
+      .from("pazienti")
+      .delete()
+      .eq("id", pazienteToDelete.id);
+
+    if (error) {
+      toast.error("Errore durante l'eliminazione del paziente");
+      console.error(error);
+    } else {
+      toast.success("Paziente eliminato con successo");
+      fetchPazienti();
+    }
+
+    setDeleteDialogOpen(false);
+    setPazienteToDelete(null);
+    setDeleteWarning("");
+  };
 
   // Mock data for initial display
   const mockPazienti = [
@@ -279,6 +347,14 @@ const Pazienti = () => {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteClick(paziente)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -304,6 +380,56 @@ const Pazienti = () => {
           if (!open) setEditingPaziente(null);
         }}
       />
+
+      {/* Dialog per conferma eliminazione */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Conferma Eliminazione</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              {deleteWarning ? (
+                <div className="space-y-2">
+                  <p className="font-semibold text-destructive">
+                    {deleteWarning.split('\n').map((line, i) => (
+                      <span key={i}>
+                        {line}
+                        <br />
+                      </span>
+                    ))}
+                  </p>
+                  <p className="text-foreground">
+                    Sei sicuro di voler eliminare il paziente{" "}
+                    <strong>
+                      {pazienteToDelete?.ragione_sociale || 
+                       `${pazienteToDelete?.nome} ${pazienteToDelete?.cognome || ""}`}
+                    </strong>?
+                  </p>
+                </div>
+              ) : (
+                <p>
+                  Sei sicuro di voler eliminare il paziente{" "}
+                  <strong>
+                    {pazienteToDelete?.ragione_sociale || 
+                     `${pazienteToDelete?.nome} ${pazienteToDelete?.cognome || ""}`}
+                  </strong>?
+                  <br />
+                  <br />
+                  Questa azione non può essere annullata.
+                </p>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Elimina
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
