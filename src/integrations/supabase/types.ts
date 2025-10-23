@@ -375,11 +375,14 @@ export type Database = {
           note: string | null
           paziente_id: string
           prestazione_id: string
+          prezzo_listino: number
           prezzo_per_seduta: number
           prezzo_totale: number
           quantita_rimanente: number | null
           quantita_totale: number
           quantita_utilizzata: number
+          sconto_importo: number | null
+          sconto_percentuale: number | null
           stato: string
           updated_at: string
           user_id: string
@@ -394,11 +397,14 @@ export type Database = {
           note?: string | null
           paziente_id: string
           prestazione_id: string
+          prezzo_listino: number
           prezzo_per_seduta: number
           prezzo_totale: number
           quantita_rimanente?: number | null
           quantita_totale: number
           quantita_utilizzata?: number
+          sconto_importo?: number | null
+          sconto_percentuale?: number | null
           stato?: string
           updated_at?: string
           user_id: string
@@ -413,11 +419,14 @@ export type Database = {
           note?: string | null
           paziente_id?: string
           prestazione_id?: string
+          prezzo_listino?: number
           prezzo_per_seduta?: number
           prezzo_totale?: number
           quantita_rimanente?: number | null
           quantita_totale?: number
           quantita_utilizzata?: number
+          sconto_importo?: number | null
+          sconto_percentuale?: number | null
           stato?: string
           updated_at?: string
           user_id?: string

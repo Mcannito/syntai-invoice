@@ -17,6 +17,9 @@ interface Pacchetto {
   quantita_totale: number;
   quantita_utilizzata: number;
   quantita_rimanente: number;
+  prezzo_listino: number;
+  sconto_percentuale: number;
+  sconto_importo: number;
   prezzo_totale: number;
   prezzo_per_seduta: number;
   stato: string;
@@ -52,7 +55,16 @@ export default function Pacchetti() {
         .order("data_acquisto", { ascending: false });
 
       if (error) throw error;
-      setPacchetti(data || []);
+      
+      // Assicuriamoci che i campi sconto esistano, altrimenti usiamo valori di default
+      const pacchettiWithDefaults = (data || []).map(p => ({
+        ...p,
+        prezzo_listino: p.prezzo_listino ?? p.prezzo_totale,
+        sconto_percentuale: p.sconto_percentuale ?? 0,
+        sconto_importo: p.sconto_importo ?? 0
+      }));
+      
+      setPacchetti(pacchettiWithDefaults);
     } catch (error) {
       console.error("Errore caricamento pacchetti:", error);
       toast({
@@ -231,8 +243,15 @@ export default function Pacchetti() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-lg">{pacchetto.nome}</CardTitle>
-                    <CardDescription className="mt-1">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <CardTitle className="text-lg">{pacchetto.nome}</CardTitle>
+                      {pacchetto.sconto_percentuale > 0 && (
+                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                          -{pacchetto.sconto_percentuale}%
+                        </Badge>
+                      )}
+                    </div>
+                    <CardDescription>
                       {getPazienteNome(pacchetto.paziente)}
                     </CardDescription>
                   </div>
@@ -263,14 +282,28 @@ export default function Pacchetti() {
                 </div>
 
                 {/* Prezzi */}
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Totale</p>
-                    <p className="font-bold">€ {Number(pacchetto.prezzo_totale).toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Per seduta</p>
-                    <p className="font-medium">€ {Number(pacchetto.prezzo_per_seduta).toFixed(2)}</p>
+                <div className="space-y-2 pt-4 border-t">
+                  {pacchetto.sconto_percentuale > 0 && (
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-muted-foreground">Prezzo Listino:</span>
+                      <span className="line-through text-muted-foreground">€ {Number(pacchetto.prezzo_listino).toFixed(2)}</span>
+                    </div>
+                  )}
+                  {pacchetto.sconto_percentuale > 0 && (
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-muted-foreground">Risparmiato:</span>
+                      <span className="text-green-600 dark:text-green-400 font-medium">-€ {Number(pacchetto.sconto_importo).toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Totale</p>
+                      <p className="font-bold text-lg">€ {Number(pacchetto.prezzo_totale).toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Per seduta</p>
+                      <p className="font-medium">€ {Number(pacchetto.prezzo_per_seduta).toFixed(2)}</p>
+                    </div>
                   </div>
                 </div>
 

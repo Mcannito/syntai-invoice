@@ -40,6 +40,9 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
     paziente_id: "",
     prestazione_id: "",
     quantita_totale: 10,
+    prezzo_listino: 0,
+    sconto_percentuale: 0,
+    sconto_importo: 0,
     prezzo_totale: 0,
     prezzo_per_seduta: 0,
     data_acquisto: new Date().toISOString().split('T')[0],
@@ -87,15 +90,21 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
     }
   }, [open]);
 
-  // Calcolo automatico prezzo per seduta
+  // Calcolo automatico prezzo con sconto
   useEffect(() => {
-    if (formData.quantita_totale > 0) {
+    if (formData.quantita_totale > 0 && formData.prezzo_listino > 0) {
+      const scontoImporto = (formData.prezzo_listino * formData.sconto_percentuale) / 100;
+      const prezzoFinale = formData.prezzo_listino - scontoImporto;
+      const prezzoPerSeduta = prezzoFinale / formData.quantita_totale;
+      
       setFormData(prev => ({
         ...prev,
-        prezzo_per_seduta: prev.prezzo_totale / prev.quantita_totale
+        sconto_importo: scontoImporto,
+        prezzo_totale: prezzoFinale,
+        prezzo_per_seduta: prezzoPerSeduta
       }));
     }
-  }, [formData.prezzo_totale, formData.quantita_totale]);
+  }, [formData.prezzo_listino, formData.sconto_percentuale, formData.quantita_totale]);
 
   // Auto-genera nome pacchetto
   useEffect(() => {
@@ -110,22 +119,60 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
     }
   }, [formData.prestazione_id, formData.quantita_totale, prestazioni]);
 
-  // Suggerisci prezzo quando cambia prestazione
+  // Suggerisci prezzo listino quando cambia prestazione o quantità
   useEffect(() => {
     if (formData.prestazione_id) {
       const prestazione = prestazioni.find(p => p.id === formData.prestazione_id);
-      if (prestazione && formData.prezzo_totale === 0) {
+      if (prestazione) {
+        const nuovoPrezzoListino = Number(prestazione.prezzo) * formData.quantita_totale;
         setFormData(prev => ({
           ...prev,
-          prezzo_totale: Number(prestazione.prezzo) * prev.quantita_totale,
-          prezzo_per_seduta: Number(prestazione.prezzo)
+          prezzo_listino: nuovoPrezzoListino
         }));
       }
     }
-  }, [formData.prestazione_id, prestazioni]);
+  }, [formData.prestazione_id, formData.quantita_totale, prestazioni]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validazioni
+    if (!formData.paziente_id) {
+      toast({
+        title: "Errore",
+        description: "Seleziona un paziente",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.prestazione_id) {
+      toast({
+        title: "Errore",
+        description: "Seleziona una prestazione",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.quantita_totale <= 0) {
+      toast({
+        title: "Errore",
+        description: "La quantità deve essere maggiore di 0",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.prezzo_totale <= 0) {
+      toast({
+        title: "Errore",
+        description: "Il prezzo deve essere maggiore di 0",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -141,6 +188,9 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
           paziente_id: formData.paziente_id,
           prestazione_id: formData.prestazione_id,
           quantita_totale: formData.quantita_totale,
+          prezzo_listino: formData.prezzo_listino,
+          sconto_percentuale: formData.sconto_percentuale,
+          sconto_importo: formData.sconto_importo,
           prezzo_totale: formData.prezzo_totale,
           prezzo_per_seduta: formData.prezzo_per_seduta,
           data_acquisto: formData.data_acquisto,
@@ -151,7 +201,23 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
         .select()
         .single();
 
-      if (pacchettoError) throw pacchettoError;
+      if (pacchettoError) {
+        console.error("Errore DB pacchetto:", pacchettoError);
+        
+        let errorMessage = "Impossibile creare il pacchetto";
+        if (pacchettoError.message.includes('foreign key')) {
+          errorMessage = "Paziente o prestazione non validi";
+        } else if (pacchettoError.message.includes('violates')) {
+          errorMessage = "Dati non validi. Controlla i campi inseriti";
+        }
+        
+        toast({
+          title: "Errore",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        throw pacchettoError;
+      }
 
       // Crea fattura se richiesto
       if (formData.crea_fattura && pacchetto) {
@@ -229,6 +295,9 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
         paziente_id: "",
         prestazione_id: "",
         quantita_totale: 10,
+        prezzo_listino: 0,
+        sconto_percentuale: 0,
+        sconto_importo: 0,
         prezzo_totale: 0,
         prezzo_per_seduta: 0,
         data_acquisto: new Date().toISOString().split('T')[0],
@@ -327,27 +396,59 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
                 type="number"
                 min="1"
                 value={formData.quantita_totale}
-                onChange={(e) => setFormData({ ...formData, quantita_totale: parseInt(e.target.value) })}
+                onChange={(e) => setFormData({ ...formData, quantita_totale: parseInt(e.target.value) || 0 })}
                 required
               />
             </div>
 
-            {/* Prezzo Totale */}
+            {/* Prezzo Listino */}
             <div className="space-y-2">
-              <Label htmlFor="prezzo_totale">Prezzo Totale *</Label>
+              <Label htmlFor="prezzo_listino">Prezzo Listino *</Label>
               <Input
-                id="prezzo_totale"
+                id="prezzo_listino"
                 type="number"
                 step="0.01"
                 min="0"
-                value={formData.prezzo_totale}
-                onChange={(e) => setFormData({ ...formData, prezzo_totale: parseFloat(e.target.value) })}
+                value={formData.prezzo_listino}
+                onChange={(e) => setFormData({ ...formData, prezzo_listino: parseFloat(e.target.value) || 0 })}
                 required
+              />
+            </div>
+
+            {/* Sconto Percentuale */}
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="sconto">Sconto %</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  id="sconto"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={formData.sconto_percentuale}
+                  onChange={(e) => setFormData({ ...formData, sconto_percentuale: parseFloat(e.target.value) || 0 })}
+                  className="flex-1"
+                />
+                {formData.sconto_percentuale > 0 && (
+                  <div className="text-sm font-medium text-green-600">
+                    Risparmi € {formData.sconto_importo.toFixed(2)}! 🎉
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Prezzo Finale */}
+            <div className="space-y-2">
+              <Label>Prezzo Finale</Label>
+              <Input
+                value={`€ ${formData.prezzo_totale.toFixed(2)}`}
+                disabled
+                className="bg-muted font-bold"
               />
             </div>
 
             {/* Prezzo Per Seduta (readonly) */}
-            <div className="space-y-2 col-span-2">
+            <div className="space-y-2">
               <Label>Prezzo per Seduta</Label>
               <Input
                 value={`€ ${formData.prezzo_per_seduta.toFixed(2)}`}
