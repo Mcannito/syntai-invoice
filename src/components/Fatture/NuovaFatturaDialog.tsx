@@ -181,26 +181,8 @@ export const NuovaFatturaDialog = ({
     
     const nuovaTassazione = { ...tassazione };
     
-    // Rivalsa/Contributo Integrativo (Cassa Previdenziale)
-    // L'attivazione dipende SOLO dallo switch nella dialog, non dalle impostazioni globali
-    if (tassazioneAttiva.cassa_previdenziale) {
-      nuovaTassazione.cassa_previdenziale = 
-        imponibile * (percentualeRivalsa / 100);
-    } else {
-      nuovaTassazione.cassa_previdenziale = 0;
-    }
-    
-    // Ritenuta d'Acconto (calcolata solo su imponibile)
-    // L'attivazione dipende SOLO dallo switch nella dialog, non dalle impostazioni globali
-    if (tassazioneAttiva.ritenuta_acconto) {
-      nuovaTassazione.ritenuta_acconto = 
-        imponibile * (percentualeRitenuta / 100);
-    } else {
-      nuovaTassazione.ritenuta_acconto = 0;
-    }
-    
     // Marca da Bollo (applica solo se switch attivo E imponibile > 77.47€)
-    // L'attivazione dipende SOLO dallo switch nella dialog, non dalle impostazioni globali
+    // Calcola prima il bollo perché serve per la rivalsa
     if (tassazioneAttiva.bollo && imponibile > 77.47) {
       const importoBollo = settings.bollo_importo || 2.00;
       // Il bollo viene conteggiato in fattura SOLO se a carico del paziente (default: paziente)
@@ -212,6 +194,26 @@ export const NuovaFatturaDialog = ({
       }
     } else {
       nuovaTassazione.bollo_virtuale = 0;
+    }
+    
+    // Rivalsa/Contributo Integrativo (Cassa Previdenziale)
+    // La rivalsa si calcola su imponibile + bollo
+    // L'attivazione dipende SOLO dallo switch nella dialog, non dalle impostazioni globali
+    if (tassazioneAttiva.cassa_previdenziale) {
+      const baseImponibileRivalsa = imponibile + nuovaTassazione.bollo_virtuale;
+      nuovaTassazione.cassa_previdenziale = 
+        baseImponibileRivalsa * (percentualeRivalsa / 100);
+    } else {
+      nuovaTassazione.cassa_previdenziale = 0;
+    }
+    
+    // Ritenuta d'Acconto (calcolata solo su imponibile)
+    // L'attivazione dipende SOLO dallo switch nella dialog, non dalle impostazioni globali
+    if (tassazioneAttiva.ritenuta_acconto) {
+      nuovaTassazione.ritenuta_acconto = 
+        imponibile * (percentualeRitenuta / 100);
+    } else {
+      nuovaTassazione.ritenuta_acconto = 0;
     }
     
     // Contributo integrativo sempre 0 di default (campo nascosto)
@@ -1263,9 +1265,11 @@ export const NuovaFatturaDialog = ({
                             });
                             
                             if (checked && userSettings.rivalsa_attiva) {
+                              // La rivalsa si calcola su imponibile + bollo
+                              const baseImponibileRivalsa = imponibile + tassazione.bollo_virtuale;
                               setTassazione(prev => ({
                                 ...prev,
-                                cassa_previdenziale: imponibile * (percentualeRivalsa / 100)
+                                cassa_previdenziale: baseImponibileRivalsa * (percentualeRivalsa / 100)
                               }));
                             } else {
                               setTassazione(prev => ({
@@ -1282,7 +1286,7 @@ export const NuovaFatturaDialog = ({
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Input
+                      <Input
                       type="number"
                       step="0.01"
                       value={percentualeRivalsa}
@@ -1296,9 +1300,11 @@ export const NuovaFatturaDialog = ({
                             const imp = d.quantita * d.prezzo_unitario * (1 - d.sconto / 100);
                             imponibile += imp;
                           });
+                          // La rivalsa si calcola su imponibile + bollo
+                          const baseImponibileRivalsa = imponibile + tassazione.bollo_virtuale;
                           setTassazione(prev => ({
                             ...prev,
-                            cassa_previdenziale: imponibile * (nuovaPercentuale / 100)
+                            cassa_previdenziale: baseImponibileRivalsa * (nuovaPercentuale / 100)
                           }));
                         }
                       }}
@@ -1392,22 +1398,26 @@ export const NuovaFatturaDialog = ({
                             const totali = calcolaTotali();
                             const imponibile = totali.imponibile;
                             
+                            let nuovoBollo = 0;
                             if (checked && userSettings.bollo_attivo && imponibile > 77.47) {
                               if (userSettings.bollo_carico === 'paziente') {
-                                setTassazione(prev => ({
-                                  ...prev,
-                                  bollo_virtuale: userSettings.bollo_importo || 2.00
-                                }));
-                              } else {
-                                setTassazione(prev => ({
-                                  ...prev,
-                                  bollo_virtuale: 0
-                                }));
+                                nuovoBollo = userSettings.bollo_importo || 2.00;
                               }
-                            } else {
+                            }
+                            
+                            // Aggiorna bollo
+                            setTassazione(prev => ({
+                              ...prev,
+                              bollo_virtuale: nuovoBollo
+                            }));
+                            
+                            // Ricalcola rivalsa con il nuovo bollo se è attiva
+                            if (tassazioneAttiva.cassa_previdenziale) {
+                              const baseImponibileRivalsa = imponibile + nuovoBollo;
                               setTassazione(prev => ({
                                 ...prev,
-                                bollo_virtuale: 0
+                                bollo_virtuale: nuovoBollo,
+                                cassa_previdenziale: baseImponibileRivalsa * (percentualeRivalsa / 100)
                               }));
                             }
                           }
@@ -1423,8 +1433,20 @@ export const NuovaFatturaDialog = ({
                     step="0.01"
                     value={tassazione.bollo_virtuale}
                     onChange={(e) => {
-                      setTassazione({ ...tassazione, bollo_virtuale: parseFloat(e.target.value) || 0 });
+                      const nuovoBollo = parseFloat(e.target.value) || 0;
+                      setTassazione(prev => ({ ...prev, bollo_virtuale: nuovoBollo }));
                       setTassazioneModificataManualmente(true);
+                      
+                      // Ricalcola rivalsa con il nuovo bollo se è attiva
+                      if (tassazioneAttiva.cassa_previdenziale && userSettings) {
+                        const totali = calcolaTotali();
+                        const baseImponibileRivalsa = totali.imponibile + nuovoBollo;
+                        setTassazione(prev => ({
+                          ...prev,
+                          bollo_virtuale: nuovoBollo,
+                          cassa_previdenziale: baseImponibileRivalsa * (percentualeRivalsa / 100)
+                        }));
+                      }
                     }}
                     disabled={!tassazioneAttiva.bollo}
                   />
