@@ -327,8 +327,8 @@ const Pazienti = () => {
                       </TableCell>
                       <TableCell className="text-sm">
                         <div className="space-y-1">
-                          <p className="text-muted-foreground">{paziente.email}</p>
-                          <p className="text-xs text-muted-foreground">{paziente.telefono}</p>
+                          <p className="text-muted-foreground">{paziente.telefono}</p>
+                          <p className="text-xs text-muted-foreground">{paziente.email}</p>
                         </div>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
