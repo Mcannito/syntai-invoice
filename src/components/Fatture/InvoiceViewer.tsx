@@ -48,7 +48,16 @@ export function InvoiceViewer({ open, onClose, htmlUrl, invoice, autoPrint = fal
   }, [open, htmlUrl, autoPrint, isPdf]);
 
   const handlePrint = () => {
-    if (iframeRef.current?.contentWindow) {
+    if (isPdf && htmlUrl) {
+      // Per i PDF, apri in una nuova finestra per stampare
+      const printWindow = window.open(htmlUrl, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      }
+    } else if (iframeRef.current?.contentWindow) {
+      // Per HTML generato, usa il metodo tradizionale
       iframeRef.current.contentWindow.print();
     }
   };
