@@ -10,35 +10,42 @@ interface InvoiceViewerProps {
   htmlUrl: string | null;
   invoice: any;
   autoPrint?: boolean;
+  isPdf?: boolean;
 }
 
-export function InvoiceViewer({ open, onClose, htmlUrl, invoice, autoPrint = false }: InvoiceViewerProps) {
+export function InvoiceViewer({ open, onClose, htmlUrl, invoice, autoPrint = false, isPdf = false }: InvoiceViewerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [loading, setLoading] = useState(true);
   const [htmlContent, setHtmlContent] = useState<string>('');
 
   useEffect(() => {
     if (open && htmlUrl) {
-      setLoading(true);
-      fetch(htmlUrl)
-        .then(response => response.text())
-        .then(html => {
-          setHtmlContent(html);
-          setLoading(false);
-          
-          // Auto-print dopo il caricamento se richiesto
-          if (autoPrint) {
-            setTimeout(() => {
-              handlePrint();
-            }, 1000);
-          }
-        })
-        .catch(error => {
-          console.error('Error loading invoice HTML:', error);
-          setLoading(false);
-        });
+      if (isPdf) {
+        // Per PDF, non fare fetch, usare direttamente l'URL
+        setLoading(false);
+      } else {
+        // Per HTML generato, fare fetch del contenuto
+        setLoading(true);
+        fetch(htmlUrl)
+          .then(response => response.text())
+          .then(html => {
+            setHtmlContent(html);
+            setLoading(false);
+            
+            // Auto-print dopo il caricamento se richiesto
+            if (autoPrint) {
+              setTimeout(() => {
+                handlePrint();
+              }, 1000);
+            }
+          })
+          .catch(error => {
+            console.error('Error loading invoice HTML:', error);
+            setLoading(false);
+          });
+      }
     }
-  }, [open, htmlUrl, autoPrint]);
+  }, [open, htmlUrl, autoPrint, isPdf]);
 
   const handlePrint = () => {
     if (iframeRef.current?.contentWindow) {
@@ -59,13 +66,17 @@ export function InvoiceViewer({ open, onClose, htmlUrl, invoice, autoPrint = fal
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <DialogTitle className="text-xl">
-                {invoice?.tipo_documento === 'preventivo' ? 'Preventivo' : 'Fattura'} N. {invoice?.numero}
+                {isPdf 
+                  ? 'Fattura in Entrata' 
+                  : invoice?.tipo_documento === 'preventivo' 
+                    ? 'Preventivo' 
+                    : 'Fattura'} N. {invoice?.numero}
               </DialogTitle>
               {invoice && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span>{new Date(invoice.data).toLocaleDateString('it-IT')}</span>
                   <Badge variant="outline">
-                    € {invoice.totale?.toFixed(2) || '0.00'}
+                    € {(isPdf ? invoice.importo : invoice.totale)?.toFixed(2) || '0.00'}
                   </Badge>
                 </div>
               )}
@@ -102,7 +113,8 @@ export function InvoiceViewer({ open, onClose, htmlUrl, invoice, autoPrint = fal
           )}
           <iframe
             ref={iframeRef}
-            srcDoc={htmlContent}
+            src={isPdf ? htmlUrl || undefined : undefined}
+            srcDoc={!isPdf ? htmlContent : undefined}
             className="w-full h-full border-0"
             title="Invoice Preview"
             onLoad={handleIframeLoad}

@@ -127,6 +127,7 @@ const Fatture = () => {
   const [currentInvoiceUrl, setCurrentInvoiceUrl] = useState<string | null>(null);
   const [currentInvoice, setCurrentInvoice] = useState<any>(null);
   const [autoPrint, setAutoPrint] = useState(false);
+  const [isPdfMode, setIsPdfMode] = useState(false);
   
   // Stato per ordinamento
   const [sortField, setSortField] = useState<'numero' | 'data'>('numero');
@@ -1848,6 +1849,7 @@ const Fatture = () => {
                                   setCurrentInvoiceUrl(data.publicUrl);
                                   setCurrentInvoice(fattura);
                                   setAutoPrint(false);
+                                  setIsPdfMode(true);
                                   setViewerOpen(true);
                                 } else {
                                   toast({
@@ -2575,10 +2577,12 @@ const Fatture = () => {
           setCurrentInvoiceUrl(null);
           setCurrentInvoice(null);
           setAutoPrint(false);
+          setIsPdfMode(false);
         }}
         htmlUrl={currentInvoiceUrl}
         invoice={currentInvoice}
         autoPrint={autoPrint}
+        isPdf={isPdfMode}
       />
     </div>
   );
