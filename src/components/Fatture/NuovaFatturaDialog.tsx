@@ -223,10 +223,16 @@ export const NuovaFatturaDialog = ({
     if (open) {
       loadPazienti();
       loadPrestazioni();
-      generateNumeroFattura();
       loadUserSettings();
     }
   }, [open]);
+
+  // Rigenera numero quando cambia tipo_documento
+  useEffect(() => {
+    if (open && formData.tipo_documento && !fatturaToEdit?.id) {
+      generateNumeroFattura(formData.tipo_documento);
+    }
+  }, [formData.tipo_documento, open]);
 
   // Ricalcola automaticamente la tassazione quando cambiano i dettagli o gli userSettings
   useEffect(() => {
@@ -348,7 +354,7 @@ export const NuovaFatturaDialog = ({
           
           // Per nota di credito nuova, genera un nuovo numero
           if (!fatturaToEdit.id) {
-            await generateNumeroFattura();
+            await generateNumeroFattura('nota_credito');
           }
         } 
         // Se è una modifica di una fattura esistente, carica i dettagli
@@ -497,13 +503,28 @@ export const NuovaFatturaDialog = ({
     }
   };
 
-  const generateNumeroFattura = async () => {
+  const generateNumeroFattura = async (tipoDocumento?: string) => {
     try {
       const year = new Date().getFullYear();
+      const tipo = tipoDocumento || formData.tipo_documento;
+      
+      // Mappa tipo documento -> prefisso
+      const prefissoMap: Record<string, string> = {
+        'fattura_sanitaria': 'FT',
+        'fattura_elettronica_pg': 'FT',
+        'fattura_elettronica_pa': 'FT',
+        'preventivo': 'PR',
+        'nota_credito': 'NC',
+        'fattura_proforma': 'PF'
+      };
+      
+      const prefisso = prefissoMap[tipo] || 'FT';
+      
+      // Cerca l'ultimo numero con questo prefisso per l'anno corrente
       const { data, error } = await supabase
         .from("fatture")
         .select("numero")
-        .like("numero", `${year}/%`)
+        .like("numero", `${prefisso} %/${year}`)
         .order("created_at", { ascending: false })
         .limit(1);
 
@@ -511,11 +532,14 @@ export const NuovaFatturaDialog = ({
 
       let nextNumber = 1;
       if (data && data.length > 0) {
-        const lastNumber = parseInt(data[0].numero.split('/')[1]);
-        nextNumber = lastNumber + 1;
+        // Estrai il numero da formato "FT 3/2025" -> 3
+        const match = data[0].numero.match(/(\d+)\/\d{4}$/);
+        if (match) {
+          nextNumber = parseInt(match[1]) + 1;
+        }
       }
 
-      const numeroFattura = `${year}/${nextNumber.toString().padStart(3, '0')}`;
+      const numeroFattura = `${prefisso} ${nextNumber}/${year}`;
       setFormData(prev => ({ ...prev, numero: numeroFattura }));
     } catch (error) {
       console.error("Error generating numero fattura:", error);
@@ -614,6 +638,29 @@ export const NuovaFatturaDialog = ({
           description: "Devi essere autenticato per aggiungere una fattura",
           variant: "destructive",
         });
+        return;
+      }
+
+      // Validazione formato numero fattura
+      const prefissoMap: Record<string, string> = {
+        'fattura_sanitaria': 'FT',
+        'fattura_elettronica_pg': 'FT',
+        'fattura_elettronica_pa': 'FT',
+        'preventivo': 'PR',
+        'nota_credito': 'NC',
+        'fattura_proforma': 'PF'
+      };
+      
+      const prefissoAtteso = prefissoMap[formData.tipo_documento] || 'FT';
+      const pattern = new RegExp(`^${prefissoAtteso} \\d+\\/\\d{4}$`);
+      
+      if (!pattern.test(formData.numero)) {
+        toast({
+          title: "Formato numero non valido",
+          description: `Il numero deve essere nel formato ${prefissoAtteso} numero/anno (es: ${prefissoAtteso} 1/2025)`,
+          variant: "destructive",
+        });
+        setLoading(false);
         return;
       }
 
@@ -863,7 +910,12 @@ export const NuovaFatturaDialog = ({
                       id="numero"
                       value={formData.numero}
                       onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
-                      placeholder="2025/001"
+                      placeholder={
+                        formData.tipo_documento === 'preventivo' ? 'PR 1/2025' :
+                        formData.tipo_documento === 'nota_credito' ? 'NC 1/2025' :
+                        formData.tipo_documento === 'fattura_proforma' ? 'PF 1/2025' :
+                        'FT 1/2025'
+                      }
                       required
                     />
                   </div>
