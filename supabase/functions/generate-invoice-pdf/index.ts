@@ -101,7 +101,17 @@ Deno.serve(async (req) => {
         
         if (logoData) {
           const arrayBuffer = await logoData.arrayBuffer();
-          const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+          const uint8Array = new Uint8Array(arrayBuffer);
+          
+          // Convert to base64 using chunk-based approach to avoid stack overflow
+          let binary = '';
+          const chunkSize = 0x8000; // 32KB chunks
+          for (let i = 0; i < uint8Array.length; i += chunkSize) {
+            const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+            binary += String.fromCharCode(...chunk);
+          }
+          
+          const base64 = btoa(binary);
           const mimeType = logoData.type || 'image/png';
           logoBase64 = `data:${mimeType};base64,${base64}`;
         }
@@ -118,7 +128,8 @@ Deno.serve(async (req) => {
     const pdfContent = encoder.encode(html);
 
     // Upload PDF to storage
-    const fileName = `${fattura.user_id}/fattura_${fattura.numero}_${Date.now()}.html`;
+    const anno = new Date(fattura.data).getFullYear();
+    const fileName = `${fattura.user_id}/fattura_${anno}/${fattura.numero}_${Date.now()}.html`;
     const { error: uploadError } = await supabase.storage
       .from('fatture-pdf')
       .upload(fileName, pdfContent, {
@@ -338,9 +349,14 @@ function generateInvoiceHTML(
     return new Date(dateString).toLocaleDateString('it-IT');
   };
 
-  const tipoDocumentoLabel = fattura.tipo_documento === 'fattura' ? 'FATTURA' :
-                             fattura.tipo_documento === 'proforma' ? 'FATTURA PROFORMA' :
-                             'PREVENTIVO';
+  const tipoDocumentoLabel = 
+    fattura.tipo_documento === 'fattura_sanitaria' ? 'FATTURA SANITARIA' :
+    fattura.tipo_documento === 'fattura_elettronica_pg' ? 'FATTURA ELETTRONICA B2B' :
+    fattura.tipo_documento === 'fattura_elettronica_pa' ? 'FATTURA ELETTRONICA PA' :
+    fattura.tipo_documento === 'fattura_proforma' ? 'FATTURA PRO FORMA' :
+    fattura.tipo_documento === 'preventivo' ? 'PREVENTIVO' :
+    fattura.tipo_documento === 'nota_credito' ? 'NOTA DI CREDITO' :
+    'FATTURA';
 
   return `
 <!DOCTYPE html>
@@ -350,6 +366,11 @@ function generateInvoiceHTML(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${tipoDocumentoLabel} ${fattura.numero}</title>
   <style>
+    @page {
+      size: A4;
+      margin: 15mm;
+    }
+    
     * {
       margin: 0;
       padding: 0;
@@ -360,7 +381,7 @@ function generateInvoiceHTML(
       font-size: ${fontSize};
       line-height: 1.6;
       color: #333;
-      padding: 40px;
+      padding: 20px;
       max-width: 800px;
       margin: 0 auto;
     }
@@ -466,6 +487,81 @@ function generateInvoiceHTML(
       font-size: 12px;
     }
     ${getLayoutStyles()}
+    
+    @media print {
+      body {
+        padding: 0;
+        margin: 0;
+        max-width: 100%;
+      }
+      
+      .header {
+        margin-bottom: 15px;
+        padding: 15px;
+      }
+      
+      .parties {
+        margin-bottom: 15px;
+        gap: 15px;
+      }
+      
+      .party {
+        padding: 10px;
+      }
+      
+      .items-table {
+        margin-bottom: 15px;
+        font-size: 11px;
+      }
+      
+      .items-table th,
+      .items-table td {
+        padding: 6px 8px;
+      }
+      
+      .totals {
+        margin-bottom: 15px;
+      }
+      
+      .total-row {
+        padding: 5px 0;
+      }
+      
+      .total-row.final {
+        padding: 10px 0;
+        font-size: 16px;
+      }
+      
+      .payment-info {
+        padding: 12px;
+        margin-bottom: 12px;
+        page-break-inside: avoid;
+      }
+      
+      .footer {
+        margin-top: 15px;
+        padding-top: 10px;
+        font-size: 10px;
+      }
+      
+      .logo {
+        max-width: 120px;
+        max-height: 80px;
+      }
+      
+      .document-title {
+        font-size: 20px;
+      }
+      
+      .document-number {
+        font-size: 16px;
+      }
+      
+      /* Prevent page breaks inside these sections */
+      .header, .parties, .items-table, .totals, .payment-info {
+        page-break-inside: avoid;
+      }
+    }
   </style>
 </head>
 <body>
@@ -561,7 +657,7 @@ function generateInvoiceHTML(
     ` : ''}
     ${fattura.bollo_virtuale > 0 ? `
     <div class="total-row">
-      <span>Bollo Virtuale:</span>
+      <span>Bollo:</span>
       <span>${formatCurrency(fattura.bollo_virtuale)}</span>
     </div>
     ` : ''}
