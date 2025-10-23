@@ -882,11 +882,9 @@ export const NuovaFatturaDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button className="gap-2 flex-col h-auto py-2 px-3">
+          <Button className="gap-2">
             <Plus className="h-4 w-4" />
-            <span className="text-xs text-center leading-tight whitespace-nowrap">
-              Nuovo Documento<br />Fiscale
-            </span>
+            Nuovo Documenti In Uscita
           </Button>
         )}
       </DialogTrigger>
