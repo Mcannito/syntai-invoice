@@ -1860,7 +1860,7 @@ const Fatture = () => {
                           
                           return (
                             <Badge variant="outline" className={cn("ml-2 text-xs", bgColor)}>
-                              Da {documentoOriginale?.numero}
+                              {documentoOriginale?.numero}
                             </Badge>
                           );
                         }
