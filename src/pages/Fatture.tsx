@@ -1678,11 +1678,14 @@ const Fatture = () => {
                           </Badge>
                         );
                       })()}
-                      {fattura.convertita_in_id && (
-                        <Badge variant="outline" className="ml-2 text-xs">
-                          Convertito
-                        </Badge>
-                      )}
+                      {fattura.convertita_in_id && (() => {
+                        const fatturaGenerata = fatture.find(f => f.id === fattura.convertita_in_id);
+                        return (
+                          <Badge variant="outline" className="ml-2 text-xs bg-orange-100 text-orange-700 border-orange-300">
+                            A {fatturaGenerata?.numero || 'fattura'}
+                          </Badge>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(fattura.data).toLocaleDateString('it-IT')}
