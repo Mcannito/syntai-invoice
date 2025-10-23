@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2, Heart, Zap, FileQuestion, FileClock, TrendingUp, FileCode, PenTool } from "lucide-react";
+import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2, Heart, Zap, FileQuestion, FileClock, TrendingUp, FileCode, PenTool, MoreVertical } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -12,6 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -1327,100 +1334,108 @@ const Fatture = () => {
                     </TableCell>
                     <TableCell>{getStatoBadge(fattura.stato)}</TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8"
-                          onClick={() => handleViewPDF(fattura)}
-                          disabled={generatingPdf === fattura.id}
-                          title="Visualizza PDF"
-                        >
-                          {generatingPdf === fattura.id ? (
-                            <RefreshCw className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8"
-                          onClick={() => handleDownloadPDF(fattura)}
-                          disabled={generatingPdf === fattura.id}
-                          title="Scarica PDF"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        {!fattura.pagata && fattura.tipo_documento !== 'preventivo' && fattura.tipo_documento !== 'fattura_proforma' && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button 
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8"
-                            onClick={() => openPaymentDialog(fattura)}
-                            title="Segna come pagata"
                           >
-                            <CheckCircle className="h-4 w-4" />
+                            <MoreVertical className="h-4 w-4" />
                           </Button>
-                        )}
-                        {(fattura.tipo_documento === 'preventivo' || fattura.tipo_documento === 'fattura_proforma') && !fattura.convertita_in_id && (
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-orange-500"
-                            onClick={() => handleConvert(fattura)}
-                            title="Converti in fattura"
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 bg-background">
+                          <DropdownMenuItem 
+                            onClick={() => handleViewPDF(fattura)}
+                            disabled={generatingPdf === fattura.id}
                           >
-                            <RefreshCw className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {fattura.tipo_documento === "fattura_sanitaria" && (
-                          <>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8"
-                              onClick={() => handleEditClick(fattura)}
-                              title="Modifica fattura"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            {!fattura.pagata && (
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 text-destructive"
-                                onClick={() => handleDeleteFattura(fattura)}
-                                title="Elimina fattura"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                            {generatingPdf === fattura.id ? (
+                              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <Eye className="h-4 w-4 mr-2" />
                             )}
-                          </>
-                        )}
-                        {fattura.pagata && fattura.tipo_documento === "fattura_sanitaria" && (
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-primary"
-                            onClick={() => navigate('/contabilita/sistema-ts')}
-                            title="Apri Sistema TS"
+                            Visualizza PDF
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuItem 
+                            onClick={() => handleDownloadPDF(fattura)}
+                            disabled={generatingPdf === fattura.id}
                           >
-                            <Send className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {fattura.stato === "Da Inviare" && (fattura.tipo_documento === "fattura_elettronica_pg" || fattura.tipo_documento === "fattura_elettronica_pa") && (
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-primary"
-                            onClick={() => handleSendSDI(fattura.id)}
-                            disabled={sendingId === fattura.id}
-                          >
-                            <Send className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+                            <Download className="h-4 w-4 mr-2" />
+                            Scarica PDF
+                          </DropdownMenuItem>
+
+                          {!fattura.pagata && fattura.tipo_documento !== 'preventivo' && fattura.tipo_documento !== 'fattura_proforma' && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => openPaymentDialog(fattura)}>
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Segna come pagata
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
+                          {(fattura.tipo_documento === 'preventivo' || fattura.tipo_documento === 'fattura_proforma') && !fattura.convertita_in_id && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => handleConvert(fattura)}
+                                className="text-orange-500"
+                              >
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                Converti in fattura
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
+                          {fattura.tipo_documento === "fattura_sanitaria" && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleEditClick(fattura)}>
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Modifica fattura
+                              </DropdownMenuItem>
+                              
+                              {!fattura.pagata && (
+                                <DropdownMenuItem 
+                                  onClick={() => handleDeleteFattura(fattura)}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Elimina fattura
+                                </DropdownMenuItem>
+                              )}
+                            </>
+                          )}
+
+                          {fattura.pagata && fattura.tipo_documento === "fattura_sanitaria" && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => navigate('/contabilita/sistema-ts')}
+                                className="text-primary"
+                              >
+                                <Send className="h-4 w-4 mr-2" />
+                                Apri Sistema TS
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
+                          {fattura.stato === "Da Inviare" && (fattura.tipo_documento === "fattura_elettronica_pg" || fattura.tipo_documento === "fattura_elettronica_pa") && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => handleSendSDI(fattura.id)}
+                                disabled={sendingId === fattura.id}
+                                className="text-primary"
+                              >
+                                <Send className="h-4 w-4 mr-2" />
+                                Invia a SDI
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))
