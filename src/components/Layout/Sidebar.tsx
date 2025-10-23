@@ -9,7 +9,8 @@ import {
   CreditCard,
   TrendingUp,
   LogOut,
-  Calculator
+  Calculator,
+  Package
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +21,7 @@ const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Pazienti", href: "/pazienti", icon: Users },
   { name: "Prestazioni", href: "/prestazioni", icon: Stethoscope },
+  { name: "Pacchetti", href: "/pacchetti", icon: Package },
   { name: "Calendario", href: "/calendario", icon: Calendar },
   { name: "Fatture", href: "/contabilita/fatture", icon: FileText },
   { name: "Contabilità", href: "/contabilita", icon: Calculator },

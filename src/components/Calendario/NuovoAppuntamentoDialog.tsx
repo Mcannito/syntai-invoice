@@ -27,11 +27,19 @@ interface NuovoAppuntamentoDialogProps {
   onAppuntamentoAdded: () => void;
 }
 
+interface PacchettoDisponibile {
+  id: string;
+  nome: string;
+  quantita_rimanente: number;
+  prezzo_per_seduta: number;
+}
+
 export const NuovoAppuntamentoDialog = ({ onAppuntamentoAdded }: NuovoAppuntamentoDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pazienti, setPazienti] = useState<any[]>([]);
   const [prestazioni, setPrestazioni] = useState<any[]>([]);
+  const [pacchettiDisponibili, setPacchettiDisponibili] = useState<PacchettoDisponibile[]>([]);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -43,6 +51,8 @@ export const NuovoAppuntamentoDialog = ({ onAppuntamentoAdded }: NuovoAppuntamen
     prestazione_id: "",
     note: "",
     stato: "programmato",
+    utilizza_pacchetto: false,
+    pacchetto_id: "",
   });
 
   useEffect(() => {
@@ -51,6 +61,54 @@ export const NuovoAppuntamentoDialog = ({ onAppuntamentoAdded }: NuovoAppuntamen
       loadPrestazioni();
     }
   }, [open]);
+
+  // Carica pacchetti disponibili
+  useEffect(() => {
+    const loadPacchettiDisponibili = async () => {
+      if (!formData.paziente_id || !formData.prestazione_id) {
+        setPacchettiDisponibili([]);
+        return;
+      }
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from("pacchetti")
+          .select("id, nome, quantita_rimanente, prezzo_per_seduta")
+          .eq("user_id", user.id)
+          .eq("paziente_id", formData.paziente_id)
+          .eq("prestazione_id", formData.prestazione_id)
+          .eq("stato", "attivo")
+          .gt("quantita_rimanente", 0);
+
+        if (error) throw error;
+        setPacchettiDisponibili(data || []);
+      } catch (error) {
+        console.error("Errore caricamento pacchetti:", error);
+      }
+    };
+
+    loadPacchettiDisponibili();
+  }, [formData.paziente_id, formData.prestazione_id]);
+
+  // Auto-seleziona pacchetto
+  useEffect(() => {
+    if (pacchettiDisponibili.length === 1) {
+      setFormData(prev => ({
+        ...prev,
+        utilizza_pacchetto: true,
+        pacchetto_id: pacchettiDisponibili[0].id
+      }));
+    } else if (pacchettiDisponibili.length === 0) {
+      setFormData(prev => ({
+        ...prev,
+        utilizza_pacchetto: false,
+        pacchetto_id: ""
+      }));
+    }
+  }, [pacchettiDisponibili]);
 
   const loadPazienti = async () => {
     try {
@@ -113,6 +171,7 @@ export const NuovoAppuntamentoDialog = ({ onAppuntamentoAdded }: NuovoAppuntamen
         prestazione_id: formData.prestazione_id || null,
         note: formData.note,
         stato: formData.stato,
+        pacchetto_id: formData.utilizza_pacchetto && formData.pacchetto_id ? formData.pacchetto_id : null,
       });
 
       if (error) throw error;
@@ -131,6 +190,8 @@ export const NuovoAppuntamentoDialog = ({ onAppuntamentoAdded }: NuovoAppuntamen
         prestazione_id: "",
         note: "",
         stato: "programmato",
+        utilizza_pacchetto: false,
+        pacchetto_id: "",
       });
       setOpen(false);
       onAppuntamentoAdded();
@@ -213,6 +274,30 @@ export const NuovoAppuntamentoDialog = ({ onAppuntamentoAdded }: NuovoAppuntamen
                 </Select>
               </div>
             </div>
+
+            {/* Pacchetti Disponibili */}
+            {pacchettiDisponibili.length > 0 && (
+              <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="utilizza_pacchetto"
+                    checked={formData.utilizza_pacchetto}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      utilizza_pacchetto: e.target.checked,
+                      pacchetto_id: e.target.checked && pacchettiDisponibili.length === 1 
+                        ? pacchettiDisponibili[0].id 
+                        : ""
+                    })}
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor="utilizza_pacchetto" className="cursor-pointer text-sm">
+                    ✓ Utilizza pacchetto ({pacchettiDisponibili[0].quantita_rimanente} rimanenti)
+                  </Label>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="data">Data *</Label>

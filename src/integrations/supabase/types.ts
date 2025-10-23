@@ -23,6 +23,7 @@ export type Database = {
           note: string | null
           ora_fine: string
           ora_inizio: string
+          pacchetto_id: string | null
           paziente_id: string | null
           prestazione_id: string | null
           stato: string
@@ -38,6 +39,7 @@ export type Database = {
           note?: string | null
           ora_fine: string
           ora_inizio: string
+          pacchetto_id?: string | null
           paziente_id?: string | null
           prestazione_id?: string | null
           stato?: string
@@ -53,6 +55,7 @@ export type Database = {
           note?: string | null
           ora_fine?: string
           ora_inizio?: string
+          pacchetto_id?: string | null
           paziente_id?: string | null
           prestazione_id?: string | null
           stato?: string
@@ -61,6 +64,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "appuntamenti_pacchetto_id_fkey"
+            columns: ["pacchetto_id"]
+            isOneToOne: false
+            referencedRelation: "pacchetti"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "appuntamenti_paziente_id_fkey"
             columns: ["paziente_id"]
@@ -353,6 +363,88 @@ export type Database = {
           xml_path?: string | null
         }
         Relationships: []
+      }
+      pacchetti: {
+        Row: {
+          created_at: string
+          data_acquisto: string
+          data_scadenza: string | null
+          fattura_id: string | null
+          id: string
+          nome: string
+          note: string | null
+          paziente_id: string
+          prestazione_id: string
+          prezzo_per_seduta: number
+          prezzo_totale: number
+          quantita_rimanente: number | null
+          quantita_totale: number
+          quantita_utilizzata: number
+          stato: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_acquisto: string
+          data_scadenza?: string | null
+          fattura_id?: string | null
+          id?: string
+          nome: string
+          note?: string | null
+          paziente_id: string
+          prestazione_id: string
+          prezzo_per_seduta: number
+          prezzo_totale: number
+          quantita_rimanente?: number | null
+          quantita_totale: number
+          quantita_utilizzata?: number
+          stato?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_acquisto?: string
+          data_scadenza?: string | null
+          fattura_id?: string | null
+          id?: string
+          nome?: string
+          note?: string | null
+          paziente_id?: string
+          prestazione_id?: string
+          prezzo_per_seduta?: number
+          prezzo_totale?: number
+          quantita_rimanente?: number | null
+          quantita_totale?: number
+          quantita_utilizzata?: number
+          stato?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pacchetti_fattura_id_fkey"
+            columns: ["fattura_id"]
+            isOneToOne: false
+            referencedRelation: "fatture"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pacchetti_paziente_id_fkey"
+            columns: ["paziente_id"]
+            isOneToOne: false
+            referencedRelation: "pazienti"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pacchetti_prestazione_id_fkey"
+            columns: ["prestazione_id"]
+            isOneToOne: false
+            referencedRelation: "prestazioni"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pazienti: {
         Row: {

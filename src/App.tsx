@@ -8,6 +8,7 @@ import { ProtectedRoute } from "./components/Auth/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Pazienti from "./pages/Pazienti";
 import Prestazioni from "./pages/Prestazioni";
+import Pacchetti from "./pages/Pacchetti";
 import Calendario from "./pages/Calendario";
 import Contabilita from "./pages/Contabilita";
 import Fatture from "./pages/Fatture";
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/" element={<ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
           <Route path="/pazienti" element={<ProtectedRoute><MainLayout><Pazienti /></MainLayout></ProtectedRoute>} />
           <Route path="/prestazioni" element={<ProtectedRoute><MainLayout><Prestazioni /></MainLayout></ProtectedRoute>} />
+          <Route path="/pacchetti" element={<ProtectedRoute><MainLayout><Pacchetti /></MainLayout></ProtectedRoute>} />
           <Route path="/calendario" element={<ProtectedRoute><MainLayout><Calendario /></MainLayout></ProtectedRoute>} />
           <Route path="/contabilita" element={<ProtectedRoute><MainLayout><Contabilita /></MainLayout></ProtectedRoute>} />
           <Route path="/contabilita/fatture" element={<ProtectedRoute><MainLayout><Fatture /></MainLayout></ProtectedRoute>} />
