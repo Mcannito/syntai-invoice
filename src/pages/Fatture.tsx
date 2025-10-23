@@ -612,13 +612,158 @@ const Fatture = () => {
     // Controlla se la fattura è pagata o inviata (al Sistema TS o al SDI)
     const isInviataSistemaTS = fattura.stato === "Inviata al Sistema TS" || fattura.stato === "Inviata";
     const isInviataSDI = fattura.sdi_stato && fattura.sdi_stato !== "Da Inviare";
+    const isPreventivoAccettato = fattura.tipo_documento === 'preventivo' && fattura.pagata;
     
-    if (fattura.pagata || isInviataSistemaTS || isInviataSDI) {
+    if (fattura.pagata || isInviataSistemaTS || isInviataSDI || isPreventivoAccettato) {
       setPendingEditFattura(fattura);
       setEditAlertOpen(true);
     } else {
       setFatturaToEdit(fattura);
       setShowNuovaFatturaDialog(true);
+    }
+  };
+
+  const handleAccettaPreventivo = async (fattura: any) => {
+    try {
+      const { error } = await supabase
+        .from('fatture')
+        .update({ 
+          pagata: true,
+          data_pagamento: format(new Date(), 'yyyy-MM-dd')
+        })
+        .eq('id', fattura.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Preventivo accettato",
+        description: "Il preventivo è stato segnato come accettato",
+      });
+      loadFatture();
+    } catch (error) {
+      console.error('Error accepting preventivo:', error);
+      toast({
+        title: "Errore",
+        description: "Impossibile accettare il preventivo",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleConvertiPreventivoInFattura = async (preventivo: any) => {
+    try {
+      // 1. Carica i dettagli del preventivo
+      const { data: dettagliData, error: dettagliError } = await supabase
+        .from("fatture_dettagli")
+        .select("*")
+        .eq("fattura_id", preventivo.id);
+
+      if (dettagliError) throw dettagliError;
+
+      // 2. Genera nuovo numero fattura (con prefisso FT)
+      const year = new Date().getFullYear();
+      const { data: fattureData, error: fattureError } = await supabase
+        .from("fatture")
+        .select("numero")
+        .like("numero", `FT %/${year}`)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (fattureError) throw fattureError;
+
+      let nextNumber = 1;
+      if (fattureData && fattureData.length > 0) {
+        const match = fattureData[0].numero.match(/(\d+)\/\d{4}$/);
+        if (match) {
+          nextNumber = parseInt(match[1]) + 1;
+        }
+      }
+      const numeroFattura = `FT ${nextNumber}/${year}`;
+
+      // 3. Determina il tipo di documento in base al tipo di paziente
+      let tipoDocumento = 'fattura_sanitaria';
+      if (preventivo.pazienti) {
+        if (preventivo.pazienti.tipo_paziente === 'persona_giuridica') {
+          tipoDocumento = 'fattura_elettronica_pg';
+        } else if (preventivo.pazienti.tipo_paziente === 'pubblica_amministrazione') {
+          tipoDocumento = 'fattura_elettronica_pa';
+        }
+      }
+
+      // 4. Crea la nuova fattura
+      const { data: nuovaFattura, error: insertError } = await supabase
+        .from("fatture")
+        .insert([{
+          numero: numeroFattura,
+          data: new Date().toISOString().split('T')[0],
+          paziente_id: preventivo.paziente_id,
+          tipo_documento: tipoDocumento,
+          metodo_pagamento: preventivo.metodo_pagamento,
+          stato: "Da Inviare",
+          importo: preventivo.importo,
+          imponibile: preventivo.imponibile,
+          iva_importo: preventivo.iva_importo,
+          cassa_previdenziale: preventivo.cassa_previdenziale,
+          ritenuta_acconto: preventivo.ritenuta_acconto,
+          contributo_integrativo: preventivo.contributo_integrativo,
+          bollo_virtuale: preventivo.bollo_virtuale,
+          totale: preventivo.totale,
+          percentuale_rivalsa: preventivo.percentuale_rivalsa,
+          percentuale_ritenuta: preventivo.percentuale_ritenuta,
+          note: preventivo.note,
+          convertita_da_id: preventivo.id,
+          fattura_originale_id: preventivo.id,
+          fattura_originale_data: preventivo.data,
+          scadenza_pagamento: preventivo.scadenza_pagamento,
+        } as any])
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      // 5. Copia i dettagli
+      if (dettagliData && dettagliData.length > 0) {
+        const dettagliCopy = dettagliData.map(d => ({
+          fattura_id: nuovaFattura.id,
+          prestazione_id: d.prestazione_id,
+          descrizione: d.descrizione,
+          quantita: d.quantita,
+          prezzo_unitario: d.prezzo_unitario,
+          sconto: d.sconto,
+          iva_percentuale: d.iva_percentuale,
+          imponibile: d.imponibile,
+          iva_importo: d.iva_importo,
+          totale: d.totale,
+        }));
+
+        const { error: dettagliInsertError } = await supabase
+          .from("fatture_dettagli")
+          .insert(dettagliCopy);
+
+        if (dettagliInsertError) throw dettagliInsertError;
+      }
+
+      // 6. Aggiorna il preventivo con il link alla fattura
+      const { error: updateError } = await supabase
+        .from("fatture")
+        .update({ convertita_in_id: nuovaFattura.id })
+        .eq("id", preventivo.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Fattura creata",
+        description: `Il preventivo ${preventivo.numero} è stato convertito in fattura ${numeroFattura}`,
+      });
+
+      loadFatture();
+    } catch (error) {
+      console.error('Error converting preventivo:', error);
+      toast({
+        title: "Errore",
+        description: "Impossibile convertire il preventivo in fattura",
+        variant: "destructive",
+      });
     }
   };
 
@@ -1516,20 +1661,43 @@ const Fatture = () => {
                       highlightedId === fattura.id && "bg-primary/10 animate-pulse"
                     )}
                   >
-                    <TableCell className="font-mono font-medium">{fattura.numero}</TableCell>
+                    <TableCell className="font-mono font-medium">
+                      {fattura.numero}
+                      {fattura.convertita_da_id && (
+                        <Badge variant="outline" className="ml-2 text-xs">
+                          Da preventivo
+                        </Badge>
+                      )}
+                      {fattura.convertita_in_id && (
+                        <Badge variant="outline" className="ml-2 text-xs">
+                          Convertito
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(fattura.data).toLocaleDateString('it-IT')}
                     </TableCell>
                     <TableCell className="font-medium">{getPazienteDisplayName(fattura)}</TableCell>
                     <TableCell>{getTipoDocumentoBadge(fattura.tipo_documento)}</TableCell>
                     <TableCell>
-                      {fattura.pagata ? (
-                        <Badge className="bg-green-500 text-white">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Pagata
-                        </Badge>
+                      {fattura.tipo_documento === 'preventivo' ? (
+                        fattura.pagata ? (
+                          <Badge className="bg-green-500 text-white">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Accettato
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">Non accettato</Badge>
+                        )
                       ) : (
-                        <Badge variant="outline">Non pagata</Badge>
+                        fattura.pagata ? (
+                          <Badge className="bg-green-500 text-white">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Pagata
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">Non pagata</Badge>
+                        )
                       )}
                     </TableCell>
                     <TableCell className="text-right font-semibold text-primary">
@@ -1590,7 +1758,30 @@ const Fatture = () => {
                             </>
                           )}
 
-                          {(fattura.tipo_documento === 'preventivo' || fattura.tipo_documento === 'fattura_proforma') && !fattura.convertita_in_id && (
+                          {fattura.tipo_documento === 'preventivo' && !fattura.pagata && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleAccettaPreventivo(fattura)}>
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Accetta preventivo
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
+                          {fattura.tipo_documento === 'preventivo' && fattura.pagata && !fattura.convertita_in_id && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => handleConvertiPreventivoInFattura(fattura)}
+                                className="text-primary"
+                              >
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                Converti in fattura
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
+                          {fattura.tipo_documento === 'fattura_proforma' && !fattura.convertita_in_id && (
                             <>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
@@ -1599,6 +1790,16 @@ const Fatture = () => {
                               >
                                 <RefreshCw className="h-4 w-4 mr-2" />
                                 Converti in fattura
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
+                          {fattura.tipo_documento === 'preventivo' && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleEditClick(fattura)}>
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Modifica preventivo
                               </DropdownMenuItem>
                             </>
                           )}
@@ -2524,9 +2725,17 @@ const Fatture = () => {
       <AlertDialog open={editAlertOpen} onOpenChange={setEditAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Attenzione: Modifica Fattura</AlertDialogTitle>
+            <AlertDialogTitle>Attenzione: Modifica Documento</AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingEditFattura?.pagata && (
+              {pendingEditFattura?.tipo_documento === 'preventivo' && pendingEditFattura?.pagata && (
+                <>
+                  Questo preventivo è stato <strong>accettato dal cliente</strong>.
+                  <br />
+                  Modificarlo potrebbe causare discrepanze con quanto concordato.
+                  <br /><br />
+                </>
+              )}
+              {pendingEditFattura?.pagata && pendingEditFattura?.tipo_documento !== 'preventivo' && (
                 <>
                   Questa fattura risulta <strong>già pagata</strong>.
                   <br />
@@ -2544,9 +2753,13 @@ const Fatture = () => {
                   <br />
                 </>
               )}
-              <br />
-              Modificando la fattura potresti creare incongruenze nei dati contabili.
-              <br />
+              {pendingEditFattura?.tipo_documento !== 'preventivo' && (
+                <>
+                  <br />
+                  Modificando la fattura potresti creare incongruenze nei dati contabili.
+                  <br />
+                </>
+              )}
               Sei sicuro di voler procedere con la modifica?
             </AlertDialogDescription>
           </AlertDialogHeader>
