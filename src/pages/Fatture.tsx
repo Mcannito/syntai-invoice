@@ -652,6 +652,12 @@ const Fatture = () => {
 
   const handleConvertiPreventivoInFattura = async (preventivo: any) => {
     try {
+      // 0. Ottieni l'utente corrente
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Utente non autenticato");
+      }
+
       // 1. Carica i dettagli del preventivo
       const { data: dettagliData, error: dettagliError } = await supabase
         .from("fatture_dettagli")
@@ -694,6 +700,7 @@ const Fatture = () => {
       const { data: nuovaFattura, error: insertError } = await supabase
         .from("fatture")
         .insert([{
+          user_id: user.id,
           numero: numeroFattura,
           data: new Date().toISOString().split('T')[0],
           paziente_id: preventivo.paziente_id,
