@@ -342,20 +342,34 @@ export const NuovaFatturaDialog = ({
   useEffect(() => {
     const precompilaDatiModifica = async () => {
       if (open && fatturaToEdit && pazienti.length > 0) {
-        // Carica i dettagli della fattura
-        const { data: dettagliData, error: dettagliError } = await supabase
-          .from("fatture_dettagli")
-          .select("*")
-          .eq("fattura_id", fatturaToEdit.id);
+        let dettagliData = null;
+        
+        // Se è una nota di credito con dettagli già caricati (da fattura originale)
+        if (fatturaToEdit.tipo_documento === "nota_credito" && fatturaToEdit.fatture_dettagli) {
+          dettagliData = fatturaToEdit.fatture_dettagli;
+          
+          // Per nota di credito nuova, genera un nuovo numero
+          if (!fatturaToEdit.id) {
+            await generateNumeroFattura();
+          }
+        } 
+        // Se è una modifica di una fattura esistente, carica i dettagli
+        else if (fatturaToEdit.id) {
+          const { data, error: dettagliError } = await supabase
+            .from("fatture_dettagli")
+            .select("*")
+            .eq("fattura_id", fatturaToEdit.id);
 
-        if (dettagliError) {
-          console.error("Error loading fattura dettagli:", dettagliError);
-          return;
+          if (dettagliError) {
+            console.error("Error loading fattura dettagli:", dettagliError);
+            return;
+          }
+          dettagliData = data;
         }
 
         // Imposta i dati del form
         setFormData({
-          numero: fatturaToEdit.numero || "",
+          numero: fatturaToEdit.id ? (fatturaToEdit.numero || "") : "", // Solo se è modifica
           data: fatturaToEdit.data || new Date().toISOString().split('T')[0],
           paziente_id: fatturaToEdit.paziente_id || "",
           tipo_documento: fatturaToEdit.tipo_documento || "fattura_sanitaria",
@@ -389,30 +403,35 @@ export const NuovaFatturaDialog = ({
           setDettagli(dettagliMappati);
         }
 
-        // Imposta la tassazione
-        setTassazione({
-          cassa_previdenziale: fatturaToEdit.cassa_previdenziale || 0,
-          ritenuta_acconto: fatturaToEdit.ritenuta_acconto || 0,
-          contributo_integrativo: fatturaToEdit.contributo_integrativo || 0,
-          bollo_virtuale: fatturaToEdit.bollo_virtuale || 0,
-        });
+        // Imposta la tassazione solo se è una modifica (ha id)
+        if (fatturaToEdit.id) {
+          setTassazione({
+            cassa_previdenziale: fatturaToEdit.cassa_previdenziale || 0,
+            ritenuta_acconto: fatturaToEdit.ritenuta_acconto || 0,
+            contributo_integrativo: fatturaToEdit.contributo_integrativo || 0,
+            bollo_virtuale: fatturaToEdit.bollo_virtuale || 0,
+          });
 
-        // Imposta le percentuali se presenti
-        if (fatturaToEdit.percentuale_rivalsa) {
-          setPercentualeRivalsa(fatturaToEdit.percentuale_rivalsa);
+          // Imposta le percentuali se presenti
+          if (fatturaToEdit.percentuale_rivalsa) {
+            setPercentualeRivalsa(fatturaToEdit.percentuale_rivalsa);
+          }
+          if (fatturaToEdit.percentuale_ritenuta) {
+            setPercentualeRitenuta(fatturaToEdit.percentuale_ritenuta);
+          }
+
+          // Imposta quali tassazioni sono attive
+          setTassazioneAttiva({
+            cassa_previdenziale: (fatturaToEdit.cassa_previdenziale || 0) > 0,
+            ritenuta_acconto: (fatturaToEdit.ritenuta_acconto || 0) > 0,
+            bollo: (fatturaToEdit.bollo_virtuale || 0) > 0,
+          });
+
+          setTassazioneModificataManualmente(true);
+        } else {
+          // Per nuove note di credito, usa le impostazioni di default
+          setTassazioneModificataManualmente(false);
         }
-        if (fatturaToEdit.percentuale_ritenuta) {
-          setPercentualeRitenuta(fatturaToEdit.percentuale_ritenuta);
-        }
-
-        // Imposta quali tassazioni sono attive
-        setTassazioneAttiva({
-          cassa_previdenziale: (fatturaToEdit.cassa_previdenziale || 0) > 0,
-          ritenuta_acconto: (fatturaToEdit.ritenuta_acconto || 0) > 0,
-          bollo: (fatturaToEdit.bollo_virtuale || 0) > 0,
-        });
-
-        setTassazioneModificataManualmente(true);
       }
     };
 

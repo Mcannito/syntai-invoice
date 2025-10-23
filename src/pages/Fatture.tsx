@@ -369,9 +369,32 @@ const Fatture = () => {
     }
   };
 
-  const handleCreaNotaCredito = (fattura: any) => {
-    setNotaCreditoFattura(fattura);
-    setShowNotaCreditoDialog(true);
+  const handleCreaNotaCredito = async (fattura: any) => {
+    try {
+      // Carica i dettagli della fattura originale
+      const { data: dettagliData, error: dettagliError } = await supabase
+        .from("fatture_dettagli")
+        .select("*")
+        .eq("fattura_id", fattura.id);
+
+      if (dettagliError) throw dettagliError;
+
+      // Crea l'oggetto fattura completo con i dettagli
+      const fatturaCompleta = {
+        ...fattura,
+        fatture_dettagli: dettagliData || []
+      };
+
+      setNotaCreditoFattura(fatturaCompleta);
+      setShowNotaCreditoDialog(true);
+    } catch (error) {
+      console.error("Error loading fattura dettagli:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile caricare i dettagli della fattura",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredFatture = fatture
