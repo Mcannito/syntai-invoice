@@ -262,26 +262,79 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
             }
           }
 
+          // Recuperare impostazioni fiscali
+          const { data: settings } = await supabase
+            .from("user_settings")
+            .select(`
+              metodo_pagamento_default,
+              bollo_attivo,
+              bollo_virtuale,
+              bollo_importo,
+              bollo_carico,
+              ritenuta_attiva,
+              ritenuta_aliquota,
+              ritenuta_tipo,
+              ritenuta_causale,
+              rivalsa_attiva,
+              rivalsa_percentuale,
+              rivalsa_applicazione,
+              regime_fiscale
+            `)
+            .eq("user_id", user.id)
+            .single();
+
           // Calcoli corretti per fattura
           const imponibile = Number(formData.prezzo_totale);
           const ivaImporto = (imponibile * ivaPercentuale) / 100;
-          const totale = imponibile + ivaImporto;
 
-          console.log("📊 Calcoli fattura:", {
+          // Calcolare importi fiscali aggiuntivi
+          let cassaPrevidenzialeImporto = 0;
+          let percentualeRivalsa: number | null = null;
+          if (settings?.rivalsa_attiva) {
+            percentualeRivalsa = Number(settings.rivalsa_percentuale || 4);
+            cassaPrevidenzialeImporto = (imponibile * percentualeRivalsa) / 100;
+          }
+
+          let contributoIntegrativo = 0;
+          if (settings?.regime_fiscale === 'forfettario' && settings?.rivalsa_attiva) {
+            contributoIntegrativo = cassaPrevidenzialeImporto;
+            cassaPrevidenzialeImporto = 0;
+          }
+
+          const baseImponibileRitenuta = imponibile + cassaPrevidenzialeImporto + contributoIntegrativo;
+
+          let ritenutaAccontoImporto = 0;
+          let percentualeRitenuta: number | null = null;
+          if (settings?.ritenuta_attiva) {
+            percentualeRitenuta = Number(settings.ritenuta_aliquota || 20);
+            ritenutaAccontoImporto = (baseImponibileRitenuta * percentualeRitenuta) / 100;
+          }
+
+          let bolloVirtualeImporto = 0;
+          if (settings?.bollo_attivo && settings?.bollo_virtuale) {
+            bolloVirtualeImporto = Number(settings.bollo_importo || 2);
+          }
+
+          const totale = imponibile 
+            + ivaImporto 
+            + cassaPrevidenzialeImporto 
+            + contributoIntegrativo
+            + bolloVirtualeImporto
+            - ritenutaAccontoImporto;
+
+          console.log("📊 Calcoli fattura completi:", {
             prezzo_totale: formData.prezzo_totale,
             iva_codice: codiceIva,
             iva_percentuale: ivaPercentuale,
             imponibile: imponibile.toFixed(2),
             iva_importo: ivaImporto.toFixed(2),
+            cassa_previdenziale: cassaPrevidenzialeImporto.toFixed(2),
+            contributo_integrativo: contributoIntegrativo.toFixed(2),
+            ritenuta_acconto: ritenutaAccontoImporto.toFixed(2),
+            bollo_virtuale: bolloVirtualeImporto.toFixed(2),
             totale: totale.toFixed(2),
             tipo_documento: tipoDocumento
           });
-
-          const { data: settings } = await supabase
-            .from("user_settings")
-            .select("metodo_pagamento_default")
-            .eq("user_id", user.id)
-            .single();
 
           // Genera numero fattura
           const year = new Date(formData.data_acquisto).getFullYear();
@@ -295,20 +348,26 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
           console.log("📄 Numero fattura:", numeroFattura);
 
           // Crea fattura con dati corretti
-          const fatturaData = {
-            user_id: user.id,
-            paziente_id: formData.paziente_id,
-            numero: numeroFattura,
-            data: formData.data_acquisto,
-            importo: Number(totale.toFixed(2)),
-            imponibile: Number(imponibile.toFixed(2)),
-            iva_importo: Number(ivaImporto.toFixed(2)),
-            totale: Number(totale.toFixed(2)),
-            metodo_pagamento: settings?.metodo_pagamento_default || "bonifico",
-            stato: "Da Inviare",
-            tipo_documento: tipoDocumento,
-            pagata: false
-          };
+      const fatturaData = {
+        user_id: user.id,
+        paziente_id: formData.paziente_id,
+        numero: numeroFattura,
+        data: formData.data_acquisto,
+        importo: Number(totale.toFixed(2)),
+        imponibile: Number(imponibile.toFixed(2)),
+        iva_importo: Number(ivaImporto.toFixed(2)),
+        cassa_previdenziale: Number(cassaPrevidenzialeImporto.toFixed(2)),
+        contributo_integrativo: Number(contributoIntegrativo.toFixed(2)),
+        ritenuta_acconto: Number(ritenutaAccontoImporto.toFixed(2)),
+        bollo_virtuale: Number(bolloVirtualeImporto.toFixed(2)),
+        percentuale_ritenuta: percentualeRitenuta,
+        percentuale_rivalsa: percentualeRivalsa,
+        totale: Number(totale.toFixed(2)),
+        metodo_pagamento: settings?.metodo_pagamento_default || "bonifico",
+        stato: "Da Inviare",
+        tipo_documento: tipoDocumento,
+        pagata: false
+      };
 
           console.log("📄 Dati fattura:", fatturaData);
 
@@ -364,9 +423,16 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
 
           console.log("✅ Fattura collegata al pacchetto");
 
+          // Messaggio di successo dettagliato
+          const dettagliMsg = [];
+          if (ivaPercentuale > 0) dettagliMsg.push(`IVA ${ivaPercentuale}%`);
+          if (settings?.bollo_attivo) dettagliMsg.push(`Bollo €${bolloVirtualeImporto.toFixed(2)}`);
+          if (settings?.ritenuta_attiva) dettagliMsg.push(`Ritenuta ${percentualeRitenuta}%`);
+          if (settings?.rivalsa_attiva) dettagliMsg.push(`Rivalsa ${percentualeRivalsa}%`);
+          
           toast({
             title: "Successo",
-            description: `Pacchetto e fattura n. ${numeroFattura} creati con IVA ${ivaPercentuale}%`,
+            description: `Pacchetto e fattura n. ${numeroFattura} creati${dettagliMsg.length > 0 ? ' (' + dettagliMsg.join(', ') + ')' : ''}`,
           });
         } catch (fatturaError: any) {
           console.error("❌ Errore nella fatturazione:", fatturaError);

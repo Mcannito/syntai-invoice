@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Search, Plus, Package, Edit, Trash2, LayoutGrid, List } from "lucide-react";
+import { Search, Plus, Package, Edit, Trash2, LayoutGrid, List, FileText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +28,7 @@ interface Pacchetto {
   data_acquisto: string;
   data_scadenza: string | null;
   note: string | null;
+  fattura_id: string | null;
   paziente: { nome: string; cognome: string; ragione_sociale: string | null };
   prestazione: { nome: string; codice: string };
 }
@@ -39,6 +41,7 @@ export default function Pacchetti() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const loadPacchetti = async () => {
     try {
@@ -335,6 +338,17 @@ export default function Pacchetti() {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
+                  {pacchetto.fattura_id && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => navigate(`/contabilita/fatture?highlight=${pacchetto.fattura_id}`)}
+                    >
+                      <FileText className="h-4 w-4 mr-1" />
+                      Vedi Fattura
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
@@ -407,13 +421,24 @@ export default function Pacchetti() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeletingId(pacchetto.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-2 justify-end">
+                        {pacchetto.fattura_id && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => navigate(`/contabilita/fatture?highlight=${pacchetto.fattura_id}`)}
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeletingId(pacchetto.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
