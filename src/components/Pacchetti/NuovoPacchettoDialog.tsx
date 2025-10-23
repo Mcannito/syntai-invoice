@@ -26,6 +26,7 @@ interface Prestazione {
   nome: string;
   codice: string;
   prezzo: number;
+  iva: string;
 }
 
 export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacchettoDialogProps) {
@@ -72,7 +73,7 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
 
       const { data, error } = await supabase
         .from("prestazioni")
-        .select("id, nome, codice, prezzo")
+        .select("id, nome, codice, prezzo, iva")
         .eq("user_id", user.id)
         .order("nome");
 
@@ -228,6 +229,54 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
         try {
           console.log("💰 Inizio creazione fattura...");
           
+          // Recupera tipo paziente per determinare tipo documento
+          const { data: pazienteData, error: pazienteError } = await supabase
+            .from("pazienti")
+            .select("tipo_paziente")
+            .eq("id", formData.paziente_id)
+            .single();
+
+          if (pazienteError) {
+            console.error("❌ Errore recupero paziente:", pazienteError);
+            throw new Error(`Impossibile recuperare dati paziente: ${pazienteError.message}`);
+          }
+
+          // Determina tipo documento in base al tipo paziente
+          const tipoDocumento = pazienteData?.tipo_paziente === 'persona_giuridica' 
+            ? 'fattura_elettronica_pg' 
+            : 'fattura_sanitaria';
+
+          console.log("📋 Tipo paziente:", pazienteData?.tipo_paziente, "→ Tipo documento:", tipoDocumento);
+
+          // Recupera IVA dalla prestazione
+          const prestazioneSelezionata = prestazioni.find(p => p.id === formData.prestazione_id);
+          const codiceIva = prestazioneSelezionata?.iva || "0";
+
+          // Parsare il codice IVA (può essere "22", "10", "N2.2", ecc.)
+          let ivaPercentuale = 0;
+          if (codiceIva && !codiceIva.startsWith('N')) {
+            // Estrae il numero dal codice IVA
+            const match = codiceIva.match(/(\d+\.?\d*)/);
+            if (match) {
+              ivaPercentuale = parseFloat(match[1]);
+            }
+          }
+
+          // Calcoli corretti per fattura
+          const imponibile = Number(formData.prezzo_totale);
+          const ivaImporto = (imponibile * ivaPercentuale) / 100;
+          const totale = imponibile + ivaImporto;
+
+          console.log("📊 Calcoli fattura:", {
+            prezzo_totale: formData.prezzo_totale,
+            iva_codice: codiceIva,
+            iva_percentuale: ivaPercentuale,
+            imponibile: imponibile.toFixed(2),
+            iva_importo: ivaImporto.toFixed(2),
+            totale: totale.toFixed(2),
+            tipo_documento: tipoDocumento
+          });
+
           const { data: settings } = await supabase
             .from("user_settings")
             .select("metodo_pagamento_default")
@@ -245,19 +294,19 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
           const numeroFattura = `${year}/${(count || 0) + 1}`;
           console.log("📄 Numero fattura:", numeroFattura);
 
-          // Crea fattura
+          // Crea fattura con dati corretti
           const fatturaData = {
             user_id: user.id,
             paziente_id: formData.paziente_id,
             numero: numeroFattura,
             data: formData.data_acquisto,
-            importo: Number(formData.prezzo_totale),
-            imponibile: Number(formData.prezzo_totale),
-            totale: Number(formData.prezzo_totale),
-            iva_importo: 0,
+            importo: Number(totale.toFixed(2)),
+            imponibile: Number(imponibile.toFixed(2)),
+            iva_importo: Number(ivaImporto.toFixed(2)),
+            totale: Number(totale.toFixed(2)),
             metodo_pagamento: settings?.metodo_pagamento_default || "bonifico",
             stato: "Da Inviare",
-            tipo_documento: "fattura",
+            tipo_documento: tipoDocumento,
             pagata: false
           };
 
@@ -276,17 +325,17 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
 
           console.log("✅ Fattura creata:", fattura.id);
 
-          // Crea dettaglio fattura
+          // Crea dettaglio fattura con IVA corretta
           const dettaglioData = {
             fattura_id: fattura.id,
             prestazione_id: formData.prestazione_id,
             descrizione: formData.nome,
             quantita: Number(formData.quantita_totale),
             prezzo_unitario: Number(formData.prezzo_per_seduta),
-            imponibile: Number(formData.prezzo_totale),
-            iva_percentuale: 0,
-            iva_importo: 0,
-            totale: Number(formData.prezzo_totale)
+            imponibile: Number(imponibile.toFixed(2)),
+            iva_percentuale: ivaPercentuale,
+            iva_importo: Number(ivaImporto.toFixed(2)),
+            totale: Number(totale.toFixed(2))
           };
 
           console.log("📋 Dati dettaglio:", dettaglioData);
@@ -317,7 +366,7 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
 
           toast({
             title: "Successo",
-            description: `Pacchetto e fattura n. ${numeroFattura} creati`,
+            description: `Pacchetto e fattura n. ${numeroFattura} creati con IVA ${ivaPercentuale}%`,
           });
         } catch (fatturaError: any) {
           console.error("❌ Errore nella fatturazione:", fatturaError);
