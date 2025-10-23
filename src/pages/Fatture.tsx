@@ -1845,7 +1845,10 @@ const Fatture = () => {
                                   const { data } = supabase.storage
                                     .from('fatture-in-entrata')
                                     .getPublicUrl(fattura.pdf_path);
-                                  window.open(data.publicUrl, '_blank');
+                                  setCurrentInvoiceUrl(data.publicUrl);
+                                  setCurrentInvoice(fattura);
+                                  setAutoPrint(false);
+                                  setViewerOpen(true);
                                 } else {
                                   toast({
                                     title: "Nessun PDF",
