@@ -160,10 +160,8 @@ const Impostazioni = () => {
       // Salva il path nel database
       const { error: dbError } = await supabase
         .from("user_settings")
-        .upsert({
-          user_id: user.id,
-          logo_path: filePath,
-        });
+        .update({ logo_path: filePath })
+        .eq("user_id", user.id);
 
       if (dbError) throw dbError;
 
