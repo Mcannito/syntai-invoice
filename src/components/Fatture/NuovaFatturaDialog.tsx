@@ -935,7 +935,11 @@ export const NuovaFatturaDialog = ({
                           type="checkbox"
                           id="pagata"
                           checked={formData.pagata}
-                          onChange={(e) => setFormData({ ...formData, pagata: e.target.checked })}
+                          onChange={(e) => setFormData({ 
+                            ...formData, 
+                            pagata: e.target.checked,
+                            data_pagamento: e.target.checked ? new Date().toISOString().split('T')[0] : formData.data_pagamento
+                          })}
                           className="h-4 w-4"
                         />
                         <Label htmlFor="pagata" className="font-normal cursor-pointer">Pagata</Label>
