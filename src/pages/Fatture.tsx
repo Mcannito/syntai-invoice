@@ -613,8 +613,10 @@ const Fatture = () => {
     const isInviataSistemaTS = fattura.stato === "Inviata al Sistema TS" || fattura.stato === "Inviata";
     const isInviataSDI = fattura.sdi_stato && fattura.sdi_stato !== "Da Inviare";
     const isPreventivoAccettato = fattura.tipo_documento === 'preventivo' && fattura.pagata;
+    const isProformaAccettata = fattura.tipo_documento === 'fattura_proforma' && fattura.pagata;
+    const isProformaConvertita = fattura.tipo_documento === 'fattura_proforma' && fattura.convertita_in_id;
     
-    if (fattura.pagata || isInviataSistemaTS || isInviataSDI || isPreventivoAccettato) {
+    if (fattura.pagata || isInviataSistemaTS || isInviataSDI || isPreventivoAccettato || isProformaAccettata || isProformaConvertita) {
       setPendingEditFattura(fattura);
       setEditAlertOpen(true);
     } else {
@@ -769,6 +771,155 @@ const Fatture = () => {
       toast({
         title: "Errore",
         description: "Impossibile convertire il preventivo in fattura",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAccettaProforma = async (fattura: any) => {
+    try {
+      const { error } = await supabase
+        .from('fatture')
+        .update({ 
+          pagata: true,
+          data_pagamento: format(new Date(), 'yyyy-MM-dd')
+        })
+        .eq('id', fattura.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Fattura pro forma accettata",
+        description: "La fattura pro forma è stata segnata come pagata",
+      });
+
+      loadFatture();
+    } catch (error) {
+      console.error('Error accepting proforma:', error);
+      toast({
+        title: "Errore",
+        description: "Impossibile accettare la fattura pro forma",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleConvertiProformaInFattura = async (proforma: any) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Utente non autenticato");
+
+      // Carica dettagli
+      const { data: dettagliData, error: dettagliError } = await supabase
+        .from("fatture_dettagli")
+        .select("*")
+        .eq("fattura_id", proforma.id);
+
+      if (dettagliError) throw dettagliError;
+
+      // Genera numero fattura
+      const year = new Date().getFullYear();
+      const { data: fattureData, error: fattureError } = await supabase
+        .from("fatture")
+        .select("numero")
+        .like("numero", `FT %/${year}`)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (fattureError) throw fattureError;
+
+      let nextNumber = 1;
+      if (fattureData && fattureData.length > 0) {
+        const match = fattureData[0].numero.match(/(\d+)\/\d{4}$/);
+        if (match) {
+          nextNumber = parseInt(match[1]) + 1;
+        }
+      }
+      const numeroFattura = `FT ${nextNumber}/${year}`;
+
+      // Determina tipo documento
+      let tipoDocumento = 'fattura_sanitaria';
+      if (proforma.pazienti) {
+        if (proforma.pazienti.tipo_paziente === 'persona_giuridica') {
+          tipoDocumento = 'fattura_elettronica_pg';
+        } else if (proforma.pazienti.tipo_paziente === 'pubblica_amministrazione') {
+          tipoDocumento = 'fattura_elettronica_pa';
+        }
+      }
+
+      // Crea fattura
+      const { data: nuovaFattura, error: insertError } = await supabase
+        .from("fatture")
+        .insert([{
+          user_id: user.id,
+          numero: numeroFattura,
+          data: new Date().toISOString().split('T')[0],
+          paziente_id: proforma.paziente_id,
+          tipo_documento: tipoDocumento,
+          metodo_pagamento: proforma.metodo_pagamento,
+          stato: "Da Inviare",
+          importo: proforma.importo,
+          imponibile: proforma.imponibile,
+          iva_importo: proforma.iva_importo,
+          cassa_previdenziale: proforma.cassa_previdenziale,
+          ritenuta_acconto: proforma.ritenuta_acconto,
+          contributo_integrativo: proforma.contributo_integrativo,
+          bollo_virtuale: proforma.bollo_virtuale,
+          totale: proforma.totale,
+          percentuale_rivalsa: proforma.percentuale_rivalsa,
+          percentuale_ritenuta: proforma.percentuale_ritenuta,
+          note: proforma.note,
+          convertita_da_id: proforma.id,
+          fattura_originale_id: proforma.id,
+          fattura_originale_data: proforma.data,
+          scadenza_pagamento: proforma.scadenza_pagamento,
+        } as any])
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      // Copia dettagli
+      if (dettagliData && dettagliData.length > 0) {
+        const dettagliCopy = dettagliData.map(d => ({
+          fattura_id: nuovaFattura.id,
+          prestazione_id: d.prestazione_id,
+          descrizione: d.descrizione,
+          quantita: d.quantita,
+          prezzo_unitario: d.prezzo_unitario,
+          sconto: d.sconto,
+          iva_percentuale: d.iva_percentuale,
+          imponibile: d.imponibile,
+          iva_importo: d.iva_importo,
+          totale: d.totale,
+        }));
+
+        const { error: dettagliInsertError } = await supabase
+          .from("fatture_dettagli")
+          .insert(dettagliCopy);
+
+        if (dettagliInsertError) throw dettagliInsertError;
+      }
+
+      // Aggiorna pro forma
+      const { error: updateError } = await supabase
+        .from("fatture")
+        .update({ convertita_in_id: nuovaFattura.id })
+        .eq("id", proforma.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Fattura creata",
+        description: `La fattura pro forma ${proforma.numero} è stata convertita in fattura ${numeroFattura}`,
+      });
+
+      loadFatture();
+    } catch (error) {
+      console.error('Error converting proforma:', error);
+      toast({
+        title: "Errore",
+        description: "Impossibile convertire la fattura pro forma",
         variant: "destructive",
       });
     }
@@ -1671,12 +1822,20 @@ const Fatture = () => {
                     <TableCell className="font-mono font-medium">
                       {fattura.numero}
                       {fattura.convertita_da_id && (() => {
-                        const preventivo = fatture.find(f => f.id === fattura.convertita_da_id);
-                        return (
-                          <Badge variant="outline" className="ml-2 text-xs bg-orange-100 text-orange-700 border-orange-300">
-                            Da {preventivo?.numero || 'preventivo'}
-                          </Badge>
-                        );
+                        const documentoOriginale = fatture.find(f => f.id === fattura.convertita_da_id);
+                        if (documentoOriginale) {
+                          const isFromProforma = documentoOriginale.tipo_documento === 'fattura_proforma';
+                          return (
+                            <Badge variant="outline" className={cn(
+                              "ml-2 text-xs",
+                              isFromProforma 
+                                ? "bg-purple-100 text-purple-700 border-purple-300"
+                                : "bg-orange-100 text-orange-700 border-orange-300"
+                            )}>
+                              Da {documentoOriginale?.numero || (isFromProforma ? 'pro forma' : 'preventivo')}
+                            </Badge>
+                          );
+                        }
                       })()}
                       {fattura.convertita_in_id && (() => {
                         const fatturaGenerata = fatture.find(f => f.id === fattura.convertita_in_id);
@@ -1818,15 +1977,57 @@ const Fatture = () => {
                             </>
                           )}
 
-                          {fattura.tipo_documento === 'fattura_proforma' && !fattura.convertita_in_id && (
+                          {fattura.tipo_documento === 'fattura_proforma' && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleEditClick(fattura)}>
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Modifica pro forma
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
+                          {fattura.tipo_documento === 'fattura_proforma' && !fattura.pagata && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleAccettaProforma(fattura)}>
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Segna come pagata
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
+                          {fattura.tipo_documento === 'fattura_proforma' && fattura.pagata && !fattura.convertita_in_id && (
                             <>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
-                                onClick={() => handleConvert(fattura)}
-                                className="text-orange-500"
+                                onClick={() => handleConvertiProformaInFattura(fattura)}
+                                className="text-primary"
                               >
                                 <RefreshCw className="h-4 w-4 mr-2" />
                                 Converti in fattura
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
+                          {fattura.tipo_documento === 'fattura_proforma' && fattura.convertita_in_id && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  setFiltroTipoDocumento("");
+                                  setFiltroStato("tutti");
+                                  setFiltroPaziente("tutti");
+                                  setSearchTerm("");
+                                  
+                                  const newSearchParams = new URLSearchParams(searchParams);
+                                  newSearchParams.set('highlight', fattura.convertita_in_id);
+                                  setSearchParams(newSearchParams);
+                                }}
+                                className="text-primary"
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Vai alla fattura
                               </DropdownMenuItem>
                             </>
                           )}
@@ -2772,7 +2973,23 @@ const Fatture = () => {
                   <br /><br />
                 </>
               )}
-              {pendingEditFattura?.pagata && pendingEditFattura?.tipo_documento !== 'preventivo' && (
+              {pendingEditFattura?.tipo_documento === 'fattura_proforma' && pendingEditFattura?.pagata && (
+                <>
+                  Questa fattura pro forma è stata <strong>pagata</strong>.
+                  <br />
+                  Modificarla potrebbe causare discrepanze con quanto concordato.
+                  <br /><br />
+                </>
+              )}
+              {pendingEditFattura?.tipo_documento === 'fattura_proforma' && pendingEditFattura?.convertita_in_id && (
+                <>
+                  Questa fattura pro forma è stata <strong>convertita in fattura definitiva</strong>.
+                  <br />
+                  Modificarla potrebbe causare discrepanze con la fattura generata.
+                  <br /><br />
+                </>
+              )}
+              {pendingEditFattura?.pagata && pendingEditFattura?.tipo_documento !== 'preventivo' && pendingEditFattura?.tipo_documento !== 'fattura_proforma' && (
                 <>
                   Questa fattura risulta <strong>già pagata</strong>.
                   <br />
@@ -2790,7 +3007,7 @@ const Fatture = () => {
                   <br />
                 </>
               )}
-              {pendingEditFattura?.tipo_documento !== 'preventivo' && (
+              {pendingEditFattura?.tipo_documento !== 'preventivo' && pendingEditFattura?.tipo_documento !== 'fattura_proforma' && (
                 <>
                   <br />
                   Modificando la fattura potresti creare incongruenze nei dati contabili.
