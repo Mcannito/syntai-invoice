@@ -424,6 +424,7 @@ const Fatture = () => {
       const { id, ...fatturaDataSenzaId } = fattura;
       const fatturaCompleta = {
         ...fatturaDataSenzaId,
+        convertita_da_id: id,
         fatture_dettagli: dettagliData || []
       };
 
