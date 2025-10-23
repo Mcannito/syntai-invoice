@@ -33,6 +33,7 @@ interface NuovaFatturaDialogProps {
   open?: boolean; // Controllo esterno del dialog
   onOpenChange?: (open: boolean) => void; // Callback per cambiamenti di stato
   metodiPagamento?: string[]; // Metodi di pagamento accettati dal professionista
+  fatturaToEdit?: any; // Fattura da modificare
 }
 
 export const NuovaFatturaDialog = ({ 
@@ -42,7 +43,8 @@ export const NuovaFatturaDialog = ({
   prestazioniPrecompilate,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
-  metodiPagamento = ['bonifico', 'contanti', 'carta-credito', 'carta-debito']
+  metodiPagamento = ['bonifico', 'contanti', 'carta-credito', 'carta-debito'],
+  fatturaToEdit
 }: NuovaFatturaDialogProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -333,6 +335,84 @@ export const NuovaFatturaDialog = ({
     }
   }, [open, appuntamento, prestazioniPrecompilate, pazienti]);
 
+  // Precompila i dati quando si modifica una fattura esistente
+  useEffect(() => {
+    const precompilaDatiModifica = async () => {
+      if (open && fatturaToEdit && pazienti.length > 0) {
+        // Carica i dettagli della fattura
+        const { data: dettagliData, error: dettagliError } = await supabase
+          .from("fatture_dettagli")
+          .select("*")
+          .eq("fattura_id", fatturaToEdit.id);
+
+        if (dettagliError) {
+          console.error("Error loading fattura dettagli:", dettagliError);
+          return;
+        }
+
+        // Imposta i dati del form
+        setFormData({
+          numero: fatturaToEdit.numero || "",
+          data: fatturaToEdit.data || new Date().toISOString().split('T')[0],
+          paziente_id: fatturaToEdit.paziente_id || "",
+          tipo_documento: fatturaToEdit.tipo_documento || "fattura_sanitaria",
+          metodo_pagamento: fatturaToEdit.metodo_pagamento || "Bonifico",
+          stato: fatturaToEdit.stato || "Da Inviare",
+          scadenza_pagamento: fatturaToEdit.scadenza_pagamento || "",
+          note: fatturaToEdit.note || "",
+          pagata: fatturaToEdit.pagata || false,
+          data_pagamento: fatturaToEdit.data_pagamento || "",
+        });
+
+        // Imposta il paziente selezionato
+        const paziente = pazienti.find(p => p.id === fatturaToEdit.paziente_id);
+        if (paziente) {
+          setPazienteSelezionato(paziente);
+        }
+
+        // Imposta i dettagli
+        if (dettagliData && dettagliData.length > 0) {
+          const dettagliMappati = dettagliData.map(d => ({
+            descrizione: d.descrizione || "",
+            prestazione_id: d.prestazione_id || "",
+            quantita: d.quantita || 1,
+            prezzo_unitario: d.prezzo_unitario || 0,
+            sconto: d.sconto || 0,
+            iva_percentuale: d.iva_percentuale || 0,
+          }));
+          setDettagli(dettagliMappati);
+        }
+
+        // Imposta la tassazione
+        setTassazione({
+          cassa_previdenziale: fatturaToEdit.cassa_previdenziale || 0,
+          ritenuta_acconto: fatturaToEdit.ritenuta_acconto || 0,
+          contributo_integrativo: fatturaToEdit.contributo_integrativo || 0,
+          bollo_virtuale: fatturaToEdit.bollo_virtuale || 0,
+        });
+
+        // Imposta le percentuali se presenti
+        if (fatturaToEdit.percentuale_rivalsa) {
+          setPercentualeRivalsa(fatturaToEdit.percentuale_rivalsa);
+        }
+        if (fatturaToEdit.percentuale_ritenuta) {
+          setPercentualeRitenuta(fatturaToEdit.percentuale_ritenuta);
+        }
+
+        // Imposta quali tassazioni sono attive
+        setTassazioneAttiva({
+          cassa_previdenziale: (fatturaToEdit.cassa_previdenziale || 0) > 0,
+          ritenuta_acconto: (fatturaToEdit.ritenuta_acconto || 0) > 0,
+          bollo: (fatturaToEdit.bollo_virtuale || 0) > 0,
+        });
+
+        setTassazioneModificataManualmente(true);
+      }
+    };
+
+    precompilaDatiModifica();
+  }, [open, fatturaToEdit, pazienti]);
+
   const loadPazienti = async () => {
     try {
       const { data, error } = await supabase
@@ -515,78 +595,146 @@ export const NuovaFatturaDialog = ({
 
       const totali = calcolaTotali();
 
-      // Inserisci la fattura
-      const { data: fatturaData, error: fatturaError } = await supabase
-        .from("fatture")
-        .insert({
-          user_id: user.id,
-          numero: formData.numero,
-          data: formData.data,
-          paziente_id: formData.paziente_id || null,
-          tipo_documento: formData.tipo_documento,
-          stato: formData.stato,
-          metodo_pagamento: formData.metodo_pagamento,
-          scadenza_pagamento: formData.scadenza_pagamento || null,
-          imponibile: totali.imponibile,
-          iva_importo: totali.iva_importo,
-          cassa_previdenziale: tassazione.cassa_previdenziale,
-          ritenuta_acconto: tassazione.ritenuta_acconto,
-          contributo_integrativo: tassazione.contributo_integrativo,
-          bollo_virtuale: tassazione.bollo_virtuale,
-          totale: totali.totale,
-          importo: totali.totale,
-          note: formData.note,
-          pagata: formData.pagata,
-          data_pagamento: formData.data_pagamento || null,
-          percentuale_rivalsa: tassazioneAttiva.cassa_previdenziale ? percentualeRivalsa : null,
-          percentuale_ritenuta: tassazioneAttiva.ritenuta_acconto ? percentualeRitenuta : null,
-        })
-        .select()
-        .single();
+      if (fatturaToEdit) {
+        // MODIFICA FATTURA ESISTENTE
+        const { error: fatturaError } = await supabase
+          .from("fatture")
+          .update({
+            numero: formData.numero,
+            data: formData.data,
+            paziente_id: formData.paziente_id || null,
+            tipo_documento: formData.tipo_documento,
+            stato: formData.stato,
+            metodo_pagamento: formData.metodo_pagamento,
+            scadenza_pagamento: formData.scadenza_pagamento || null,
+            imponibile: totali.imponibile,
+            iva_importo: totali.iva_importo,
+            cassa_previdenziale: tassazione.cassa_previdenziale,
+            ritenuta_acconto: tassazione.ritenuta_acconto,
+            contributo_integrativo: tassazione.contributo_integrativo,
+            bollo_virtuale: tassazione.bollo_virtuale,
+            totale: totali.totale,
+            importo: totali.totale,
+            note: formData.note,
+            pagata: formData.pagata,
+            data_pagamento: formData.data_pagamento || null,
+            percentuale_rivalsa: tassazioneAttiva.cassa_previdenziale ? percentualeRivalsa : null,
+            percentuale_ritenuta: tassazioneAttiva.ritenuta_acconto ? percentualeRitenuta : null,
+          })
+          .eq('id', fatturaToEdit.id);
 
-      if (fatturaError) throw fatturaError;
+        if (fatturaError) throw fatturaError;
 
-      // Inserisci i dettagli
-      const dettagliConCalcoli = dettagli.map(d => {
-        const imponibile = d.quantita * d.prezzo_unitario * (1 - d.sconto / 100);
-        const iva_importo = imponibile * (d.iva_percentuale / 100);
-        return {
-          fattura_id: fatturaData.id,
-          prestazione_id: d.prestazione_id || null,
-          descrizione: d.descrizione,
-          quantita: d.quantita,
-          prezzo_unitario: d.prezzo_unitario,
-          sconto: d.sconto,
-          iva_percentuale: d.iva_percentuale,
-          imponibile,
-          iva_importo,
-          totale: imponibile + iva_importo,
-        };
-      });
+        // Elimina i vecchi dettagli
+        const { error: deleteError } = await supabase
+          .from("fatture_dettagli")
+          .delete()
+          .eq("fattura_id", fatturaToEdit.id);
 
-      const { error: dettagliError } = await supabase
-        .from("fatture_dettagli")
-        .insert(dettagliConCalcoli);
+        if (deleteError) throw deleteError;
 
-      if (dettagliError) throw dettagliError;
+        // Inserisci i nuovi dettagli
+        const dettagliConCalcoli = dettagli.map(d => {
+          const imponibile = d.quantita * d.prezzo_unitario * (1 - d.sconto / 100);
+          const iva_importo = imponibile * (d.iva_percentuale / 100);
+          return {
+            fattura_id: fatturaToEdit.id,
+            prestazione_id: d.prestazione_id || null,
+            descrizione: d.descrizione,
+            quantita: d.quantita,
+            prezzo_unitario: d.prezzo_unitario,
+            sconto: d.sconto,
+            iva_percentuale: d.iva_percentuale,
+            imponibile,
+            iva_importo,
+            totale: imponibile + iva_importo,
+          };
+        });
 
-      // Se ci sono prestazioni precompilate, marca gli appuntamenti come fatturati
-      if (prestazioniPrecompilate && prestazioniPrecompilate.length > 0) {
-        const appuntamentiIds = prestazioniPrecompilate.map(app => app.id);
-        const { error: updateError } = await supabase
-          .from("appuntamenti")
-          .update({ fatturato: true })
-          .in("id", appuntamentiIds);
+        const { error: dettagliError } = await supabase
+          .from("fatture_dettagli")
+          .insert(dettagliConCalcoli);
 
-        if (updateError) {
-          console.error("Error updating appuntamenti fatturato status:", updateError);
+        if (dettagliError) throw dettagliError;
+
+        toast({
+          title: "Successo",
+          description: "Fattura modificata con successo",
+        });
+      } else {
+        // CREAZIONE NUOVA FATTURA
+        const { data: fatturaData, error: fatturaError } = await supabase
+          .from("fatture")
+          .insert({
+            user_id: user.id,
+            numero: formData.numero,
+            data: formData.data,
+            paziente_id: formData.paziente_id || null,
+            tipo_documento: formData.tipo_documento,
+            stato: formData.stato,
+            metodo_pagamento: formData.metodo_pagamento,
+            scadenza_pagamento: formData.scadenza_pagamento || null,
+            imponibile: totali.imponibile,
+            iva_importo: totali.iva_importo,
+            cassa_previdenziale: tassazione.cassa_previdenziale,
+            ritenuta_acconto: tassazione.ritenuta_acconto,
+            contributo_integrativo: tassazione.contributo_integrativo,
+            bollo_virtuale: tassazione.bollo_virtuale,
+            totale: totali.totale,
+            importo: totali.totale,
+            note: formData.note,
+            pagata: formData.pagata,
+            data_pagamento: formData.data_pagamento || null,
+            percentuale_rivalsa: tassazioneAttiva.cassa_previdenziale ? percentualeRivalsa : null,
+            percentuale_ritenuta: tassazioneAttiva.ritenuta_acconto ? percentualeRitenuta : null,
+          })
+          .select()
+          .single();
+
+        if (fatturaError) throw fatturaError;
+
+        // Inserisci i dettagli
+        const dettagliConCalcoli = dettagli.map(d => {
+          const imponibile = d.quantita * d.prezzo_unitario * (1 - d.sconto / 100);
+          const iva_importo = imponibile * (d.iva_percentuale / 100);
+          return {
+            fattura_id: fatturaData.id,
+            prestazione_id: d.prestazione_id || null,
+            descrizione: d.descrizione,
+            quantita: d.quantita,
+            prezzo_unitario: d.prezzo_unitario,
+            sconto: d.sconto,
+            iva_percentuale: d.iva_percentuale,
+            imponibile,
+            iva_importo,
+            totale: imponibile + iva_importo,
+          };
+        });
+
+        const { error: dettagliError } = await supabase
+          .from("fatture_dettagli")
+          .insert(dettagliConCalcoli);
+
+        if (dettagliError) throw dettagliError;
+
+        // Se ci sono prestazioni precompilate, marca gli appuntamenti come fatturati
+        if (prestazioniPrecompilate && prestazioniPrecompilate.length > 0) {
+          const appuntamentiIds = prestazioniPrecompilate.map(app => app.id);
+          const { error: updateError } = await supabase
+            .from("appuntamenti")
+            .update({ fatturato: true })
+            .in("id", appuntamentiIds);
+
+          if (updateError) {
+            console.error("Error updating appuntamenti fatturato status:", updateError);
+          }
         }
-      }
 
-      toast({
-        title: "Successo",
-        description: "Fattura creata con successo",
-      });
+        toast({
+          title: "Successo",
+          description: "Fattura creata con successo",
+        });
+      }
 
       setFormData({
         numero: "",
@@ -629,7 +777,7 @@ export const NuovaFatturaDialog = ({
       console.error("Error adding fattura:", error);
       toast({
         title: "Errore",
-        description: "Impossibile creare la fattura",
+        description: fatturaToEdit ? "Impossibile modificare la fattura" : "Impossibile creare la fattura",
         variant: "destructive",
       });
     } finally {
@@ -651,9 +799,9 @@ export const NuovaFatturaDialog = ({
       </DialogTrigger>
       <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nuova Fattura</DialogTitle>
+          <DialogTitle>{fatturaToEdit ? 'Modifica Fattura' : 'Nuova Fattura'}</DialogTitle>
           <DialogDescription>
-            Inserisci i dettagli della nuova fattura
+            {fatturaToEdit ? 'Modifica i dettagli della fattura' : 'Inserisci i dettagli della nuova fattura'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>

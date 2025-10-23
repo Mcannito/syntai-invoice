@@ -110,6 +110,9 @@ const Fatture = () => {
   const [filtroCategoriaEntrata, setFiltroCategoriaEntrata] = useState<string>("tutte");
   const [filtroStatoPagamento, setFiltroStatoPagamento] = useState<string>("tutti");
   const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
+  const [fatturaToEdit, setFatturaToEdit] = useState<any>(null);
+  const [editAlertOpen, setEditAlertOpen] = useState(false);
+  const [pendingEditFattura, setPendingEditFattura] = useState<any>(null);
   
   // Stati per template
   const [templateSettings, setTemplateSettings] = useState({
@@ -483,6 +486,28 @@ const Fatture = () => {
         description: error.message || "Impossibile convertire il documento",
       variant: "destructive",
       });
+    }
+  };
+
+  const handleEditClick = (fattura: any) => {
+    // Controlla se la fattura è pagata o inviata al Sistema TS
+    const isInviataSistemaTS = fattura.stato === "Inviata al Sistema TS" || fattura.stato === "Inviata";
+    
+    if (fattura.pagata || isInviataSistemaTS) {
+      setPendingEditFattura(fattura);
+      setEditAlertOpen(true);
+    } else {
+      setFatturaToEdit(fattura);
+      setShowNuovaFatturaDialog(true);
+    }
+  };
+
+  const confirmEdit = () => {
+    if (pendingEditFattura) {
+      setFatturaToEdit(pendingEditFattura);
+      setShowNuovaFatturaDialog(true);
+      setEditAlertOpen(false);
+      setPendingEditFattura(null);
     }
   };
 
@@ -1334,6 +1359,17 @@ const Fatture = () => {
                             title="Converti in fattura"
                           >
                             <RefreshCw className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {fattura.tipo_documento === "fattura_sanitaria" && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => handleEditClick(fattura)}
+                            title="Modifica fattura"
+                          >
+                            <Pencil className="h-4 w-4" />
                           </Button>
                         )}
                         {fattura.pagata && fattura.tipo_documento === "fattura_sanitaria" && (
@@ -2204,6 +2240,41 @@ const Fatture = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Edit Alert Dialog */}
+      <AlertDialog open={editAlertOpen} onOpenChange={setEditAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Attenzione: Modifica Fattura</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingEditFattura?.pagata && (
+                <>
+                  Questa fattura risulta <strong>già pagata</strong>.
+                  <br />
+                </>
+              )}
+              {(pendingEditFattura?.stato === "Inviata al Sistema TS" || pendingEditFattura?.stato === "Inviata") && (
+                <>
+                  Questa fattura è stata <strong>inviata al Sistema TS</strong>.
+                  <br />
+                </>
+              )}
+              <br />
+              Modificando la fattura potresti creare incongruenze nei dati contabili.
+              <br />
+              Sei sicuro di voler procedere con la modifica?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingEditFattura(null)}>
+              Annulla
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmEdit}>
+              Procedi con la Modifica
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Dialog Fattura da Prestazioni */}
       <NuovaFatturaDialog
         open={showNuovaFatturaDialog}
@@ -2211,6 +2282,7 @@ const Fatture = () => {
           setShowNuovaFatturaDialog(open);
           if (!open) {
             setPrestazioniPerFattura([]);
+            setFatturaToEdit(null);
           }
         }}
         onFatturaAdded={() => {
@@ -2219,9 +2291,11 @@ const Fatture = () => {
           setSelectedPrestazioni(new Set());
           setPrestazioniPerFattura([]);
           setShowNuovaFatturaDialog(false);
+          setFatturaToEdit(null);
         }}
         prestazioniPrecompilate={prestazioniPerFattura}
         metodiPagamento={Array.from(metodiPagamento)}
+        fatturaToEdit={fatturaToEdit}
         trigger={<span style={{ display: 'none' }} />}
       />
 
