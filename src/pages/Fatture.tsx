@@ -568,10 +568,11 @@ const Fatture = () => {
   };
 
   const handleEditClick = (fattura: any) => {
-    // Controlla se la fattura è pagata o inviata al Sistema TS
+    // Controlla se la fattura è pagata o inviata (al Sistema TS o al SDI)
     const isInviataSistemaTS = fattura.stato === "Inviata al Sistema TS" || fattura.stato === "Inviata";
+    const isInviataSDI = fattura.sdi_stato && fattura.sdi_stato !== "Da Inviare";
     
-    if (fattura.pagata || isInviataSistemaTS) {
+    if (fattura.pagata || isInviataSistemaTS || isInviataSDI) {
       setPendingEditFattura(fattura);
       setEditAlertOpen(true);
     } else {
@@ -1516,20 +1517,25 @@ const Fatture = () => {
                             </>
                           )}
 
-                          {/* Crea Nota di Credito - Solo per Persone Giuridiche */}
-                          {(fattura.tipo_documento === "fattura_elettronica_pg" || 
-                            fattura.tipo_documento === "fattura_elettronica_pa") && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => handleCreaNotaCredito(fattura)}
-                                className="text-blue-600"
-                              >
-                                <FileText className="h-4 w-4 mr-2" />
-                                Crea Nota di Credito
-                              </DropdownMenuItem>
-                            </>
-                          )}
+          {/* Modifica e Crea Nota di Credito - Solo per Fatture Elettroniche */}
+          {(fattura.tipo_documento === "fattura_elettronica_pg" || 
+            fattura.tipo_documento === "fattura_elettronica_pa") && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleEditClick(fattura)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Modifica fattura
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem 
+                onClick={() => handleCreaNotaCredito(fattura)}
+                className="text-blue-600"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Crea Nota di Credito
+              </DropdownMenuItem>
+            </>
+          )}
 
                           {fattura.tipo_documento === "fattura_sanitaria" && (
                             <>
@@ -2439,6 +2445,12 @@ const Fatture = () => {
               {(pendingEditFattura?.stato === "Inviata al Sistema TS" || pendingEditFattura?.stato === "Inviata") && (
                 <>
                   Questa fattura è stata <strong>inviata al Sistema TS</strong>.
+                  <br />
+                </>
+              )}
+              {pendingEditFattura?.sdi_stato && pendingEditFattura?.sdi_stato !== "Da Inviare" && (
+                <>
+                  Questa fattura è stata <strong>inviata al SDI</strong> (Stato: {pendingEditFattura.sdi_stato}).
                   <br />
                 </>
               )}
