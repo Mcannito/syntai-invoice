@@ -1778,8 +1778,8 @@ const Fatture = () => {
               <div className="flex flex-col gap-4">
                 <CardTitle>Documenti Emessi</CardTitle>
                 
-                <div className="flex gap-2 items-center">
-                  <div className="relative flex-1">
+                <div className="flex flex-row gap-2 items-center overflow-x-auto">
+                  <div className="relative flex-1 min-w-[200px]">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       placeholder="Cerca documento o paziente..."
@@ -1815,7 +1815,7 @@ const Fatture = () => {
                   
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-[180px]">
+                      <Button variant="outline" className="w-[180px] flex-shrink-0">
                         <CalendarIcon className="h-4 w-4 mr-2" />
                         Periodo
                       </Button>
