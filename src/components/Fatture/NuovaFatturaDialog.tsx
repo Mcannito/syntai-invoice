@@ -884,7 +884,7 @@ export const NuovaFatturaDialog = ({
         {trigger || (
           <Button className="gap-2">
             <Plus className="h-4 w-4" />
-            Nuovo Documenti In Uscita
+            Nuovo Documento In Uscita
           </Button>
         )}
       </DialogTrigger>
