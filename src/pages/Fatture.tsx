@@ -1850,40 +1850,66 @@ const Fatture = () => {
                   >
                     <TableCell className="font-mono font-medium">
                       {fattura.numero}
-                      {/* Badge per documento convertito da un altro */}
+                      
+                      {/* Badge per documento originale (convertita_da_id) */}
                       {fattura.convertita_da_id && (() => {
                         const documentoOriginale = fatture.find(f => f.id === fattura.convertita_da_id);
                         if (documentoOriginale) {
-                          const isFromProforma = documentoOriginale.tipo_documento === 'fattura_proforma';
-                          const isFromPreventivo = documentoOriginale.tipo_documento === 'preventivo';
-                          const isFromFattura = !isFromProforma && !isFromPreventivo;
+                          // Determina il colore in base al tipo di documento originale
+                          let bgColor = "bg-orange-100 text-orange-700 border-orange-300"; // default preventivo
                           
-                          let bgColor = "bg-orange-100 text-orange-700 border-orange-300";
-                          if (isFromProforma) bgColor = "bg-purple-100 text-purple-700 border-purple-300";
-                          if (isFromFattura) bgColor = "bg-blue-100 text-blue-700 border-blue-300";
+                          switch(documentoOriginale.tipo_documento) {
+                            case 'fattura_proforma':
+                              bgColor = "bg-purple-100 text-purple-700 border-purple-300";
+                              break;
+                            case 'preventivo':
+                              bgColor = "bg-orange-100 text-orange-700 border-orange-300";
+                              break;
+                            case 'fattura_sanitaria':
+                            case 'fattura_elettronica_pg':
+                            case 'fattura_elettronica_pa':
+                              bgColor = "bg-blue-100 text-blue-700 border-blue-300";
+                              break;
+                            case 'nota_credito':
+                              bgColor = "bg-red-100 text-red-700 border-red-300";
+                              break;
+                          }
                           
                           return (
                             <Badge variant="outline" className={cn("ml-2 text-xs", bgColor)}>
-                              {documentoOriginale?.numero}
+                              {documentoOriginale.numero}
                             </Badge>
                           );
                         }
                       })()}
                       
-                      {/* Badge per documento che è stato convertito in altro */}
-                      {fattura.convertita_in_id && fattura.tipo_documento !== 'nota_credito' && (() => {
+                      {/* Badge per documento generato (convertita_in_id) */}
+                      {fattura.convertita_in_id && (() => {
                         const documentoGenerato = fatture.find(f => f.id === fattura.convertita_in_id);
                         if (documentoGenerato) {
-                          const isNotaCredito = documentoGenerato.tipo_documento === 'nota_credito';
+                          // Determina il colore in base al tipo di documento generato
+                          let bgColor = "bg-blue-100 text-blue-700 border-blue-300"; // default fattura
+                          
+                          switch(documentoGenerato.tipo_documento) {
+                            case 'nota_credito':
+                              bgColor = "bg-red-100 text-red-700 border-red-300";
+                              break;
+                            case 'fattura_sanitaria':
+                            case 'fattura_elettronica_pg':
+                            case 'fattura_elettronica_pa':
+                              bgColor = "bg-blue-100 text-blue-700 border-blue-300";
+                              break;
+                            case 'fattura_proforma':
+                              bgColor = "bg-purple-100 text-purple-700 border-purple-300";
+                              break;
+                            case 'preventivo':
+                              bgColor = "bg-orange-100 text-orange-700 border-orange-300";
+                              break;
+                          }
                           
                           return (
-                            <Badge variant="outline" className={cn(
-                              "ml-2 text-xs",
-                              isNotaCredito 
-                                ? "bg-red-100 text-red-700 border-red-300"
-                                : "bg-blue-100 text-blue-700 border-blue-300"
-                            )}>
-                              {documentoGenerato?.numero}
+                            <Badge variant="outline" className={cn("ml-2 text-xs", bgColor)}>
+                              {documentoGenerato.numero}
                             </Badge>
                           );
                         }
@@ -2107,10 +2133,37 @@ const Fatture = () => {
             </>
           )}
 
-          {/* Bottone per navigare alla nota di credito */}
-          {fattura.tipo_documento !== 'nota_credito' && fattura.convertita_in_id && (() => {
-            const notaCredito = fatture.find(f => f.id === fattura.convertita_in_id && f.tipo_documento === 'nota_credito');
-            if (notaCredito) {
+          {/* Navigazione al documento generato (convertita_in_id) */}
+          {fattura.convertita_in_id && (() => {
+            const documentoGenerato = fatture.find(f => f.id === fattura.convertita_in_id);
+            if (documentoGenerato) {
+              // Determina il testo del pulsante in base al tipo di documento generato
+              let buttonText = "Vai al Documento Generato";
+              let buttonIcon = <FileText className="h-4 w-4 mr-2" />;
+              
+              switch(documentoGenerato.tipo_documento) {
+                case 'nota_credito':
+                  buttonText = `Vai alla Nota di Credito (${documentoGenerato.numero})`;
+                  break;
+                case 'fattura_sanitaria':
+                  buttonText = `Vai alla Fattura Sanitaria (${documentoGenerato.numero})`;
+                  break;
+                case 'fattura_elettronica_pg':
+                  buttonText = `Vai alla Fattura Elettronica (${documentoGenerato.numero})`;
+                  break;
+                case 'fattura_elettronica_pa':
+                  buttonText = `Vai alla Fattura Elettronica PA (${documentoGenerato.numero})`;
+                  break;
+                case 'fattura_proforma':
+                  buttonText = `Vai alla Proforma (${documentoGenerato.numero})`;
+                  break;
+                case 'preventivo':
+                  buttonText = `Vai al Preventivo (${documentoGenerato.numero})`;
+                  break;
+                default:
+                  buttonText = `Vai al Documento (${documentoGenerato.numero})`;
+              }
+              
               return (
                 <>
                   <DropdownMenuSeparator />
@@ -2127,36 +2180,68 @@ const Fatture = () => {
                     }}
                     className="text-primary"
                   >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Vai alla Nota di Credito
+                    {buttonIcon}
+                    {buttonText}
                   </DropdownMenuItem>
                 </>
               );
             }
           })()}
 
-          {/* Bottone per navigare alla fattura originale dalla nota di credito */}
-          {fattura.tipo_documento === 'nota_credito' && fattura.convertita_da_id && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => {
-                  setFiltroTipoDocumento("");
-                  setFiltroStato("tutti");
-                  setFiltroPaziente("tutti");
-                  setSearchTerm("");
-                  
-                  const newSearchParams = new URLSearchParams(searchParams);
-                  newSearchParams.set('highlight', fattura.convertita_da_id);
-                  setSearchParams(newSearchParams);
-                }}
-                className="text-primary"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Vai alla Fattura Originale
-              </DropdownMenuItem>
-            </>
-          )}
+          {/* Navigazione al documento originale (convertita_da_id) */}
+          {fattura.convertita_da_id && (() => {
+            const documentoOriginale = fatture.find(f => f.id === fattura.convertita_da_id);
+            if (documentoOriginale) {
+              // Determina il testo del pulsante in base al tipo di documento originale
+              let buttonText = "Vai al Documento Originale";
+              let buttonIcon = <FileText className="h-4 w-4 mr-2" />;
+              
+              switch(documentoOriginale.tipo_documento) {
+                case 'preventivo':
+                  buttonText = `Vai al Preventivo (${documentoOriginale.numero})`;
+                  break;
+                case 'fattura_proforma':
+                  buttonText = `Vai alla Proforma (${documentoOriginale.numero})`;
+                  break;
+                case 'fattura_sanitaria':
+                  buttonText = `Vai alla Fattura Sanitaria (${documentoOriginale.numero})`;
+                  break;
+                case 'fattura_elettronica_pg':
+                  buttonText = `Vai alla Fattura Elettronica (${documentoOriginale.numero})`;
+                  break;
+                case 'fattura_elettronica_pa':
+                  buttonText = `Vai alla Fattura Elettronica PA (${documentoOriginale.numero})`;
+                  break;
+                case 'nota_credito':
+                  buttonText = `Vai alla Nota di Credito (${documentoOriginale.numero})`;
+                  break;
+                default:
+                  buttonText = `Vai al Documento (${documentoOriginale.numero})`;
+              }
+              
+              return (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      setFiltroTipoDocumento("");
+                      setFiltroStato("tutti");
+                      setFiltroPaziente("tutti");
+                      setSearchTerm("");
+                      
+                      const newSearchParams = new URLSearchParams(searchParams);
+                      newSearchParams.set('highlight', fattura.convertita_da_id);
+                      setSearchParams(newSearchParams);
+                    }}
+                    className="text-primary"
+                  >
+                    {buttonIcon}
+                    {buttonText}
+                  </DropdownMenuItem>
+                </>
+              );
+            }
+          })()}
 
                           {fattura.tipo_documento === "fattura_sanitaria" && (
                             <>
