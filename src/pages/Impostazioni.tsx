@@ -81,6 +81,10 @@ const Impostazioni = () => {
 
   const handleSaveSettings = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Salvare il riferimento al form PRIMA di operazioni asincrone
+    const form = e.currentTarget;
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -92,7 +96,7 @@ const Impostazioni = () => {
         return;
       }
 
-      const formData = new FormData(e.currentTarget);
+      const formData = new FormData(form);
       
       const settingsData = {
         tipo_persona: tipoPersona || null,
