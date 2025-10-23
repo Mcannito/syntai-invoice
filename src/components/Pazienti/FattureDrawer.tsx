@@ -90,9 +90,31 @@ export function FattureDrawer({
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const handleViewFattura = (fatturaId: string) => {
-    onOpenChange(false);
-    navigate(`/fatture?id=${fatturaId}`);
+  const handleViewFattura = (fattura: Fattura) => {
+    if (!fattura.pdf_path) {
+      toast({
+        title: "PDF non disponibile",
+        description: "Il PDF di questa fattura non è ancora stato generato",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Ottieni l'URL pubblico del PDF dal bucket Supabase
+    const { data } = supabase.storage
+      .from("fatture-pdf")
+      .getPublicUrl(fattura.pdf_path);
+
+    if (data?.publicUrl) {
+      // Apri il PDF in una nuova finestra
+      window.open(data.publicUrl, '_blank');
+    } else {
+      toast({
+        title: "Errore",
+        description: "Impossibile visualizzare il PDF",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -161,10 +183,11 @@ export function FattureDrawer({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleViewFattura(fattura.id)}
+                        onClick={() => handleViewFattura(fattura)}
+                        disabled={!fattura.pdf_path}
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        Visualizza
+                        Visualizza PDF
                       </Button>
                     </div>
                   </div>
