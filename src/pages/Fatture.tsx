@@ -61,7 +61,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears } from "date-fns";
 import { it } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
@@ -86,6 +86,9 @@ const Fatture = () => {
   const [showNuovaFatturaDialog, setShowNuovaFatturaDialog] = useState(false);
   const [filtroStato, setFiltroStato] = useState<string>("tutti");
   const [filtroPaziente, setFiltroPaziente] = useState<string>("tutti");
+  const [filtroDataInizio, setFiltroDataInizio] = useState<Date | undefined>(undefined);
+  const [filtroDataFine, setFiltroDataFine] = useState<Date | undefined>(undefined);
+  const [filtroPreset, setFiltroPreset] = useState<string>("tutti");
   const [impostazioniDialogOpen, setImpostazioniDialogOpen] = useState(false);
   const [rivalsaAttiva, setRivalsaAttiva] = useState(true);
   const [ritenutaAttiva, setRitenutaAttiva] = useState(false);
@@ -154,6 +157,35 @@ const Fatture = () => {
   const [logo, setLogo] = useState<string | null>(null);
   
   const { toast } = useToast();
+
+  const applyPreset = (preset: string) => {
+    const now = new Date();
+    setFiltroPreset(preset);
+    
+    switch(preset) {
+      case "questo_mese":
+        setFiltroDataInizio(startOfMonth(now));
+        setFiltroDataFine(endOfMonth(now));
+        break;
+      case "ultimi_3_mesi":
+        setFiltroDataInizio(startOfMonth(subMonths(now, 2)));
+        setFiltroDataFine(endOfMonth(now));
+        break;
+      case "questo_anno":
+        setFiltroDataInizio(startOfYear(now));
+        setFiltroDataFine(endOfYear(now));
+        break;
+      case "anno_scorso":
+        setFiltroDataInizio(startOfYear(subYears(now, 1)));
+        setFiltroDataFine(endOfYear(subYears(now, 1)));
+        break;
+      case "tutti":
+      default:
+        setFiltroDataInizio(undefined);
+        setFiltroDataFine(undefined);
+        break;
+    }
+  };
 
   const loadUserSettings = async () => {
     try {
@@ -458,12 +490,20 @@ const Fatture = () => {
       // Filtro stato
       const matchesStato = filtroStato === 'tutti' || f.stato === filtroStato;
       
+      // Filtro temporale
+      let matchesData = true;
+      if (filtroDataInizio || filtroDataFine) {
+        const fatturaDate = new Date(f.data);
+        if (filtroDataInizio && fatturaDate < filtroDataInizio) matchesData = false;
+        if (filtroDataFine && fatturaDate > filtroDataFine) matchesData = false;
+      }
+      
       // Filtro pagamento
       const matchesPagamento = filtroPaziente === 'tutti' ||
         (filtroPaziente === 'pagata' && f.pagata) ||
         (filtroPaziente === 'non_pagata' && !f.pagata);
       
-      return matchesSearch && matchesTipo && matchesStato && matchesPagamento;
+      return matchesSearch && matchesTipo && matchesStato && matchesPagamento && matchesData;
     })
     .sort((a, b) => {
       let comparison = 0;
@@ -1772,7 +1812,149 @@ const Fatture = () => {
                       <SelectItem value="non_pagata">Non Pagate</SelectItem>
                     </SelectContent>
                   </Select>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-[180px]">
+                        <CalendarIcon className="h-4 w-4 mr-2" />
+                        Periodo
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-80">
+                      <div className="p-4 space-y-4">
+                        <div>
+                          <p className="text-sm font-medium mb-3">Preset rapidi</p>
+                          <div className="space-y-2">
+                            <Button
+                              variant={filtroPreset === "questo_mese" ? "default" : "outline"}
+                              className="w-full justify-start"
+                              onClick={() => applyPreset("questo_mese")}
+                            >
+                              Questo Mese
+                            </Button>
+                            <Button
+                              variant={filtroPreset === "ultimi_3_mesi" ? "default" : "outline"}
+                              className="w-full justify-start"
+                              onClick={() => applyPreset("ultimi_3_mesi")}
+                            >
+                              Ultimi 3 Mesi
+                            </Button>
+                            <Button
+                              variant={filtroPreset === "questo_anno" ? "default" : "outline"}
+                              className="w-full justify-start"
+                              onClick={() => applyPreset("questo_anno")}
+                            >
+                              Quest'Anno
+                            </Button>
+                            <Button
+                              variant={filtroPreset === "anno_scorso" ? "default" : "outline"}
+                              className="w-full justify-start"
+                              onClick={() => applyPreset("anno_scorso")}
+                            >
+                              Anno Scorso
+                            </Button>
+                            <Button
+                              variant={filtroPreset === "tutti" ? "default" : "outline"}
+                              className="w-full justify-start"
+                              onClick={() => applyPreset("tutti")}
+                            >
+                              Tutti i Periodi
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="border-t pt-4">
+                          <p className="text-sm font-medium mb-3">Periodo personalizzato</p>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="text-xs text-muted-foreground mb-1 block">Data inizio</label>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {filtroDataInizio ? format(filtroDataInizio, "dd/MM/yyyy") : "Seleziona data"}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                    mode="single"
+                                    selected={filtroDataInizio}
+                                    onSelect={(date) => {
+                                      setFiltroDataInizio(date);
+                                      setFiltroPreset("personalizzato");
+                                    }}
+                                    initialFocus
+                                    className="pointer-events-auto"
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                            
+                            <div>
+                              <label className="text-xs text-muted-foreground mb-1 block">Data fine</label>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {filtroDataFine ? format(filtroDataFine, "dd/MM/yyyy") : "Seleziona data"}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                    mode="single"
+                                    selected={filtroDataFine}
+                                    onSelect={(date) => {
+                                      setFiltroDataFine(date);
+                                      setFiltroPreset("personalizzato");
+                                    }}
+                                    initialFocus
+                                    className="pointer-events-auto"
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+
+                            {(filtroDataInizio || filtroDataFine) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full"
+                                onClick={() => {
+                                  setFiltroDataInizio(undefined);
+                                  setFiltroDataFine(undefined);
+                                  setFiltroPreset("tutti");
+                                }}
+                              >
+                                <X className="h-4 w-4 mr-2" />
+                                Rimuovi filtro
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
+                
+                {/* Badge filtro attivo */}
+                {(filtroDataInizio || filtroDataFine) && (
+                  <div className="px-6 pb-4">
+                    <Badge variant="secondary" className="text-sm py-1.5 px-3">
+                      <CalendarIcon className="h-3.5 w-3.5 mr-1.5" />
+                      {filtroDataInizio && format(filtroDataInizio, "dd/MM/yyyy")}
+                      {filtroDataInizio && filtroDataFine && " - "}
+                      {filtroDataFine && format(filtroDataFine, "dd/MM/yyyy")}
+                      <X 
+                        className="h-3.5 w-3.5 ml-2 cursor-pointer hover:text-destructive" 
+                        onClick={() => {
+                          setFiltroDataInizio(undefined);
+                          setFiltroDataFine(undefined);
+                          setFiltroPreset("tutti");
+                        }}
+                      />
+                    </Badge>
+                  </div>
+                )}
               </div>
             </CardHeader>
         <CardContent className="p-0">
