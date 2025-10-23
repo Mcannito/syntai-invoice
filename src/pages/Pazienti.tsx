@@ -19,6 +19,7 @@ const Pazienti = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [pazienti, setPazienti] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tipoFilter, setTipoFilter] = useState<"all" | "fisica" | "giuridica">("all");
 
   const fetchPazienti = async () => {
     setLoading(true);
@@ -92,11 +93,19 @@ const Pazienti = () => {
 
   const filteredPazienti = displayPazienti.filter(p => {
     const nomeCompleto = p.ragione_sociale || `${p.nome} ${p.cognome || ""}`;
-    return (
+    const matchesSearch = (
       nomeCompleto.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (p.codice_fiscale && p.codice_fiscale.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (p.partita_iva && p.partita_iva.includes(searchTerm))
     );
+    
+    const tipo = p.tipo_paziente === "persona_fisica" || p.tipo === "Persona Fisica" 
+      ? "fisica" 
+      : "giuridica";
+    
+    const matchesTipo = tipoFilter === "all" || tipo === tipoFilter;
+    
+    return matchesSearch && matchesTipo;
   });
 
   const personeFisiche = displayPazienti.filter(p => 
@@ -121,36 +130,57 @@ const Pazienti = () => {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-primary/20 bg-primary-light">
+        <Card 
+          className={`cursor-pointer transition-all hover:shadow-lg ${
+            tipoFilter === "all" 
+              ? "border-primary/40 bg-primary-light ring-2 ring-primary/20" 
+              : "border-primary/20 bg-primary-light/50 hover:bg-primary-light"
+          }`}
+          onClick={() => setTipoFilter("all")}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Totale Pazienti</p>
-                <p className="text-2xl font-bold">{pazienti.length}</p>
+                <p className="text-2xl font-bold">{displayPazienti.length}</p>
               </div>
-              <Users className="h-8 w-8 text-primary" />
+              <Users className={`h-8 w-8 ${tipoFilter === "all" ? "text-primary" : "text-primary/60"}`} />
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all hover:shadow-lg ${
+            tipoFilter === "fisica" 
+              ? "border-primary/40 bg-background ring-2 ring-primary/20" 
+              : "hover:bg-muted/30"
+          }`}
+          onClick={() => setTipoFilter("fisica")}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Persone Fisiche</p>
                 <p className="text-2xl font-bold">{personeFisiche}</p>
               </div>
-              <UserCheck className="h-8 w-8 text-muted-foreground" />
+              <UserCheck className={`h-8 w-8 ${tipoFilter === "fisica" ? "text-primary" : "text-muted-foreground"}`} />
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all hover:shadow-lg ${
+            tipoFilter === "giuridica" 
+              ? "border-primary/40 bg-background ring-2 ring-primary/20" 
+              : "hover:bg-muted/30"
+          }`}
+          onClick={() => setTipoFilter("giuridica")}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Persone Giuridiche</p>
                 <p className="text-2xl font-bold">{personeGiuridiche}</p>
               </div>
-              <Building2 className="h-8 w-8 text-muted-foreground" />
+              <Building2 className={`h-8 w-8 ${tipoFilter === "giuridica" ? "text-primary" : "text-muted-foreground"}`} />
             </div>
           </CardContent>
         </Card>
