@@ -10,12 +10,25 @@ import { Plus } from "lucide-react";
 
 interface NuovoPazienteDialogProps {
   onPazienteCreated: () => void;
+  pazienteToEdit?: any;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export const NuovoPazienteDialog = ({ onPazienteCreated }: NuovoPazienteDialogProps) => {
-  const [open, setOpen] = useState(false);
+export const NuovoPazienteDialog = ({ 
+  onPazienteCreated, 
+  pazienteToEdit,
+  open: externalOpen,
+  onOpenChange: externalOnOpenChange
+}: NuovoPazienteDialogProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [tipoPaziente, setTipoPaziente] = useState<"persona_fisica" | "persona_giuridica">("persona_fisica");
+  const [tipoPaziente, setTipoPaziente] = useState<"persona_fisica" | "persona_giuridica">(
+    pazienteToEdit?.tipo_paziente || "persona_fisica"
+  );
+
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = externalOnOpenChange || setInternalOpen;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -44,13 +57,25 @@ export const NuovoPazienteDialog = ({ onPazienteCreated }: NuovoPazienteDialogPr
       data.codice_destinatario = formData.get("codice_destinatario") as string || null;
     }
 
-    const { error } = await supabase.from("pazienti").insert([data]);
+    let error;
+    if (pazienteToEdit) {
+      // Modifica paziente esistente
+      const result = await supabase
+        .from("pazienti")
+        .update(data)
+        .eq("id", pazienteToEdit.id);
+      error = result.error;
+    } else {
+      // Crea nuovo paziente
+      const result = await supabase.from("pazienti").insert([data]);
+      error = result.error;
+    }
 
     if (error) {
-      toast.error("Errore durante la creazione del paziente");
+      toast.error(pazienteToEdit ? "Errore durante la modifica del paziente" : "Errore durante la creazione del paziente");
       console.error(error);
     } else {
-      toast.success("Paziente creato con successo");
+      toast.success(pazienteToEdit ? "Paziente modificato con successo" : "Paziente creato con successo");
       setOpen(false);
       e.currentTarget.reset();
       onPazienteCreated();
@@ -69,7 +94,7 @@ export const NuovoPazienteDialog = ({ onPazienteCreated }: NuovoPazienteDialogPr
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nuovo Paziente</DialogTitle>
+          <DialogTitle>{pazienteToEdit ? "Modifica Paziente" : "Nuovo Paziente"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Tipo Paziente */}
@@ -101,11 +126,11 @@ export const NuovoPazienteDialog = ({ onPazienteCreated }: NuovoPazienteDialogPr
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="nome">Nome *</Label>
-                  <Input id="nome" name="nome" required />
+                  <Input id="nome" name="nome" defaultValue={pazienteToEdit?.nome} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cognome">Cognome *</Label>
-                  <Input id="cognome" name="cognome" required />
+                  <Input id="cognome" name="cognome" defaultValue={pazienteToEdit?.cognome} required />
                 </div>
               </div>
               <div className="space-y-2">
@@ -115,6 +140,7 @@ export const NuovoPazienteDialog = ({ onPazienteCreated }: NuovoPazienteDialogPr
                   name="codice_fiscale" 
                   maxLength={16}
                   className="uppercase"
+                  defaultValue={pazienteToEdit?.codice_fiscale}
                   required 
                 />
               </div>
@@ -126,7 +152,7 @@ export const NuovoPazienteDialog = ({ onPazienteCreated }: NuovoPazienteDialogPr
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="ragione_sociale">Ragione Sociale *</Label>
-                <Input id="ragione_sociale" name="ragione_sociale" required />
+                <Input id="ragione_sociale" name="ragione_sociale" defaultValue={pazienteToEdit?.ragione_sociale} required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="partita_iva">Partita IVA *</Label>
@@ -134,13 +160,14 @@ export const NuovoPazienteDialog = ({ onPazienteCreated }: NuovoPazienteDialogPr
                   id="partita_iva" 
                   name="partita_iva" 
                   maxLength={11}
+                  defaultValue={pazienteToEdit?.partita_iva}
                   required 
                 />
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="pec">PEC</Label>
-                  <Input id="pec" name="pec" type="email" />
+                  <Input id="pec" name="pec" type="email" defaultValue={pazienteToEdit?.pec} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="codice_destinatario">Codice Destinatario</Label>
@@ -149,6 +176,7 @@ export const NuovoPazienteDialog = ({ onPazienteCreated }: NuovoPazienteDialogPr
                     name="codice_destinatario" 
                     maxLength={7}
                     className="uppercase"
+                    defaultValue={pazienteToEdit?.codice_destinatario}
                   />
                 </div>
               </div>
@@ -161,11 +189,11 @@ export const NuovoPazienteDialog = ({ onPazienteCreated }: NuovoPazienteDialogPr
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" />
+                <Input id="email" name="email" type="email" defaultValue={pazienteToEdit?.email} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="telefono">Telefono</Label>
-                <Input id="telefono" name="telefono" />
+                <Input id="telefono" name="telefono" defaultValue={pazienteToEdit?.telefono} />
               </div>
             </div>
           </div>
@@ -174,16 +202,16 @@ export const NuovoPazienteDialog = ({ onPazienteCreated }: NuovoPazienteDialogPr
             <h4 className="font-medium">Indirizzo</h4>
             <div className="space-y-2">
               <Label htmlFor="indirizzo">Via e Numero</Label>
-              <Input id="indirizzo" name="indirizzo" />
+              <Input id="indirizzo" name="indirizzo" defaultValue={pazienteToEdit?.indirizzo} />
             </div>
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="citta">Città</Label>
-                <Input id="citta" name="citta" />
+                <Input id="citta" name="citta" defaultValue={pazienteToEdit?.citta} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cap">CAP</Label>
-                <Input id="cap" name="cap" maxLength={5} />
+                <Input id="cap" name="cap" maxLength={5} defaultValue={pazienteToEdit?.cap} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="provincia">Provincia</Label>
@@ -192,6 +220,7 @@ export const NuovoPazienteDialog = ({ onPazienteCreated }: NuovoPazienteDialogPr
                   name="provincia" 
                   maxLength={2}
                   className="uppercase"
+                  defaultValue={pazienteToEdit?.provincia}
                 />
               </div>
             </div>
@@ -208,7 +237,10 @@ export const NuovoPazienteDialog = ({ onPazienteCreated }: NuovoPazienteDialogPr
               Annulla
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Creazione..." : "Crea Paziente"}
+              {loading 
+                ? (pazienteToEdit ? "Modifica..." : "Creazione...") 
+                : (pazienteToEdit ? "Salva Modifiche" : "Crea Paziente")
+              }
             </Button>
           </div>
         </form>

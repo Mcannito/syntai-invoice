@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Edit, Eye, Users, Building2, UserCheck } from "lucide-react";
+import { Plus, Search, Edit, Users, Building2, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NuovoPazienteDialog } from "@/components/Pazienti/NuovoPazienteDialog";
 import {
@@ -20,6 +20,8 @@ const Pazienti = () => {
   const [pazienti, setPazienti] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [tipoFilter, setTipoFilter] = useState<"all" | "fisica" | "giuridica">("all");
+  const [editingPaziente, setEditingPaziente] = useState<any>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const fetchPazienti = async () => {
     setLoading(true);
@@ -266,10 +268,15 @@ const Pazienti = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => {
+                              setEditingPaziente(paziente);
+                              setEditDialogOpen(true);
+                            }}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                         </div>
@@ -282,6 +289,21 @@ const Pazienti = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Dialog per modifica paziente */}
+      <NuovoPazienteDialog
+        onPazienteCreated={() => {
+          fetchPazienti();
+          setEditDialogOpen(false);
+          setEditingPaziente(null);
+        }}
+        pazienteToEdit={editingPaziente}
+        open={editDialogOpen}
+        onOpenChange={(open) => {
+          setEditDialogOpen(open);
+          if (!open) setEditingPaziente(null);
+        }}
+      />
     </div>
   );
 };
