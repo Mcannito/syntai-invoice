@@ -68,7 +68,10 @@ const Impostazioni = () => {
           const { data: publicUrl } = supabase.storage
             .from("logos")
             .getPublicUrl(data.logo_path);
-          setLogo(publicUrl.publicUrl);
+          // Aggiungi cache-busting parameter per forzare refresh
+          setLogo(`${publicUrl.publicUrl}?t=${Date.now()}`);
+        } else {
+          setLogo(null);
         }
       }
     } catch (error) {
