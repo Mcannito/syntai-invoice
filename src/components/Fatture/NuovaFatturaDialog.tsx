@@ -127,10 +127,8 @@ export const NuovaFatturaDialog = ({
     // PRIORITÀ 2: Esente = 0%
     if (descLower.includes('esente')) return 0;
     
-    // PRIORITÀ 3: Codici natura specifici
-    if (descLower.includes('n2.1') || descLower.includes('n2,1')) return 4;
-    if (descLower.includes('n2.2') || descLower.includes('n2,2')) return 10;
-    if (descLower.includes('n2.3') || descLower.includes('n2,3')) return 5;
+    // PRIORITÀ 3: Codici natura (tutti i codici N indicano operazioni NON soggette ad IVA)
+    if (descLower.match(/n\d/)) return 0;
     
     // PRIORITÀ 4: Pattern con percentuale
     const match = descLower.match(/(\d+(?:[.,]\d+)?)\s*%/) || descLower.match(/iva\s*(\d+(?:[.,]\d+)?)/);

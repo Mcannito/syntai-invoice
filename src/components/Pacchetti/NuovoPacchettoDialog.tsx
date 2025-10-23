@@ -261,6 +261,7 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
               ivaPercentuale = parseFloat(match[1]);
             }
           }
+          console.log("🏷️ Codice IVA:", codiceIva, "→ Percentuale:", ivaPercentuale + "%");
 
           // Recuperare impostazioni fiscali
           const { data: settings } = await supabase
