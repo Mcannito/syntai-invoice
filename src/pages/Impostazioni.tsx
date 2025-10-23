@@ -89,8 +89,7 @@ const Impostazioni = () => {
       
       const { error } = await supabase
         .from("user_settings")
-        .upsert({
-          user_id: user.id,
+        .update({
           tipo_persona: tipoPersona,
           sesso: sesso,
           nome: formData.get("nome") as string,
@@ -106,7 +105,8 @@ const Impostazioni = () => {
           telefono: formData.get("telefono") as string,
           email: formData.get("email") as string,
           pec: formData.get("pec") as string,
-        });
+        })
+        .eq("user_id", user.id);
 
       if (error) throw error;
 
