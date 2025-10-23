@@ -212,7 +212,7 @@ export function FattureDrawer({
         htmlUrl={currentInvoiceUrl}
         invoice={currentInvoice}
         autoPrint={false}
-        isPdf={true}
+        isPdf={false}
       />
     </Drawer>
   );
