@@ -6,6 +6,7 @@ import { Plus, Search, Edit, Users, Building2, UserCheck, Trash2 } from "lucide-
 import { supabase } from "@/integrations/supabase/client";
 import { NuovoPazienteDialog } from "@/components/Pazienti/NuovoPazienteDialog";
 import { PacchettiDrawer } from "@/components/Pazienti/PacchettiDrawer";
+import { FattureDrawer } from "@/components/Pazienti/FattureDrawer";
 import {
   Table,
   TableBody,
@@ -39,6 +40,8 @@ const Pazienti = () => {
   const [deleteWarning, setDeleteWarning] = useState<string>("");
   const [pacchettiDrawerOpen, setPacchettiDrawerOpen] = useState(false);
   const [selectedPaziente, setSelectedPaziente] = useState<{ id: string; nome: string } | null>(null);
+  const [fattureDrawerOpen, setFattureDrawerOpen] = useState(false);
+  const [selectedPazienteForFatture, setSelectedPazienteForFatture] = useState<{ id: string; nome: string } | null>(null);
 
   const fetchPazienti = async () => {
     setLoading(true);
@@ -46,7 +49,8 @@ const Pazienti = () => {
       .from("pazienti")
       .select(`
         *,
-        pacchetti_count:pacchetti(count)
+        pacchetti_count:pacchetti(count),
+        fatture_count:fatture(count)
       `)
       .order("created_at", { ascending: false });
 
@@ -350,7 +354,7 @@ const Pazienti = () => {
                           {paziente.pacchetti_count?.[0]?.count > 0 && (
                             <Badge 
                               variant="outline" 
-                              className="cursor-pointer hover:bg-accent mr-2"
+                              className="cursor-pointer hover:bg-accent"
                               onClick={() => {
                                 setSelectedPaziente({
                                   id: paziente.id,
@@ -362,7 +366,22 @@ const Pazienti = () => {
                               📦 {paziente.pacchetti_count[0].count}
                             </Badge>
                           )}
-                          <Button 
+                          {paziente.fatture_count?.[0]?.count > 0 && (
+                            <Badge 
+                              variant="outline" 
+                              className="cursor-pointer hover:bg-accent"
+                              onClick={() => {
+                                setSelectedPazienteForFatture({
+                                  id: paziente.id,
+                                  nome: paziente.ragione_sociale || `${paziente.nome} ${paziente.cognome || ''}`
+                                });
+                                setFattureDrawerOpen(true);
+                              }}
+                            >
+                              🧾 {paziente.fatture_count[0].count}
+                            </Badge>
+                          )}
+                          <Button
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8"
@@ -464,6 +483,14 @@ const Pazienti = () => {
         open={pacchettiDrawerOpen}
         onOpenChange={setPacchettiDrawerOpen}
         onPacchettoAdded={fetchPazienti}
+      />
+
+      {/* Drawer Fatture */}
+      <FattureDrawer
+        pazienteId={selectedPazienteForFatture?.id || null}
+        pazienteNome={selectedPazienteForFatture?.nome || ""}
+        open={fattureDrawerOpen}
+        onOpenChange={setFattureDrawerOpen}
       />
     </div>
   );
