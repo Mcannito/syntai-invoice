@@ -1070,7 +1070,9 @@ export const NuovaFatturaDialog = ({
                           })}
                           className="h-4 w-4"
                         />
-                        <Label htmlFor="pagata" className="font-normal cursor-pointer">Pagata</Label>
+                        <Label htmlFor="pagata" className="font-normal cursor-pointer">
+                          {formData.tipo_documento === 'preventivo' ? 'Accettato' : 'Pagata'}
+                        </Label>
                       </div>
                       {formData.pagata && (
                         <Input
