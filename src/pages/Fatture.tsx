@@ -1673,7 +1673,7 @@ const Fatture = () => {
                       {fattura.convertita_da_id && (() => {
                         const preventivo = fatture.find(f => f.id === fattura.convertita_da_id);
                         return (
-                          <Badge variant="outline" className="ml-2 text-xs">
+                          <Badge variant="outline" className="ml-2 text-xs bg-orange-100 text-orange-700 border-orange-300">
                             Da {preventivo?.numero || 'preventivo'}
                           </Badge>
                         );
