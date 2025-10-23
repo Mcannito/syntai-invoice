@@ -498,17 +498,17 @@ const Fatture = () => {
   const getTipoDocumentoBadge = (tipo: string) => {
     switch (tipo) {
       case "fattura_sanitaria":
-        return <Badge className="bg-green-500 text-white">🏥 Sanitaria</Badge>;
+        return <Badge className="bg-green-500 text-white">Sanitaria</Badge>;
       case "fattura_elettronica_pg":
-        return <Badge className="bg-blue-500 text-white">📄 B2B</Badge>;
+        return <Badge className="bg-blue-500 text-white">B2B</Badge>;
       case "fattura_elettronica_pa":
-        return <Badge className="bg-cyan-500 text-white">🏛️ PA</Badge>;
+        return <Badge className="bg-cyan-500 text-white">PA</Badge>;
       case "fattura_proforma":
-        return <Badge className="bg-yellow-500 text-white">📋 Pro Forma</Badge>;
+        return <Badge className="bg-yellow-500 text-white">Pro Forma</Badge>;
       case "preventivo":
-        return <Badge className="bg-orange-500 text-white">📝 Preventivo</Badge>;
+        return <Badge className="bg-orange-500 text-white">Preventivo</Badge>;
       case "nota_credito":
-        return <Badge className="bg-red-500 text-white">↩️ Nota Credito</Badge>;
+        return <Badge className="bg-red-500 text-white">Nota Credito</Badge>;
       default:
         return <Badge variant="outline">{tipo}</Badge>;
     }
