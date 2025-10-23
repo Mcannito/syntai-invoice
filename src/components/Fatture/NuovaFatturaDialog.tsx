@@ -1063,12 +1063,10 @@ export const NuovaFatturaDialog = ({
                   <span>Bollo:</span>
                   <span className="font-semibold">€{tassazione.bollo_virtuale.toFixed(2)}</span>
                 </div>
-                {tassazioneAttiva.ritenuta_acconto && (
-                  <div className="flex justify-between text-sm text-destructive">
-                    <span>Ritenuta d'Acconto:</span>
-                    <span className="font-semibold">-€{tassazione.ritenuta_acconto.toFixed(2)}</span>
-                  </div>
-                )}
+                <div className="flex justify-between text-sm text-destructive">
+                  <span>Ritenuta d'Acconto:</span>
+                  <span className="font-semibold">-€{tassazione.ritenuta_acconto.toFixed(2)}</span>
+                </div>
                 <div className="flex justify-between text-lg font-bold pt-2 border-t">
                   <span>TOTALE:</span>
                   <span className="text-primary">€{totali.totale.toFixed(2)}</span>
