@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2, Heart, Zap, FileQuestion, FileClock, TrendingUp, FileCode, PenTool, MoreVertical, Printer } from "lucide-react";
+import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2, Heart, Zap, FileQuestion, FileClock, TrendingUp, FileCode, PenTool, MoreVertical, Printer, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -127,6 +127,10 @@ const Fatture = () => {
   const [currentInvoiceUrl, setCurrentInvoiceUrl] = useState<string | null>(null);
   const [currentInvoice, setCurrentInvoice] = useState<any>(null);
   const [autoPrint, setAutoPrint] = useState(false);
+  
+  // Stato per ordinamento
+  const [sortField, setSortField] = useState<'numero' | 'data'>('numero');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   
   // Stati per template
   const [templateSettings, setTemplateSettings] = useState({
@@ -352,26 +356,54 @@ const Fatture = () => {
     return fattura.pazienti.ragione_sociale || fattura.pazienti.nome;
   };
 
-  const filteredFatture = fatture.filter(f => {
-    const searchLower = searchTerm.toLowerCase();
-    const pazienteNome = getPazienteDisplayName(f).toLowerCase();
-    const matchesSearch = f.numero.toLowerCase().includes(searchLower) || pazienteNome.includes(searchLower);
-    
-    let matchesTipo = true;
-    if (filtroTipoDocumento) {
-      matchesTipo = f.tipo_documento === filtroTipoDocumento;
+  const toggleSort = (field: 'numero' | 'data') => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
     }
-    
-    // Filtro stato
-    const matchesStato = filtroStato === 'tutti' || f.stato === filtroStato;
-    
-    // Filtro pagamento
-    const matchesPagamento = filtroPaziente === 'tutti' ||
-      (filtroPaziente === 'pagata' && f.pagata) ||
-      (filtroPaziente === 'non_pagata' && !f.pagata);
-    
-    return matchesSearch && matchesTipo && matchesStato && matchesPagamento;
-  });
+  };
+
+  const filteredFatture = fatture
+    .filter(f => {
+      const searchLower = searchTerm.toLowerCase();
+      const pazienteNome = getPazienteDisplayName(f).toLowerCase();
+      const matchesSearch = f.numero.toLowerCase().includes(searchLower) || pazienteNome.includes(searchLower);
+      
+      let matchesTipo = true;
+      if (filtroTipoDocumento) {
+        matchesTipo = f.tipo_documento === filtroTipoDocumento;
+      }
+      
+      // Filtro stato
+      const matchesStato = filtroStato === 'tutti' || f.stato === filtroStato;
+      
+      // Filtro pagamento
+      const matchesPagamento = filtroPaziente === 'tutti' ||
+        (filtroPaziente === 'pagata' && f.pagata) ||
+        (filtroPaziente === 'non_pagata' && !f.pagata);
+      
+      return matchesSearch && matchesTipo && matchesStato && matchesPagamento;
+    })
+    .sort((a, b) => {
+      let comparison = 0;
+      
+      if (sortField === 'numero') {
+        // Confronto numerico se possibile, altrimenti alfabetico
+        const numA = parseInt(a.numero);
+        const numB = parseInt(b.numero);
+        if (!isNaN(numA) && !isNaN(numB)) {
+          comparison = numA - numB;
+        } else {
+          comparison = a.numero.localeCompare(b.numero);
+        }
+      } else if (sortField === 'data') {
+        comparison = new Date(a.data).getTime() - new Date(b.data).getTime();
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
 
   const getStatoBadge = (stato: string) => {
     switch (stato) {
@@ -1315,8 +1347,44 @@ const Fatture = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Numero</TableHead>
-                <TableHead>Data</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleSort('numero')}
+                    className="h-8 px-2 -ml-2 hover:bg-muted"
+                  >
+                    Numero
+                    {sortField === 'numero' ? (
+                      sortDirection === 'asc' ? (
+                        <ArrowUp className="ml-2 h-4 w-4" />
+                      ) : (
+                        <ArrowDown className="ml-2 h-4 w-4" />
+                      )
+                    ) : (
+                      <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />
+                    )}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleSort('data')}
+                    className="h-8 px-2 -ml-2 hover:bg-muted"
+                  >
+                    Data
+                    {sortField === 'data' ? (
+                      sortDirection === 'asc' ? (
+                        <ArrowUp className="ml-2 h-4 w-4" />
+                      ) : (
+                        <ArrowDown className="ml-2 h-4 w-4" />
+                      )
+                    ) : (
+                      <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />
+                    )}
+                  </Button>
+                </TableHead>
                 <TableHead>Paziente</TableHead>
                 <TableHead>Tipo Documento</TableHead>
                 <TableHead>Pagamento</TableHead>
