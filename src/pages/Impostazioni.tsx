@@ -37,6 +37,8 @@ const Impostazioni = () => {
   const [qualificaSelezionata, setQualificaSelezionata] = useState<string>("");
   const [specializzazione, setSpecializzazione] = useState<string>("");
   const [openSpecializzazione, setOpenSpecializzazione] = useState(false);
+  const [tipoPersona, setTipoPersona] = useState<string>("");
+  const [sesso, setSesso] = useState<string>("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -60,6 +62,8 @@ const Impostazioni = () => {
         setSettings(data);
         setQualificaSelezionata(data.qualifica || "");
         setSpecializzazione(data.specializzazione || "");
+        setTipoPersona(data.tipo_persona || "fisica");
+        setSesso(data.sesso || "");
         if (data.logo_path) {
           const { data: publicUrl } = supabase.storage
             .from("logos")
@@ -84,11 +88,11 @@ const Impostazioni = () => {
         .from("user_settings")
         .upsert({
           user_id: user.id,
-          tipo_persona: formData.get("tipo_persona") as string,
-          sesso: formData.get("sesso") as string,
+          tipo_persona: tipoPersona,
+          sesso: sesso,
           nome: formData.get("nome") as string,
           cognome: formData.get("cognome") as string,
-          qualifica: formData.get("qualifica") as string,
+          qualifica: qualificaSelezionata,
           specializzazione: specializzazione,
           codice_fiscale: formData.get("codice_fiscale") as string,
           partita_iva: formData.get("partita_iva") as string,
@@ -305,7 +309,7 @@ const Impostazioni = () => {
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="tipo_persona">Tipo Persona *</Label>
-                  <Select name="tipo_persona" defaultValue={settings?.tipo_persona || "fisica"}>
+                  <Select value={tipoPersona} onValueChange={setTipoPersona}>
                     <SelectTrigger>
                       <SelectValue placeholder="Seleziona tipo" />
                     </SelectTrigger>
@@ -317,7 +321,7 @@ const Impostazioni = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="sesso">Sesso</Label>
-                  <Select name="sesso" defaultValue={settings?.sesso || ""}>
+                  <Select value={sesso} onValueChange={setSesso}>
                     <SelectTrigger>
                       <SelectValue placeholder="Seleziona sesso" />
                     </SelectTrigger>
@@ -346,8 +350,7 @@ const Impostazioni = () => {
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="qualifica">Qualifica *</Label>
                   <Select 
-                    name="qualifica" 
-                    defaultValue={settings?.qualifica || ""}
+                    value={qualificaSelezionata}
                     onValueChange={(value) => setQualificaSelezionata(value)}
                   >
                     <SelectTrigger>
