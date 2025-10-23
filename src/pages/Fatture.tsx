@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { NuovaFatturaDialog } from "@/components/Fatture/NuovaFatturaDialog";
 import { InserisciFatturaInEntrataDialog } from "@/components/Fatture/InserisciFatturaInEntrataDialog";
 import { CaricaFatturaXMLDialog } from "@/components/Fatture/CaricaFatturaXMLDialog";
+import { InvoiceViewer } from "@/components/Fatture/InvoiceViewer";
 import TemplateEditor from "@/components/Impostazioni/TemplateEditor";
 import TemplatePreview from "@/components/Impostazioni/TemplatePreview";
 import {
@@ -120,6 +121,12 @@ const Fatture = () => {
   const [fatturaToEdit, setFatturaToEdit] = useState<any>(null);
   const [editAlertOpen, setEditAlertOpen] = useState(false);
   const [pendingEditFattura, setPendingEditFattura] = useState<any>(null);
+  
+  // Invoice Viewer state
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [currentInvoiceUrl, setCurrentInvoiceUrl] = useState<string | null>(null);
+  const [currentInvoice, setCurrentInvoice] = useState<any>(null);
+  const [autoPrint, setAutoPrint] = useState(false);
   
   // Stati per template
   const [templateSettings, setTemplateSettings] = useState({
@@ -687,7 +694,10 @@ const Fatture = () => {
     try {
       if (fattura.pdf_path) {
         const { data } = supabase.storage.from('fatture-pdf').getPublicUrl(fattura.pdf_path);
-        window.open(data.publicUrl, '_blank');
+        setCurrentInvoiceUrl(data.publicUrl);
+        setCurrentInvoice(fattura);
+        setAutoPrint(false);
+        setViewerOpen(true);
         return;
       }
       
@@ -697,12 +707,17 @@ const Fatture = () => {
       });
       
       if (error) throw error;
-      window.open(data.pdfUrl, '_blank');
+      
+      setCurrentInvoiceUrl(data.pdfUrl);
+      setCurrentInvoice(fattura);
+      setAutoPrint(false);
+      setViewerOpen(true);
       await loadFatture();
       
       toast({ title: "PDF Generato", description: "Il PDF è stato generato con successo" });
     } catch (error) {
-      toast({ title: "Errore", description: "Impossibile generare il PDF", variant: "destructive" });
+      console.error('Error viewing PDF:', error);
+      toast({ title: "Errore", description: "Impossibile visualizzare il PDF", variant: "destructive" });
     } finally {
       setGeneratingPdf(null);
     }
@@ -711,20 +726,29 @@ const Fatture = () => {
   const handlePrintPDF = async (fattura: any) => {
     try {
       if (!fattura.pdf_path) {
-        await handleViewPDF(fattura);
+        setGeneratingPdf(fattura.id);
+        const { data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
+          body: { fatturaId: fattura.id }
+        });
+        
+        if (error) throw error;
+        
+        setCurrentInvoiceUrl(data.pdfUrl);
+        setCurrentInvoice(fattura);
+        setAutoPrint(true);
+        setViewerOpen(true);
+        await loadFatture();
+        setGeneratingPdf(null);
         return;
       }
       
       const { data } = supabase.storage.from('fatture-pdf').getPublicUrl(fattura.pdf_path);
-      const printWindow = window.open(data.publicUrl, '_blank');
+      setCurrentInvoiceUrl(data.publicUrl);
+      setCurrentInvoice(fattura);
+      setAutoPrint(true);
+      setViewerOpen(true);
       
-      if (printWindow) {
-        printWindow.onload = () => {
-          printWindow.print();
-        };
-        
-        toast({ title: "Stampa Avviata", description: "La finestra di stampa si aprirà a breve" });
-      }
+      toast({ title: "Stampa Avviata", description: "La finestra di stampa si aprirà a breve" });
     } catch (error) {
       console.error('Error printing PDF:', error);
       toast({ title: "Errore", description: "Impossibile stampare il PDF", variant: "destructive" });
@@ -2389,6 +2413,19 @@ const Fatture = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <InvoiceViewer
+        open={viewerOpen}
+        onClose={() => {
+          setViewerOpen(false);
+          setCurrentInvoiceUrl(null);
+          setCurrentInvoice(null);
+          setAutoPrint(false);
+        }}
+        htmlUrl={currentInvoiceUrl}
+        invoice={currentInvoice}
+        autoPrint={autoPrint}
+      />
     </div>
   );
 };
