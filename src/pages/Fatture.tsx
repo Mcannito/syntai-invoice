@@ -1821,29 +1821,43 @@ const Fatture = () => {
                   >
                     <TableCell className="font-mono font-medium">
                       {fattura.numero}
+                      {/* Badge per documento convertito da un altro */}
                       {fattura.convertita_da_id && (() => {
                         const documentoOriginale = fatture.find(f => f.id === fattura.convertita_da_id);
                         if (documentoOriginale) {
                           const isFromProforma = documentoOriginale.tipo_documento === 'fattura_proforma';
+                          const isFromPreventivo = documentoOriginale.tipo_documento === 'preventivo';
+                          const isFromFattura = !isFromProforma && !isFromPreventivo;
+                          
+                          let bgColor = "bg-orange-100 text-orange-700 border-orange-300";
+                          if (isFromProforma) bgColor = "bg-purple-100 text-purple-700 border-purple-300";
+                          if (isFromFattura) bgColor = "bg-red-100 text-red-700 border-red-300";
+                          
                           return (
-                            <Badge variant="outline" className={cn(
-                              "ml-2 text-xs",
-                              isFromProforma 
-                                ? "bg-purple-100 text-purple-700 border-purple-300"
-                                : "bg-orange-100 text-orange-700 border-orange-300"
-                            )}>
-                              Da {documentoOriginale?.numero || (isFromProforma ? 'pro forma' : 'preventivo')}
+                            <Badge variant="outline" className={cn("ml-2 text-xs", bgColor)}>
+                              Da {documentoOriginale?.numero}
                             </Badge>
                           );
                         }
                       })()}
-                      {fattura.convertita_in_id && (() => {
-                        const fatturaGenerata = fatture.find(f => f.id === fattura.convertita_in_id);
-                        return (
-                          <Badge variant="outline" className="ml-2 text-xs bg-blue-100 text-blue-700 border-blue-300">
-                            A {fatturaGenerata?.numero || 'fattura'}
-                          </Badge>
-                        );
+                      
+                      {/* Badge per documento che è stato convertito in altro */}
+                      {fattura.convertita_in_id && fattura.tipo_documento !== 'nota_credito' && (() => {
+                        const documentoGenerato = fatture.find(f => f.id === fattura.convertita_in_id);
+                        if (documentoGenerato) {
+                          const isNotaCredito = documentoGenerato.tipo_documento === 'nota_credito';
+                          
+                          return (
+                            <Badge variant="outline" className={cn(
+                              "ml-2 text-xs",
+                              isNotaCredito 
+                                ? "bg-orange-100 text-orange-700 border-orange-300"
+                                : "bg-blue-100 text-blue-700 border-blue-300"
+                            )}>
+                              {isNotaCredito ? 'NC' : 'A'} {documentoGenerato?.numero}
+                            </Badge>
+                          );
+                        }
                       })()}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -2052,12 +2066,65 @@ const Fatture = () => {
                 Modifica fattura
               </DropdownMenuItem>
               
+              {!fattura.convertita_in_id && (
+                <DropdownMenuItem 
+                  onClick={() => handleCreaNotaCredito(fattura)}
+                  className="text-blue-600"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Crea Nota di Credito
+                </DropdownMenuItem>
+              )}
+            </>
+          )}
+
+          {/* Bottone per navigare alla nota di credito */}
+          {fattura.tipo_documento !== 'nota_credito' && fattura.convertita_in_id && (() => {
+            const notaCredito = fatture.find(f => f.id === fattura.convertita_in_id && f.tipo_documento === 'nota_credito');
+            if (notaCredito) {
+              return (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      setFiltroTipoDocumento("");
+                      setFiltroStato("tutti");
+                      setFiltroPaziente("tutti");
+                      setSearchTerm("");
+                      
+                      const newSearchParams = new URLSearchParams(searchParams);
+                      newSearchParams.set('highlight', fattura.convertita_in_id);
+                      setSearchParams(newSearchParams);
+                    }}
+                    className="text-primary"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Vai alla Nota di Credito
+                  </DropdownMenuItem>
+                </>
+              );
+            }
+          })()}
+
+          {/* Bottone per navigare alla fattura originale dalla nota di credito */}
+          {fattura.tipo_documento === 'nota_credito' && fattura.convertita_da_id && (
+            <>
+              <DropdownMenuSeparator />
               <DropdownMenuItem 
-                onClick={() => handleCreaNotaCredito(fattura)}
-                className="text-blue-600"
+                onClick={() => {
+                  setFiltroTipoDocumento("");
+                  setFiltroStato("tutti");
+                  setFiltroPaziente("tutti");
+                  setSearchTerm("");
+                  
+                  const newSearchParams = new URLSearchParams(searchParams);
+                  newSearchParams.set('highlight', fattura.convertita_da_id);
+                  setSearchParams(newSearchParams);
+                }}
+                className="text-primary"
               >
                 <FileText className="h-4 w-4 mr-2" />
-                Crea Nota di Credito
+                Vai alla Fattura Originale
               </DropdownMenuItem>
             </>
           )}
@@ -3094,6 +3161,8 @@ const Fatture = () => {
             fattura_originale_numero: notaCreditoFattura.numero,
             fattura_originale_data: notaCreditoFattura.data,
             stato: "Da Inviare",
+            fatture_dettagli: notaCreditoFattura.fatture_dettagli || [],
+            convertita_da_id: notaCreditoFattura.id,
           }}
           trigger={<span style={{ display: 'none' }} />}
         />

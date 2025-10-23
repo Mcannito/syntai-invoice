@@ -77,6 +77,7 @@ export const NuovaFatturaDialog = ({
     fattura_originale_id: "",
     fattura_originale_numero: "",
     fattura_originale_data: "",
+    convertita_da_id: "",
   });
   
   const [pazienteSelezionato, setPazienteSelezionato] = useState<any>(null);
@@ -386,6 +387,7 @@ export const NuovaFatturaDialog = ({
           fattura_originale_id: fatturaToEdit.fattura_originale_id || "",
           fattura_originale_numero: fatturaToEdit.fattura_originale_numero || "",
           fattura_originale_data: fatturaToEdit.fattura_originale_data || "",
+          convertita_da_id: fatturaToEdit.convertita_da_id || "",
         });
 
         // Imposta il paziente selezionato
@@ -775,6 +777,7 @@ export const NuovaFatturaDialog = ({
             percentuale_ritenuta: tassazioneAttiva.ritenuta_acconto ? percentualeRitenuta : null,
             fattura_originale_id: formData.fattura_originale_id || null,
             fattura_originale_data: formData.fattura_originale_data || null,
+            convertita_da_id: formData.convertita_da_id || null,
           })
           .select()
           .single();
@@ -804,6 +807,18 @@ export const NuovaFatturaDialog = ({
           .insert(dettagliConCalcoli);
 
         if (dettagliError) throw dettagliError;
+
+        // Se è una nota di credito, aggiorna la fattura originale con il riferimento
+        if (formData.tipo_documento === 'nota_credito' && formData.convertita_da_id) {
+          const { error: updateError } = await supabase
+            .from("fatture")
+            .update({ convertita_in_id: fatturaData.id })
+            .eq("id", formData.convertita_da_id);
+
+          if (updateError) {
+            console.error("Error updating fattura originale:", updateError);
+          }
+        }
 
         // Se ci sono prestazioni precompilate, marca gli appuntamenti come fatturati
         if (prestazioniPrecompilate && prestazioniPrecompilate.length > 0) {
@@ -838,6 +853,7 @@ export const NuovaFatturaDialog = ({
         fattura_originale_id: "",
         fattura_originale_numero: "",
         fattura_originale_data: "",
+        convertita_da_id: "",
       });
       setPazienteSelezionato(null);
       setDettagli([{
