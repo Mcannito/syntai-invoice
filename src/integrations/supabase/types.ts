@@ -91,6 +91,7 @@ export type Database = {
           data: string
           data_pagamento: string | null
           email_inviata: boolean | null
+          fattura_originale_data: string | null
           fattura_originale_id: string | null
           id: string
           imponibile: number | null
@@ -130,6 +131,7 @@ export type Database = {
           data: string
           data_pagamento?: string | null
           email_inviata?: boolean | null
+          fattura_originale_data?: string | null
           fattura_originale_id?: string | null
           id?: string
           imponibile?: number | null
@@ -169,6 +171,7 @@ export type Database = {
           data?: string
           data_pagamento?: string | null
           email_inviata?: boolean | null
+          fattura_originale_data?: string | null
           fattura_originale_id?: string | null
           id?: string
           imponibile?: number | null

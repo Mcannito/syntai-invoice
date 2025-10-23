@@ -132,6 +132,10 @@ const Fatture = () => {
   const [sortField, setSortField] = useState<'numero' | 'data'>('numero');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   
+  // Stati per nota di credito
+  const [notaCreditoFattura, setNotaCreditoFattura] = useState<any>(null);
+  const [showNotaCreditoDialog, setShowNotaCreditoDialog] = useState(false);
+  
   // Stati per template
   const [templateSettings, setTemplateSettings] = useState({
     pdf_template_colore_primario: '#2563eb',
@@ -363,6 +367,11 @@ const Fatture = () => {
       setSortField(field);
       setSortDirection('desc');
     }
+  };
+
+  const handleCreaNotaCredito = (fattura: any) => {
+    setNotaCreditoFattura(fattura);
+    setShowNotaCreditoDialog(true);
   };
 
   const filteredFatture = fatture
@@ -1484,6 +1493,21 @@ const Fatture = () => {
                             </>
                           )}
 
+                          {/* Crea Nota di Credito - Solo per Persone Giuridiche */}
+                          {(fattura.tipo_documento === "fattura_elettronica_pg" || 
+                            fattura.tipo_documento === "fattura_elettronica_pa") && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => handleCreaNotaCredito(fattura)}
+                                className="text-blue-600"
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Crea Nota di Credito
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
                           {fattura.tipo_documento === "fattura_sanitaria" && (
                             <>
                               <DropdownMenuSeparator />
@@ -2458,6 +2482,30 @@ const Fatture = () => {
           loadFattureInEntrata();
         }}
       />
+
+      {/* Dialog Nota di Credito */}
+      {showNotaCreditoDialog && notaCreditoFattura && (
+        <NuovaFatturaDialog
+          onFatturaAdded={() => {
+            loadFatture();
+            setShowNotaCreditoDialog(false);
+            setNotaCreditoFattura(null);
+          }}
+          open={showNotaCreditoDialog}
+          onOpenChange={setShowNotaCreditoDialog}
+          metodiPagamento={Array.from(metodiPagamento)}
+          fatturaToEdit={{
+            paziente_id: notaCreditoFattura.paziente_id,
+            tipo_documento: "nota_credito",
+            metodo_pagamento: notaCreditoFattura.metodo_pagamento,
+            fattura_originale_id: notaCreditoFattura.id,
+            fattura_originale_numero: notaCreditoFattura.numero,
+            fattura_originale_data: notaCreditoFattura.data,
+            stato: "Da Inviare",
+          }}
+          trigger={<span style={{ display: 'none' }} />}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

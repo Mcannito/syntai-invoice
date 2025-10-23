@@ -74,6 +74,9 @@ export const NuovaFatturaDialog = ({
     note: "",
     pagata: false,
     data_pagamento: "",
+    fattura_originale_id: "",
+    fattura_originale_numero: "",
+    fattura_originale_data: "",
   });
   
   const [pazienteSelezionato, setPazienteSelezionato] = useState<any>(null);
@@ -362,6 +365,9 @@ export const NuovaFatturaDialog = ({
           note: fatturaToEdit.note || "",
           pagata: fatturaToEdit.pagata || false,
           data_pagamento: fatturaToEdit.data_pagamento || "",
+          fattura_originale_id: fatturaToEdit.fattura_originale_id || "",
+          fattura_originale_numero: fatturaToEdit.fattura_originale_numero || "",
+          fattura_originale_data: fatturaToEdit.fattura_originale_data || "",
         });
 
         // Imposta il paziente selezionato
@@ -450,12 +456,13 @@ export const NuovaFatturaDialog = ({
   const getTipiDocumentoDisponibili = () => {
     if (!pazienteSelezionato) return [];
     
-    const comuni = ["preventivo", "nota_credito"];
+    const comuni = ["preventivo"];
     
     if (pazienteSelezionato.tipo_paziente === "persona_fisica") {
       return ["fattura_sanitaria", ...comuni];
     } else {
-      return ["fattura_elettronica_pg", "fattura_elettronica_pa", "fattura_proforma", ...comuni];
+      // nota_credito disponibile solo per persone giuridiche
+      return ["fattura_elettronica_pg", "fattura_elettronica_pa", "fattura_proforma", "nota_credito", ...comuni];
     }
   };
 
@@ -593,6 +600,19 @@ export const NuovaFatturaDialog = ({
         return;
       }
 
+      // Validazione nota di credito
+      if (formData.tipo_documento === "nota_credito") {
+        if (!formData.fattura_originale_numero || !formData.fattura_originale_data) {
+          toast({
+            title: "Errore",
+            description: "Per una Nota di Credito è obbligatorio indicare il numero e la data della fattura originale",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
       const totali = calcolaTotali();
 
       if (fatturaToEdit) {
@@ -620,6 +640,8 @@ export const NuovaFatturaDialog = ({
             data_pagamento: formData.data_pagamento || null,
             percentuale_rivalsa: tassazioneAttiva.cassa_previdenziale ? percentualeRivalsa : null,
             percentuale_ritenuta: tassazioneAttiva.ritenuta_acconto ? percentualeRitenuta : null,
+            fattura_originale_id: formData.fattura_originale_id || null,
+            fattura_originale_data: formData.fattura_originale_data || null,
           })
           .eq('id', fatturaToEdit.id);
 
@@ -687,6 +709,8 @@ export const NuovaFatturaDialog = ({
             data_pagamento: formData.data_pagamento || null,
             percentuale_rivalsa: tassazioneAttiva.cassa_previdenziale ? percentualeRivalsa : null,
             percentuale_ritenuta: tassazioneAttiva.ritenuta_acconto ? percentualeRitenuta : null,
+            fattura_originale_id: formData.fattura_originale_id || null,
+            fattura_originale_data: formData.fattura_originale_data || null,
           })
           .select()
           .single();
@@ -747,6 +771,9 @@ export const NuovaFatturaDialog = ({
         note: "",
         pagata: false,
         data_pagamento: "",
+        fattura_originale_id: "",
+        fattura_originale_numero: "",
+        fattura_originale_data: "",
       });
       setPazienteSelezionato(null);
       setDettagli([{
@@ -884,6 +911,36 @@ export const NuovaFatturaDialog = ({
                     </Select>
                   </div>
                 </div>
+
+                {/* Sezione Riferimenti Fattura Originale - Solo per Note di Credito */}
+                {formData.tipo_documento === "nota_credito" && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fattura_originale_numero">
+                        Numero Fattura Originale *
+                      </Label>
+                      <Input
+                        id="fattura_originale_numero"
+                        value={formData.fattura_originale_numero}
+                        onChange={(e) => setFormData({ ...formData, fattura_originale_numero: e.target.value })}
+                        placeholder="Es: 2024/001"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="fattura_originale_data">
+                        Data Fattura Originale *
+                      </Label>
+                      <Input
+                        id="fattura_originale_data"
+                        type="date"
+                        value={formData.fattura_originale_data}
+                        onChange={(e) => setFormData({ ...formData, fattura_originale_data: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
