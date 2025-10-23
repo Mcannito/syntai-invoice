@@ -34,6 +34,9 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
   const [loading, setLoading] = useState(false);
   const [pazienti, setPazienti] = useState<Paziente[]>([]);
   const [prestazioni, setPrestazioni] = useState<Prestazione[]>([]);
+  const [metodiPagamento, setMetodiPagamento] = useState<string[]>([
+    'bonifico', 'contanti', 'carta', 'pos'
+  ]);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -50,6 +53,8 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
     data_scadenza: "",
     note: "",
     crea_fattura: true,
+    metodo_pagamento: "bonifico",
+    fattura_pagata: false,
   });
 
   const loadPazienti = async () => {
@@ -84,10 +89,39 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
     }
   };
 
+  const loadUserSettings = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("user_settings")
+        .select("metodo_pagamento_default, metodi_pagamento")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) throw error;
+      
+      if (data) {
+        setFormData(prev => ({
+          ...prev,
+          metodo_pagamento: data.metodo_pagamento_default || 'bonifico'
+        }));
+        
+        if (data.metodi_pagamento && data.metodi_pagamento.length > 0) {
+          setMetodiPagamento(data.metodi_pagamento);
+        }
+      }
+    } catch (error) {
+      console.error("Errore caricamento impostazioni:", error);
+    }
+  };
+
   useEffect(() => {
     if (open) {
       loadPazienti();
       loadPrestazioni();
+      loadUserSettings();
     }
   }, [open]);
 
@@ -151,6 +185,15 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
       toast({
         title: "Errore",
         description: "Seleziona una prestazione",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.crea_fattura && !formData.metodo_pagamento) {
+      toast({
+        title: "Errore",
+        description: "Seleziona un metodo di pagamento per la fattura",
         variant: "destructive",
       });
       return;
@@ -367,10 +410,11 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
         percentuale_ritenuta: percentualeRitenuta,
         percentuale_rivalsa: percentualeRivalsa,
         totale: Number(totale.toFixed(2)),
-        metodo_pagamento: settings?.metodo_pagamento_default || "bonifico",
+        metodo_pagamento: formData.metodo_pagamento,
         stato: "Da Inviare",
         tipo_documento: tipoDocumento,
-        pagata: false
+        pagata: formData.fattura_pagata,
+        data_pagamento: formData.fattura_pagata ? formData.data_acquisto : null
       };
 
           console.log("📄 Dati fattura:", fatturaData);
@@ -471,6 +515,8 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
         data_scadenza: "",
         note: "",
         crea_fattura: true,
+        metodo_pagamento: "bonifico",
+        fattura_pagata: false,
       });
     } catch (error: any) {
       console.error("❌ Errore creazione pacchetto:", error);
@@ -659,18 +705,65 @@ export function NuovoPacchettoDialog({ children, onPacchettoAdded }: NuovoPacche
               />
             </div>
 
-            {/* Crea Fattura */}
-            <div className="flex items-center space-x-2 col-span-2">
-              <Checkbox
-                id="crea_fattura"
-                checked={formData.crea_fattura}
-                onCheckedChange={(checked) => 
-                  setFormData({ ...formData, crea_fattura: checked as boolean })
-                }
-              />
-              <Label htmlFor="crea_fattura" className="cursor-pointer">
-                Crea fattura immediata per il pacchetto
-              </Label>
+            {/* Crea Fattura con campi aggiuntivi */}
+            <div className="space-y-4 col-span-2 border-t pt-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="crea_fattura"
+                  checked={formData.crea_fattura}
+                  onCheckedChange={(checked) => 
+                    setFormData({ ...formData, crea_fattura: checked as boolean })
+                  }
+                />
+                <Label htmlFor="crea_fattura" className="cursor-pointer font-semibold">
+                  Crea fattura immediata per il pacchetto
+                </Label>
+              </div>
+
+              {/* Campi aggiuntivi visibili solo se crea_fattura è true */}
+              {formData.crea_fattura && (
+                <div className="grid grid-cols-2 gap-4 pl-6 border-l-2 border-primary/20 ml-6">
+                  {/* Metodo di Pagamento */}
+                  <div className="space-y-2">
+                    <Label htmlFor="metodo_pagamento">
+                      Metodo di Pagamento <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={formData.metodo_pagamento}
+                      onValueChange={(value) => 
+                        setFormData({ ...formData, metodo_pagamento: value })
+                      }
+                    >
+                      <SelectTrigger id="metodo_pagamento">
+                        <SelectValue placeholder="Seleziona metodo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {metodiPagamento.map((metodo) => (
+                          <SelectItem key={metodo} value={metodo}>
+                            {metodo.charAt(0).toUpperCase() + metodo.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Checkbox Pagata */}
+                  <div className="space-y-2 flex items-end pb-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="fattura_pagata"
+                        checked={formData.fattura_pagata}
+                        onCheckedChange={(checked) => 
+                          setFormData({ ...formData, fattura_pagata: checked as boolean })
+                        }
+                      />
+                      <Label htmlFor="fattura_pagata" className="cursor-pointer">
+                        Fattura già pagata
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
