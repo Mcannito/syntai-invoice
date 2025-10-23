@@ -1054,7 +1054,9 @@ export const NuovaFatturaDialog = ({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="pagata">Pagamento</Label>
+                    <Label htmlFor="pagata">
+                      {formData.tipo_documento === 'preventivo' ? 'Accettato' : 'Pagamento'}
+                    </Label>
                     <div className="flex items-center gap-4 pt-2">
                       <div className="flex items-center gap-2">
                         <input
