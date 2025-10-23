@@ -2204,30 +2204,6 @@ const Fatture = () => {
                             </>
                           )}
 
-                          {fattura.tipo_documento === 'preventivo' && fattura.convertita_in_id && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => {
-                                  // Reset filtri per assicurarsi che la fattura sia visibile
-                                  setFiltroTipoDocumento("");
-                                  setFiltroStato("tutti");
-                                  setFiltroPaziente("tutti");
-                                  setSearchTerm("");
-                                  
-                                  // Aggiorna URL con parametro highlight
-                                  const newSearchParams = new URLSearchParams(searchParams);
-                                  newSearchParams.set('highlight', fattura.convertita_in_id);
-                                  setSearchParams(newSearchParams);
-                                }}
-                                className="text-primary"
-                              >
-                                <FileText className="h-4 w-4 mr-2" />
-                                Vai alla fattura
-                              </DropdownMenuItem>
-                            </>
-                          )}
-
                           {fattura.tipo_documento === 'fattura_proforma' && (
                             <>
                               <DropdownMenuSeparator />
@@ -2257,28 +2233,6 @@ const Fatture = () => {
                               >
                                 <RefreshCw className="h-4 w-4 mr-2" />
                                 Converti in fattura
-                              </DropdownMenuItem>
-                            </>
-                          )}
-
-                          {fattura.tipo_documento === 'fattura_proforma' && fattura.convertita_in_id && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => {
-                                  setFiltroTipoDocumento("");
-                                  setFiltroStato("tutti");
-                                  setFiltroPaziente("tutti");
-                                  setSearchTerm("");
-                                  
-                                  const newSearchParams = new URLSearchParams(searchParams);
-                                  newSearchParams.set('highlight', fattura.convertita_in_id);
-                                  setSearchParams(newSearchParams);
-                                }}
-                                className="text-primary"
-                              >
-                                <FileText className="h-4 w-4 mr-2" />
-                                Vai alla fattura
                               </DropdownMenuItem>
                             </>
                           )}
