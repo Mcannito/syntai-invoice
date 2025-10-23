@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2, Heart, Zap, FileQuestion, FileClock, TrendingUp, FileCode, PenTool, MoreVertical } from "lucide-react";
+import { Plus, Search, Eye, Download, Send, FileText, Upload, RefreshCw, CheckCircle, CalendarIcon, X, CreditCard, Settings, Pencil, Trash2, Heart, Zap, FileQuestion, FileClock, TrendingUp, FileCode, PenTool, MoreVertical, Printer } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -708,7 +708,7 @@ const Fatture = () => {
     }
   };
 
-  const handleDownloadPDF = async (fattura: any) => {
+  const handlePrintPDF = async (fattura: any) => {
     try {
       if (!fattura.pdf_path) {
         await handleViewPDF(fattura);
@@ -716,14 +716,18 @@ const Fatture = () => {
       }
       
       const { data } = supabase.storage.from('fatture-pdf').getPublicUrl(fattura.pdf_path);
-      const link = document.createElement('a');
-      link.href = data.publicUrl;
-      link.download = `fattura_${fattura.numero}.html`;
-      link.click();
+      const printWindow = window.open(data.publicUrl, '_blank');
       
-      toast({ title: "Download Avviato", description: "Il PDF verrà scaricato a breve" });
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+        
+        toast({ title: "Stampa Avviata", description: "La finestra di stampa si aprirà a breve" });
+      }
     } catch (error) {
-      toast({ title: "Errore", description: "Impossibile scaricare il PDF", variant: "destructive" });
+      console.error('Error printing PDF:', error);
+      toast({ title: "Errore", description: "Impossibile stampare il PDF", variant: "destructive" });
     }
   };
 
@@ -1358,11 +1362,11 @@ const Fatture = () => {
                           </DropdownMenuItem>
                           
                           <DropdownMenuItem 
-                            onClick={() => handleDownloadPDF(fattura)}
+                            onClick={() => handlePrintPDF(fattura)}
                             disabled={generatingPdf === fattura.id}
                           >
-                            <Download className="h-4 w-4 mr-2" />
-                            Scarica PDF
+                            <Printer className="h-4 w-4 mr-2" />
+                            Stampa
                           </DropdownMenuItem>
 
                           {!fattura.pagata && fattura.tipo_documento !== 'preventivo' && fattura.tipo_documento !== 'fattura_proforma' && (
