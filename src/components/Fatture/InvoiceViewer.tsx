@@ -54,8 +54,8 @@ export function InvoiceViewer({ open, onClose, htmlUrl, invoice, autoPrint = fal
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] h-[95vh] p-0 gap-0" hideCloseButton>
-        <DialogHeader className="px-6 py-4 border-b">
+      <DialogContent className="max-w-[95vw] h-[95vh] p-0 gap-0 flex flex-col" hideCloseButton>
+        <DialogHeader className="px-6 py-2 border-b flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <DialogTitle className="text-xl">
@@ -91,7 +91,7 @@ export function InvoiceViewer({ open, onClose, htmlUrl, invoice, autoPrint = fal
           </div>
         </DialogHeader>
 
-        <div className="relative flex-1 bg-muted/30">
+        <div className="relative flex-1 bg-muted/30 min-h-0">
           {loading && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
               <div className="flex flex-col items-center gap-2">
