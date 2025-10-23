@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
     const { error: uploadError } = await supabase.storage
       .from('fatture-pdf')
       .upload(fileName, pdfContent, {
-        contentType: 'text/html',
+        contentType: 'text/html; charset=utf-8',
         upsert: true,
       });
 
@@ -484,7 +484,7 @@ function generateInvoiceHTML(
     <div class="party">
       <div class="party-title">Professionista</div>
       <div class="party-info">
-        <p><strong>${settings.qualifica || ''} ${settings.nome || ''} ${settings.cognome || ''}</strong></p>
+        <p><strong>${[settings.qualifica, settings.nome, settings.cognome].filter(Boolean).join(' ') || 'Professionista'}</strong></p>
         ${settings.codice_fiscale ? `<p>C.F.: ${settings.codice_fiscale}</p>` : ''}
         ${settings.partita_iva ? `<p>P.IVA: ${settings.partita_iva}</p>` : ''}
         ${settings.albo_nome ? `<p>${settings.albo_nome} N. ${settings.albo_numero || ''}</p>` : ''}
@@ -499,7 +499,7 @@ function generateInvoiceHTML(
       <div class="party-title">Cliente</div>
       <div class="party-info">
         ${paziente ? `
-          <p><strong>${paziente.tipo_paziente === 'privato' ? `${paziente.nome} ${paziente.cognome || ''}` : paziente.ragione_sociale}</strong></p>
+          <p><strong>${paziente.tipo_paziente === 'persona_fisica' ? [paziente.nome, paziente.cognome].filter(Boolean).join(' ').trim() || 'Cliente' : (paziente.ragione_sociale || 'Cliente')}</strong></p>
           ${paziente.codice_fiscale ? `<p>C.F.: ${paziente.codice_fiscale}</p>` : ''}
           ${paziente.partita_iva ? `<p>P.IVA: ${paziente.partita_iva}</p>` : ''}
           ${paziente.indirizzo ? `<p>${paziente.indirizzo}</p>` : ''}
