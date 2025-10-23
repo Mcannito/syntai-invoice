@@ -1860,7 +1860,7 @@ const Fatture = () => {
                           
                           let bgColor = "bg-orange-100 text-orange-700 border-orange-300";
                           if (isFromProforma) bgColor = "bg-purple-100 text-purple-700 border-purple-300";
-                          if (isFromFattura) bgColor = "bg-red-100 text-red-700 border-red-300";
+                          if (isFromFattura) bgColor = "bg-blue-100 text-blue-700 border-blue-300";
                           
                           return (
                             <Badge variant="outline" className={cn("ml-2 text-xs", bgColor)}>
