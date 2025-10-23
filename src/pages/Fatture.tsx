@@ -282,6 +282,17 @@ const Fatture = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Se il bollo è attivo, il bollo virtuale è obbligatorio per le fatture elettroniche
+      let finalBolloVirtuale = bolloVirtuale;
+      if (bolloAttivo && !bolloVirtuale) {
+        toast({
+          title: "Bollo Virtuale Attivato",
+          description: "Per le fatture elettroniche il bollo deve essere assolto in maniera virtuale. L'opzione è stata attivata automaticamente.",
+        });
+        finalBolloVirtuale = true;
+        setBolloVirtuale(true);
+      }
+
       const settings = {
         regime_fiscale: regimeFiscale,
         cassa_previdenziale: cassaPrevidenziale,
@@ -301,7 +312,7 @@ const Fatture = () => {
         bollo_attivo: bolloAttivo,
         bollo_importo: bolloImporto,
         bollo_carico: bolloCarico,
-        bollo_virtuale: bolloVirtuale,
+        bollo_virtuale: finalBolloVirtuale,
       };
 
       const { error } = await supabase
@@ -3176,14 +3187,15 @@ const Fatture = () => {
                             Bollo assolto in maniera virtuale
                           </Label>
                         </div>
-                        {bolloVirtuale && (
-                          <div className="bg-muted/50 p-3 rounded-md">
-                            <p className="text-xs text-muted-foreground">
-                              Attivando questa opzione comparirà nel PDF la dicitura 'marca da bollo assolta in maniera virtuale'. 
-                              Non serve acquistarla fisicamente, ma dovrai versarla trimestralmente con F24. Consulta il tuo commercialista.
-                            </p>
-                          </div>
-                        )}
+                        <div className="bg-muted/50 p-3 rounded-md space-y-2">
+                          <p className="text-xs text-muted-foreground">
+                            Attivando questa opzione comparirà nel PDF la dicitura 'marca da bollo assolta in maniera virtuale'. 
+                            Non serve acquistarla fisicamente, ma dovrai versarla trimestralmente con F24.
+                          </p>
+                          <p className="text-xs font-semibold text-primary">
+                            ⚠️ OBBLIGATORIO per tutte le fatture elettroniche (B2B e PA)
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}

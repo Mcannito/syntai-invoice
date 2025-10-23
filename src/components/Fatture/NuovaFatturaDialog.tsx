@@ -237,6 +237,28 @@ export const NuovaFatturaDialog = ({
     }
   }, [formData.tipo_documento, open]);
 
+  // Imposta automaticamente bollo virtuale per fatture elettroniche
+  useEffect(() => {
+    const isFatturaElettronica = 
+      formData.tipo_documento === 'fattura_elettronica_pg' || 
+      formData.tipo_documento === 'fattura_elettronica_pa';
+    
+    if (isFatturaElettronica && userSettings) {
+      // Per le fatture elettroniche, il bollo è obbligatorio se attivo
+      if (tassazioneAttiva.bollo) {
+        // Verifica che il bollo virtuale sia attivo nelle impostazioni
+        if (!userSettings.bollo_virtuale) {
+          toast({
+            title: "Attenzione",
+            description: "Per le fatture elettroniche il bollo deve essere assolto in maniera virtuale. Attiva questa opzione nelle impostazioni.",
+            variant: "destructive",
+          });
+        }
+      }
+    }
+  }, [formData.tipo_documento, tassazioneAttiva.bollo, userSettings]);
+
+
   // Ricalcola automaticamente la tassazione quando cambiano i dettagli o gli userSettings
   useEffect(() => {
     // Non ricalcolare se l'utente ha modificato manualmente i valori
@@ -666,6 +688,23 @@ export const NuovaFatturaDialog = ({
         });
         setLoading(false);
         return;
+      }
+      
+      // Validazione bollo virtuale per fatture elettroniche
+      const isFatturaElettronica = 
+        formData.tipo_documento === 'fattura_elettronica_pg' || 
+        formData.tipo_documento === 'fattura_elettronica_pa';
+      
+      if (isFatturaElettronica && tassazioneAttiva.bollo && userSettings) {
+        if (!userSettings.bollo_virtuale) {
+          toast({
+            title: "Bollo Virtuale Obbligatorio",
+            description: "Per le fatture elettroniche il bollo deve essere assolto in maniera virtuale. Attiva questa opzione nelle impostazioni prima di procedere.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
       }
 
       // Validazione nota di credito
